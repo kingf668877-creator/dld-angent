@@ -3875,7 +3875,14 @@
     input.focus();
   }
   newConversationBtn.addEventListener('click', showEmptyConversation);
-  stopBtn.addEventListener('click', () => { ABORT_RUN = true; });
+  stopBtn.addEventListener('click', async () => {
+    ABORT_RUN = true;
+    const runId = stopBtn.getAttribute('data-dld-run');
+    if (runId && typeof DLD !== 'undefined' && DLD.stopRun) {
+      try { await DLD.stopRun(runId); }
+      catch (e) { console.warn('[DLD] stopRun 失败：', e.message); }
+    }
+  });
 
   function addWalletLedger(label, amount, type) {
     if (typeof CONSUME_LEDGER === 'undefined') return;
@@ -3967,213 +3974,162 @@
         sendBtn.classList.remove('busy');
         sendBtn.title = '发送（Enter）';
         stopBtn.classList.remove('show');
+        stopBtn.removeAttribute('data-dld-run');
       };
-      const checkAbort = () => {
-        if (!ABORT_RUN) return false;
-        roleTime.textContent = '· 已停止';
-        bubble.insertAdjacentHTML('beforeend', `<div class="ai-summary"><p>已停止本次生成，你可以修改需求后重新查询。</p></div><button class="regen-btn">↻ 重新生成</button>`);
-        bindRegenerate(ai);
+      const showError = (msg) => {
+        roleTime.textContent = '· 失败';
+        bubble.insertAdjacentHTML('beforeend', `<div class="ai-summary" style="border-left:3px solid #d6493a;padding:8px 12px;background:#fef0ef;color:#d6493a;border-radius:4px;margin-top:8px"><b>请求失败：</b>${escapeHtml(msg)}</div>`);
+      };
+
+      // ── 立即显示 "思考中" 动画 ──
+      bubble.insertAdjacentHTML('beforeend',
+        `<div class="thinking-line" data-live>正在连接 AI<span class="tdots"><span></span><span></span><span></span></span></div>`);
+
+      // 当前选中会话的 convId（首条消息为空 → 服务端会创建并通过 X-AI-Conversation-Id 回传）
+      const activeConvItem = convList.querySelector('.conv-item.active');
+      const activeSess = activeConvItem
+        ? (SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] || []).find(s => s.id === activeConvItem.dataset.conv)
+        : null;
+      const convId = activeSess && activeSess.convId ? activeSess.convId : '';
+      const appCode = (typeof window.__dldApps !== 'undefined' && window.__dldApps[0] && window.__dldApps[0].appCode) || '1';
+      const clientRequestId = 'dld-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+
+      // 累积已收到的 AI 文本（用于 message 事件增量拼接）
+      let accAnswer = '';
+      let liveTextEl = null;
+      const appendDelta = (delta) => {
+        if (!delta) return;
+        // 第一次收到文本 → 把"正在连接"行换成流式容器
+        if (!liveTextEl) {
+          const thinking = bubble.querySelector('.thinking-line[data-live]');
+          if (thinking) thinking.remove();
+          const live = document.createElement('div');
+          live.className = 'live-answer';
+          live.style.cssText = 'white-space:pre-wrap;line-height:1.7;margin:6px 0 4px;';
+          liveTextEl = document.createElement('div');
+          liveTextEl.className = 'live-text';
+          liveTextEl.style.cssText = 'white-space:pre-wrap;line-height:1.7;';
+          live.appendChild(liveTextEl);
+          bubble.appendChild(live);
+          scrollBottom();
+        }
+        accAnswer += delta;
+        liveTextEl.textContent = accAnswer;
+        scrollBottom();
+      };
+
+      let runId = null;
+      let convIdFromHeader = null;
+      // 把当前 runId 写到 stopBtn，点击时 stopRun 即可
+      const tagStopBtn = (id) => {
+        stopBtn.setAttribute('data-dld-run', id || '');
+      };
+
+      try {
+        await DLD.sendMessageStream({
+          appCode,
+          conversationId: convId || undefined,
+          clientRequestId,
+          query: text,
+          fileIds: []
+        }, {
+          onHeaders: ({ conversationId, requestId }) => {
+            convIdFromHeader = conversationId;
+            runId = requestId;
+            tagStopBtn(requestId);
+            roleTime.textContent = '· 流式中';
+            // 首条消息：服务端可能创建了新会话 → 在主账号桶插入并刷新左栏
+            if (!convId && conversationId) {
+              const title = text.slice(0, 24) + (text.length > 24 ? '…' : '');
+              const newSess = {
+                id: conversationId,
+                convId: conversationId,
+                appCode,
+                title,
+                tag: appCode,
+                time: '刚刚',
+                timestamp: Date.now()
+              };
+              if (typeof SESSIONS_BY_ACCOUNT !== 'undefined') {
+                SESSIONS_BY_ACCOUNT.main = SESSIONS_BY_ACCOUNT.main || [];
+                SESSIONS_BY_ACCOUNT.main.unshift(newSess);
+              }
+              if (typeof rerenderConvList === 'function') rerenderConvList();
+              // 选中新会话
+              setTimeout(() => {
+                 const items = convList.querySelectorAll('.conv-item');
+                 for (const it of items) {
+                   if (it.dataset.conv === conversationId) {
+                     document.querySelectorAll('.conv-item').forEach(x => x.classList.remove('active'));
+                     it.classList.add('active');
+                     break;
+                   }
+                 }
+               }, 50);
+              const chatTitle = document.querySelector('.chat-head .title');
+              if (chatTitle) chatTitle.textContent = title;
+            }
+          },
+          onEvent: (eventName, payload) => {
+            // 兼容多种 SSE 事件命名（Dify 原生 + Apifox 描述）
+            // - agent_message / agent_message_delta / message / message_delta
+            // - agent_thought（思考过程）
+            // - workflow_started / workflow_finished / node_started / node_finished（Coze）
+            // - connected / done / error
+            const t = String(eventName || '').toLowerCase();
+            if (t === 'connected') { roleTime.textContent = '· 已连接'; return; }
+            if (t === 'error') { showError(typeof payload === 'string' ? payload : (payload && payload.message) || '流式错误'); return; }
+            if (t === 'agent_thought' || t === 'workflow_started' || t === 'node_started') {
+              // 思考过程：作为 status-line 追加
+              const msg = (payload && (payload.thought || payload.message || payload.title)) || eventName;
+              bubble.insertAdjacentHTML('beforeend',
+                `<div class="status-line"><span class="sl-ic">💭</span><span>${escapeHtml(String(msg).slice(0, 80))}</span></div>`);
+              scrollBottom();
+              return;
+            }
+            if (t === 'workflow_finished' || t === 'node_finished') {
+              const msg = (payload && (payload.title || payload.message)) || eventName;
+              bubble.insertAdjacentHTML('beforeend',
+                `<div class="status-line"><span class="sl-ic">✓</span><span>${escapeHtml(String(msg).slice(0, 80))}</span></div>`);
+              scrollBottom();
+              return;
+            }
+            // 文本事件：把 answer / delta / text 字段作为增量
+            let delta = null;
+            if (payload && typeof payload === 'object') {
+              delta = payload.answer ?? payload.delta ?? payload.text ?? payload.content ?? null;
+              if (Array.isArray(delta)) {
+                delta = delta.filter(c => c && (c.type === 'text' || c.type === 'message')).map(c => c.text || c.message || '').join('');
+              }
+            } else if (typeof payload === 'string') {
+              delta = payload;
+            }
+            if (delta) appendDelta(delta);
+          },
+          onDone: () => {
+            roleTime.textContent = '· 已完成';
+            // 移除"正在连接"占位（如果从未收到文本）
+            const thinking = bubble.querySelector('.thinking-line[data-live]');
+            if (thinking) thinking.remove();
+            // 暴露记忆验证面板
+            const memoryBadge = `<div class="status-line" style="margin-top:8px;color:#909399"><span class="sl-ic">🧠</span><span>本会话已记忆 <b>1</b> 轮 · Chatflow 记忆上限 100 轮</span></div>`;
+            bubble.insertAdjacentHTML('beforeend', memoryBadge);
+            // 重新生成按钮
+            bubble.insertAdjacentHTML('beforeend', `<button class="regen-btn" style="margin-top:8px">↻ 重新生成</button>`);
+            bindRegenerate(ai);
+            scrollBottom();
+            finishRun();
+          },
+          onError: (payload) => {
+            showError(typeof payload === 'string' ? payload : (payload && payload.message) || '流式错误');
+            finishRun();
+          }
+        });
+      } catch (e) {
+        showError(e.message || String(e));
         finishRun();
         scrollBottom();
-        return true;
-      };
-      // ── 1. 需求确认卡 ──
-      const req = parseRequirements(text);
-      bubble.insertAdjacentHTML('beforeend', `
-        <div class="req-card">
-          <div class="rc-head">你本次的需求为：</div>
-          <ul class="rc-body" style="margin:0">
-            <li>目标平台：<b>${req.platform}</b></li>
-            <li>品类诉求：<b>${req.category}</b></li>
-            <li>展示要求：<b>${req.reqs.join('、')}</b></li>
-          </ul>
-        </div>`);
-      scrollBottom();
-      await sleep(700);
-      if (checkAbort()) return;
-
-      // ── 2. 深度思考（默认收起，点击展开） ──
-      bubble.insertAdjacentHTML('beforeend', `
-        <div class="think-row"><span class="di">›</span><span>深度思考</span></div>
-        <div class="think-body">正在结合店雷达选品库与近期市场趋势拆解需求：平台类目 → 竞品密度 → 价格带 → 差异化卖点；优先筛选运费、上架时间透明可展示的优质货源。</div>`);
-      const thinkRow  = bubble.querySelector('.think-row');
-      const thinkBody = bubble.querySelector('.think-body');
-      thinkRow.addEventListener('click', () => {
-        const open = getComputedStyle(thinkBody).display !== 'none';
-        thinkBody.style.display = open ? 'none' : 'block';
-        thinkRow.querySelector('.di').style.transform = open ? '' : 'rotate(90deg)';
-      });
-      scrollBottom();
-      await sleep(900);
-      if (checkAbort()) return;
-
-      // ── 3. 执行 2 个步骤（默认展开，spinner 转动） ──
-      bubble.insertAdjacentHTML('beforeend', `
-        <div class="exec-row"><span class="di" style="transform:rotate(90deg)">›</span><span>执行</span><span class="cnt">2个步骤</span></div>
-        <div class="exec-body">
-          <div class="exec-step" data-step="1">
-            <span class="st-ic"><span class="spinner"></span></span>
-            <span>更新任务列表</span>
-            <span class="st-state">· 进行中</span>
-          </div>
-          <div class="exec-step" data-step="2">
-            <span class="st-ic"><span class="spinner"></span></span>
-            <span>执行工作流 <span class="wf-meta">· 1688-supply-chain-procurement-search</span></span>
-            <span class="st-state">· 进行中</span>
-          </div>
-        </div>`);
-      const execRow  = bubble.querySelector('.exec-row');
-      const execBody = bubble.querySelector('.exec-body');
-      execRow.addEventListener('click', () => {
-        const open = getComputedStyle(execBody).display !== 'none';
-        execBody.style.display = open ? 'none' : '';
-        execRow.querySelector('.di').style.transform = open ? '' : 'rotate(90deg)';
-      });
-      scrollBottom();
-
-      const step1 = bubble.querySelector('[data-step="1"]');
-      const step2 = bubble.querySelector('[data-step="2"]');
-      await sleep(1000);
-      if (checkAbort()) return;
-      step1.classList.add('done');
-      step1.querySelector('.st-ic').innerHTML = '<span class="ok">✓</span>';
-      step1.querySelector('.st-state').textContent = '· 已完成';
-      scrollBottom();
-
-      // ── 4. 状态行逐条浮现 ──
-      const statuses = [
-        ['📄', '正在准备为您找品...'],
-        ['⚙️', '正在识别商品和采购要求...'],
-        ['📄', '正在搜索商品，预计需要约10秒，请稍候...'],
-      ];
-      for (const [ic, tx] of statuses) {
-        await sleep(1100);
-        if (checkAbort()) return;
-        bubble.insertAdjacentHTML('beforeend',
-          `<div class="status-line"><span class="sl-ic">${ic}</span><span>${tx}</span></div>`);
-        scrollBottom();
       }
-
-      // ── 5. 正在思考中… ──
-      bubble.insertAdjacentHTML('beforeend',
-        `<div class="thinking-line">正在思考中<span class="tdots"><span></span><span></span><span></span></span></div>`);
-      scrollBottom();
-      await sleep(1800);
-      if (checkAbort()) return;
-
-      // ── 6. 收尾：步骤全部打勾，移除过渡元素，输出最终结果 ──
-      bubble.querySelector('.thinking-line').remove();
-      bubble.querySelectorAll('.status-line').forEach(el => el.remove());
-      step2.classList.add('done');
-      step2.querySelector('.st-ic').innerHTML = '<span class="ok">✓</span>';
-      step2.querySelector('.st-state').textContent = '· 已完成';
-      roleTime.textContent = '· 刚刚';
-
-      const cost = computeCost(text, attachCount, CURRENT_MODEL);
-      const suggestions = buildSuggestions(text, CURRENT_MODEL);
-      const suggestionHtml = suggestions.map(s =>
-        '<div class="ns-item" data-q="' + s.q.replace(/"/g, '&quot;') + '">' +
-          '<span class="ns-ic">' + s.icon + '</span>' +
-          '<span class="ns-text">' + s.text + '</span>' +
-          '<span class="ns-arrow">›</span>' +
-        '</div>'
-      ).join('');
-
-      bubble.insertAdjacentHTML('beforeend', `
-        <!-- 任务规划卡 -->
-        <div class="task-card">
-          <div class="task-head">
-            <span class="task-ic">⬢</span>
-            <span class="task-title">任务规划</span>
-            <span class="task-arrow">⌃</span>
-          </div>
-          <div class="task-body">
-            <div class="task-block-title">需求理解</div>
-            <div class="task-block-sub">在${req.platform}站点${text}</div>
-            <div class="task-block-title">${req.platform} ${req.category} 选品规划</div>
-            <ol class="task-block-list" style="list-style:none">
-              <li><span class="task-block-num">1</span>搜索${req.platform}${req.category} 20 款新上架商品</li>
-            </ol>
-            <ul class="task-block-list">
-              <li>查询${req.platform}站点${req.reqs.join('、')}等数据，筛选出 20 款有市场潜力的商品并总结。</li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- 任务执行卡 -->
-        <div class="task-card">
-          <div class="task-head">
-            <span class="task-ic">≡</span>
-            <span class="task-title">任务执行</span>
-            <span class="task-arrow">⌃</span>
-          </div>
-          <div class="task-body">
-            <div class="task-step done"><span class="node">✓</span><span class="step-name">搜索有机会商品</span></div>
-            <div class="product-list">
-              <div class="pl-title">商品列表</div>
-              <div class="pl-grid">
-                <div class="pl-card"><div class="pl-thumb">👗</div><div class="pl-name">${req.platform} 新品 Top1 · ${req.category}</div></div>
-                <div class="pl-card"><div class="pl-thumb">👗</div><div class="pl-name">${req.platform} 新品 Top2 · ${req.category}</div></div>
-                <div class="pl-card"><div class="pl-thumb">👗</div><div class="pl-name">${req.platform} 新品 Top3 · ${req.category}</div></div>
-                <div class="pl-card"><div class="pl-thumb">👗</div><div class="pl-name">${req.platform} 新品 Top4 · ${req.category}</div></div>
-                <div class="pl-card"><div class="pl-thumb">👗</div><div class="pl-name">${req.platform} 新品 Top5 · ${req.category}</div></div>
-                <div class="pl-footer">
-                  共 20 商品，<a href="#" class="detail-link" data-detail-trigger="products">查看详情 ›</a>
-                </div>
-              </div>
-            </div>
-            <div class="status-line-list">
-              <div class="status-line"><span class="sl-tick">✓</span><span>任务【${text}】执行完成</span></div>
-              <div class="status-line"><span class="sl-tick">✓</span><span>Perfect！即将撰写选品报告...</span></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 下一步建议 -->
-        <div class="next-suggest">
-          <div class="ns-head">
-            💡 你可能还想问
-            <span class="ai-tag">AI</span>
-          </div>
-          <div class="ns-list">
-            ${suggestionHtml}
-          </div>
-        </div>
-
-        <!-- 积分消耗条（放在每次对话最后） -->
-        <div class="cost-bar">
-          <div class="cb-coin">🪙</div>
-          <div class="cb-info">
-            <div class="cb-title">本次对话消耗</div>
-            <div class="cb-sub">已从账户余额扣除</div>
-          </div>
-          <div class="cb-total">
-            <div class="cb-num">-${cost.coins}</div>
-            <div class="cb-unit">积分</div>
-          </div>
-        </div>
-        <button class="regen-btn">↻ 重新生成</button>`);
-
-      // 任务卡折叠（每个 task-head 单独绑定，避免事件冲突）
-      ai.querySelectorAll('.task-head').forEach(h => {
-        h.addEventListener('click', e => e.currentTarget.parentElement.classList.toggle('collapsed'));
-      });
-
-      // 建议项和详情链接点击（用统一函数，避免重复绑定）
-      bindSuggestionClicks(ai);
-      bindDetailLinks(ai);
-      bindRegenerate(ai);
-
-      // 累加总消耗（顶部用户胶囊显示）
-      TOTAL_COINS = Math.max(0, TOTAL_COINS - cost.coins);
-      updateUserCoin();
-      if (walletModal.classList.contains('open')) {
-        syncWalletSummary();
-      }
-      addWalletLedger(`${req.platform} ${req.category}选品`, -cost.coins, 'minus');
-
-      scrollBottom();
-      finishRun();
     })();
   }
 
@@ -4235,10 +4191,19 @@
         body: JSON.stringify(body)
       };
       const r = await fetch(url, init);
-      if (!r.ok) throw new Error('流式请求失败 HTTP ' + r.status);
+      const ct = (r.headers.get('Content-Type') || '').toLowerCase();
       const conversationId = r.headers.get('X-AI-Conversation-Id');
       const requestId = r.headers.get('X-AI-Request-Id');
       if (callbacks.onHeaders) callbacks.onHeaders({ conversationId, requestId });
+      // 流式失败兜底：服务端把异常包成 JSON 返回（非 text/event-stream），需解析为错误抛出
+      if (ct.indexOf('text/event-stream') === -1) {
+        const text = await r.text();
+        let payload;
+        try { payload = JSON.parse(text); } catch { payload = { msg: text.slice(0, 200) }; }
+        const msg = (payload && (payload.msg || payload.message || (payload.result && payload.result.msg))) || ('流式请求失败 HTTP ' + r.status);
+        if (callbacks.onError) callbacks.onError(payload);
+        throw new Error(msg);
+      }
       const reader = r.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let buf = '';
