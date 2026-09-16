@@ -1966,8 +1966,8 @@
     </div>
 
     <div class="right-body">
-      <h2 class="preview-h1">1688 商品选品结果</h2>
-      <div class="preview-meta">
+      <h2 class="preview-h1" id="previewTitle">1688 商品选品结果</h2>
+      <div class="preview-meta" id="previewMeta">
         执行时间 · 2026-09-11 17:14 · 共 <strong>20</strong> 条 · 当前展示前 3 条
       </div>
 
@@ -1986,7 +1986,7 @@
           <span class="ic export-btn" title="导出 Excel">⤓</span>
         </div>
 
-        <table class="preview-table">
+        <table class="preview-table" id="previewTable">
           <thead>
             <tr>
               <th>序号</th>
@@ -2595,67 +2595,145 @@
       if (!target) return;
       const title = document.querySelector('.chat-head .title');
       if (title) title.textContent = target.title;
+
+      // 如果这条会话带真实 convId（来自 DLD 真实会话列表），拉真实消息历史
+      if (target.convId && typeof DLD !== 'undefined') {
+        loadRealMessages(target);
+        return;
+      }
+      renderConvMockMessages(target);
+    }
+
+    /* 把 DLD 返回的消息历史渲染到中部 stream */
+    async function loadRealMessages(target) {
       const stream = document.getElementById('stream');
-      if (stream) {
-        stream.classList.remove('conv-fade-in'); void stream.offsetWidth;
-        stream.innerHTML = `
-          <div class="msg user"><div class="avatar">我</div><div class="msg-body"><div class="msg-role">${CURRENT_ACCOUNT.name} <span class="time">· ${target.time}</span></div><div class="msg-bubble"><p>${target.snippet}</p></div></div></div>
-          <div class="msg ai"><div class="avatar">AI</div><div class="msg-body"><div class="msg-role">${target.agent} <span class="time">· 已完成</span></div>
-            <div class="task-card">
-              <div class="task-head"><span class="task-ic">⬢</span><span class="task-title">任务规划</span><span class="task-arrow">⌃</span></div>
-              <div class="task-body">
-                <div class="task-block-title">需求理解</div>
-                <div class="task-block-sub">${target.snippet || '历史对话结果已生成'}</div>
-                <div class="task-block-title">${target.title}</div>
-                <ul class="task-block-list">
-                  <li>查询近 30 天销量、价格、评分、销量趋势等数据，筛选 20 款有市场潜力的商品并总结。</li>
-                </ul>
-              </div>
-            </div>
-            <div class="task-card">
-              <div class="task-head"><span class="task-ic">≡</span><span class="task-title">任务执行</span><span class="task-arrow">⌃</span></div>
-              <div class="task-body">
-                <div class="task-step done"><span class="node">✓</span><span class="step-name">搜索有机会商品</span></div>
-                <div class="product-list">
-                  <div class="pl-title">商品列表</div>
-                  <div class="pl-grid">
-                    <div class="pl-card"><div class="pl-thumb">📦</div><div class="pl-name">${target.snippet || '历史结果'}</div></div>
-                    <div class="pl-card"><div class="pl-thumb">📦</div><div class="pl-name">命中商品 · Top1 ${Math.floor(2000 + Math.random() * 3000)} 件</div></div>
-                    <div class="pl-card"><div class="pl-thumb">📦</div><div class="pl-name">命中商品 · Top2 ${Math.floor(1000 + Math.random() * 2000)} 件</div></div>
-                    <div class="pl-card"><div class="pl-thumb">📦</div><div class="pl-name">命中商品 · Top3 ${Math.floor(800 + Math.random() * 1500)} 件</div></div>
-                    <div class="pl-card"><div class="pl-thumb">📦</div><div class="pl-name">命中商品 · Top4 ${Math.floor(500 + Math.random() * 1200)} 件</div></div>
-                    <div class="pl-footer">
-                      共 20 商品，<a href="#" class="detail-link" data-detail-trigger="products">查看详情 ›</a>
-                    </div>
-                  </div>
-                </div>
-                <div class="status-line-list">
-                  <div class="status-line"><span class="sl-tick">✓</span><span>任务【${target.title}】执行完成</span></div>
-                </div>
-              </div>
-            </div>
-            <div class="msg-bubble" style="background:transparent;padding:0;margin-top:8px"><button class="regen-btn">↻ 重新生成</button></div>
-            <div class="next-suggest">
-              <div class="ns-head">💡 你可能还想问 <span class="ai-tag">AI</span></div>
-              <div class="ns-list">
-                <div class="ns-item" data-q="继续查 30 天销量 TOP100"><span class="ns-ic">🔍</span><span class="ns-text">继续查 30 天销量 TOP100</span><span class="ns-arrow">›</span></div>
-                <div class="ns-item" data-q="对比 OZON 同款货源价格"><span class="ns-ic">🌍</span><span class="ns-text">对比 OZON 同款货源价格</span><span class="ns-arrow">›</span></div>
-                <div class="ns-item" data-q="把这 20 款加入我的监控"><span class="ns-ic">📦</span><span class="ns-text">把这 20 款加入我的监控</span><span class="ns-arrow">›</span></div>
-              </div>
-            </div>
-            <div class="cost-bar">
-              <div class="cb-info"><div class="cb-title">本次对话消耗</div></div>
-              <div class="cb-total"><div class="cb-num">-${Math.floor(8 + Math.random() * 18)}</div><div class="cb-unit">积分</div></div>
-            </div>
-          </div></div>`;
+      if (!stream) return;
+      stream.classList.remove('conv-fade-in'); void stream.offsetWidth;
+      stream.innerHTML = '<div class="loading-state" style="padding:40px;text-align:center;color:#909399">消息加载中…</div>';
+      try {
+        const res = await DLD.conversationMessages(target.convId, null, 50);
+        const messages = extractMessages(res);
+        if (!messages.length) {
+          stream.innerHTML = '<div class="empty-state"><div class="empty-inner"><div class="empty-title">该会话暂无消息</div><div class="empty-desc">会话 ' + target.convId + ' 当前没有可加载的历史消息。</div></div></div>';
+          return;
+        }
+        stream.innerHTML = messages.map(renderMessageBubble).join('');
         stream.classList.add('conv-fade-in');
-        bindRegenerate(stream);
-        bindDetailLinks(stream);
         bindSuggestionClicks(stream);
         stream.querySelectorAll('.task-head').forEach(h => {
           h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed'));
         });
+        stream.scrollTop = stream.scrollHeight;
+      } catch (e) {
+        console.warn('[DLD] conversationMessages 失败：', e.message);
+        stream.innerHTML = '<div class="empty-state"><div class="empty-inner"><div class="empty-title">消息加载失败</div><div class="empty-desc">' + e.message + '</div></div></div>';
       }
+    }
+
+    /* 解析 DLD / Dify 返回的 JSON 结构为统一消息数组 */
+    function extractMessages(res) {
+      // 兼容两种结构：res.result.data / res.result.messages / res.result 直接是数组
+      const r = (res && res.result) || {};
+      let list = [];
+      if (Array.isArray(r.data)) list = r.data;
+      else if (Array.isArray(r.messages)) list = r.messages;
+      else if (Array.isArray(r)) list = r;
+      else if (Array.isArray(r.data && r.data.data)) list = r.data.data;  // Dify 嵌套
+      return list.map(normalizeMessage);
+    }
+    function normalizeMessage(m) {
+      // Dify 风格：{ role, content, id, created_at } → 兼容
+      const role = (m.role || m.from || (m.from_account_id ? 'user' : 'assistant')).toLowerCase();
+      let content = m.content || m.text || m.message || '';
+      if (typeof content !== 'string') {
+        // Dify content 多为数组 [{type:'text', text:'...'}]
+        content = (content && Array.isArray(content))
+          ? content.filter(c => c.type === 'text').map(c => c.text).join('\n')
+          : JSON.stringify(content);
+      }
+      return {
+        id: m.id || m.message_id || '',
+        role: role.includes('user') || role.includes('human') ? 'user' : 'assistant',
+        content,
+        createdAt: m.created_at || m.createdAt || m.timestamp || null
+      };
+    }
+    function renderMessageBubble(m) {
+      const time = m.createdAt ? new Date(m.createdAt).toLocaleString('zh-CN', { hour12: false }) : '';
+      if (m.role === 'user') {
+        return `<div class="msg user"><div class="avatar">我</div><div class="msg-body"><div class="msg-role">我 <span class="time">${time}</span></div><div class="msg-bubble"><p>${escapeHtml(m.content)}</p></div></div></div>`;
+      }
+      // AI 消息：如果是 markdown-ish 文本，保留换行；否则原样
+      const html = escapeHtml(m.content).replace(/\n/g, '<br>');
+      return `<div class="msg ai"><div class="avatar">AI</div><div class="msg-body"><div class="msg-role">${CURRENT_ACCOUNT.agent || '店雷达 AI'} <span class="time">${time} · 已完成</span></div><div class="msg-bubble"><p>${html}</p></div></div></div>`;
+    }
+    function escapeHtml(s) {
+      // 使用外层全局 escapeHtml；此处保留空实现以兼容旧引用
+      return window.escapeHtml ? window.escapeHtml(s) : String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    }
+
+    /* 渲染无真实 convId 的会话（本地 mock）—— 保留原 selectConvItem 逻辑 */
+    function renderConvMockMessages(target) {
+      const stream = document.getElementById('stream');
+      if (!stream) return;
+      stream.classList.remove('conv-fade-in'); void stream.offsetWidth;
+      stream.innerHTML = `
+        <div class="msg user"><div class="avatar">我</div><div class="msg-body"><div class="msg-role">${CURRENT_ACCOUNT.name} <span class="time">· ${target.time}</span></div><div class="msg-bubble"><p>${target.snippet}</p></div></div></div>
+        <div class="msg ai"><div class="avatar">AI</div><div class="msg-body"><div class="msg-role">${target.agent} <span class="time">· 已完成</span></div>
+          <div class="task-card">
+            <div class="task-head"><span class="task-ic">⬢</span><span class="task-title">任务规划</span><span class="task-arrow">⌃</span></div>
+            <div class="task-body">
+              <div class="task-block-title">需求理解</div>
+              <div class="task-block-sub">${target.snippet || '历史对话结果已生成'}</div>
+              <div class="task-block-title">${target.title}</div>
+              <ul class="task-block-list">
+                <li>查询近 30 天销量、价格、评分、销量趋势等数据，筛选 20 款有市场潜力的商品并总结。</li>
+              </ul>
+            </div>
+          </div>
+          <div class="task-card">
+            <div class="task-head"><span class="task-ic">≡</span><span class="task-title">任务执行</span><span class="task-arrow">⌃</span></div>
+            <div class="task-body">
+              <div class="task-step done"><span class="node">✓</span><span class="step-name">搜索有机会商品</span></div>
+              <div class="product-list">
+                <div class="pl-title">商品列表</div>
+                <div class="pl-grid">
+                  <div class="pl-card"><div class="pl-thumb">📦</div><div class="pl-name">${target.snippet || '历史结果'}</div></div>
+                  <div class="pl-card"><div class="pl-thumb">📦</div><div class="pl-name">命中商品 · Top1 ${Math.floor(2000 + Math.random() * 3000)} 件</div></div>
+                  <div class="pl-card"><div class="pl-thumb">📦</div><div class="pl-name">命中商品 · Top2 ${Math.floor(1000 + Math.random() * 2000)} 件</div></div>
+                  <div class="pl-card"><div class="pl-thumb">📦</div><div class="pl-name">命中商品 · Top3 ${Math.floor(800 + Math.random() * 1500)} 件</div></div>
+                  <div class="pl-card"><div class="pl-thumb">📦</div><div class="pl-name">命中商品 · Top4 ${Math.floor(500 + Math.random() * 1200)} 件</div></div>
+                  <div class="pl-footer">
+                    共 20 商品，<a href="#" class="detail-link" data-detail-trigger="products">查看详情 ›</a>
+                  </div>
+                </div>
+              </div>
+              <div class="status-line-list">
+                <div class="status-line"><span class="sl-tick">✓</span><span>任务【${target.title}】执行完成</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="msg-bubble" style="background:transparent;padding:0;margin-top:8px"><button class="regen-btn">↻ 重新生成</button></div>
+          <div class="next-suggest">
+            <div class="ns-head">💡 你可能还想问 <span class="ai-tag">AI</span></div>
+            <div class="ns-list">
+              <div class="ns-item" data-q="继续查 30 天销量 TOP100"><span class="ns-ic">🔍</span><span class="ns-text">继续查 30 天销量 TOP100</span><span class="ns-arrow">›</span></div>
+              <div class="ns-item" data-q="对比 OZON 同款货源价格"><span class="ns-ic">🌍</span><span class="ns-text">对比 OZON 同款货源价格</span><span class="ns-arrow">›</span></div>
+              <div class="ns-item" data-q="把这 20 款加入我的监控"><span class="ns-ic">📦</span><span class="ns-text">把这 20 款加入我的监控</span><span class="ns-arrow">›</span></div>
+            </div>
+          </div>
+          <div class="cost-bar">
+            <div class="cb-info"><div class="cb-title">本次对话消耗</div></div>
+            <div class="cb-total"><div class="cb-num">-${Math.floor(8 + Math.random() * 18)}</div><div class="cb-unit">积分</div></div>
+          </div>
+        </div></div>`;
+      stream.classList.add('conv-fade-in');
+      bindRegenerate(stream);
+      bindDetailLinks(stream);
+      bindSuggestionClicks(stream);
+      stream.querySelectorAll('.task-head').forEach(h => {
+        h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed'));
+      });
     }
     function showEmptyConversation() {
       const stream = document.getElementById('stream');
@@ -2687,6 +2765,15 @@
     rerenderConvList();
     const firstItem = convList.querySelector('.conv-item');
     if (firstItem) selectConvItem(firstItem);
+
+    // 监听 DLD 真实会话加载完成事件 → 自动刷新左栏
+    document.addEventListener('dld:conversations-updated', () => {
+      const list = (SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] || []);
+      if (list.length === 0) return;
+      rerenderConvList();
+      const fi = convList.querySelector('.conv-item');
+      if (fi) selectConvItem(fi);
+    });
   }
 
   /* ============ 子账号互看 / 主账号控制 ============ */
@@ -4094,6 +4181,337 @@
   input.addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
   });
+
+  /* =====================================================
+   * 店雷达 API 客户端 + 业务接入
+   * baseURL:  http://192.168.1.14/dld
+   * 认证:     X-AI-Access-Token: 123456  (超级管理员)
+   * 约定:     所有接口返回 { code, msg, result }
+   * ===================================================== */
+  const DLD = (() => {
+    const BASE_URL = 'http://192.168.1.14/dld';
+    const HEADERS = {
+      'X-AI-Access-Token': '123456',
+      'Accept': 'application/json'
+    };
+
+    // ===== 通用 fetch 封装（JSON） =====
+    async function request(method, path, opts = {}) {
+      const url = BASE_URL + path;
+      const init = {
+        method,
+        headers: { ...HEADERS, ...(opts.headers || {}) },
+        credentials: 'omit',
+        mode: 'cors'
+      };
+      if (opts.body !== undefined) {
+        init.headers['Content-Type'] = 'application/json;charset=UTF-8';
+        init.body = typeof opts.body === 'string' ? opts.body : JSON.stringify(opts.body);
+      }
+      const r = await fetch(url, init);
+      // 401/403 直接抛错（token 失效）
+      if (r.status === 401 || r.status === 403) {
+        throw new Error('Access-Token 鉴权失败（HTTP ' + r.status + '）');
+      }
+      const text = await r.text();
+      let data;
+      try { data = JSON.parse(text); } catch (e) {
+        throw new Error('接口返回非 JSON：HTTP ' + r.status + '，前 80 字符 = ' + text.slice(0, 80));
+      }
+      if (data && typeof data === 'object' && 'code' in data && data.code !== 0 && data.code !== 200) {
+        throw new Error(data.msg || ('业务错误 code=' + data.code));
+      }
+      return data;
+    }
+
+    // ===== SSE 流式（发起问答专用） =====
+    async function stream(path, body, callbacks = {}) {
+      const url = BASE_URL + path;
+      const init = {
+        method: 'POST',
+        headers: { ...HEADERS, 'Content-Type': 'application/json;charset=UTF-8' },
+        credentials: 'omit',
+        mode: 'cors',
+        body: JSON.stringify(body)
+      };
+      const r = await fetch(url, init);
+      if (!r.ok) throw new Error('流式请求失败 HTTP ' + r.status);
+      const conversationId = r.headers.get('X-AI-Conversation-Id');
+      const requestId = r.headers.get('X-AI-Request-Id');
+      if (callbacks.onHeaders) callbacks.onHeaders({ conversationId, requestId });
+      const reader = r.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buf = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        // SSE: 以空行分隔事件，事件内 \n 分隔行
+        let idx;
+        while ((idx = buf.indexOf('\n\n')) !== -1) {
+          const evt = buf.slice(0, idx);
+          buf = buf.slice(idx + 2);
+          const lines = evt.split('\n');
+          let eventName = 'message', dataStr = '';
+          for (const line of lines) {
+            if (line.startsWith('event:')) eventName = line.slice(6).trim();
+            else if (line.startsWith('data:')) dataStr += line.slice(5).trim();
+          }
+          if (!dataStr) continue;
+          let payload;
+          try { payload = JSON.parse(dataStr); } catch { payload = dataStr; }
+          if (callbacks.onEvent) callbacks.onEvent(eventName, payload);
+          if (eventName === 'done') { if (callbacks.onDone) callbacks.onDone(payload); return; }
+          if (eventName === 'error') { if (callbacks.onError) callbacks.onError(payload); throw new Error('SSE error'); }
+        }
+      }
+      if (callbacks.onDone) callbacks.onDone(null);
+    }
+
+    // ===== 业务接口 =====
+    return {
+      // 顶部账号胶囊
+      getMemberDetail: () => request('POST', '/api/members/getMemberDetail'),
+      // 顶部积分（type=0=选品库，1=导出，2=监控店铺... 视后端定义）
+      getMemberLimit: (limitType, useLimit, remarks) =>
+        request('POST', '/api/members/getMemberLimit', { body: { limitType, useLimit, remarks } }),
+      // 套餐信息
+      getMemberVerObj: () => request('GET', '/api/members/getMemberVerObj'),
+      // 子账号列表（账号下拉）
+      slaveList: () => request('POST', '/api/members/slaveList'),
+      // Chatflow 列表（智能体切换）
+      chatApps: () => request('GET', '/api/ai/chat/apps'),
+      // 会话列表
+      conversations: (appCode, cursor, limit = 20) => {
+        const qs = new URLSearchParams();
+        if (appCode) qs.set('appCode', appCode);
+        if (cursor) qs.set('cursor', cursor);
+        qs.set('limit', String(limit));
+        return request('GET', '/api/ai/chat/conversations?' + qs.toString());
+      },
+      // 消息历史
+      conversationMessages: (id, firstId, limit = 20) => {
+        const qs = new URLSearchParams();
+        if (firstId) qs.set('firstId', firstId);
+        qs.set('limit', String(limit));
+        return request('GET', '/api/ai/chat/conversations/' + encodeURIComponent(id) + '/messages?' + qs.toString());
+      },
+      // 改会话标题
+      renameConversation: (id, title) =>
+        request('PUT', '/api/ai/chat/conversations/' + encodeURIComponent(id), { body: { title } }),
+      // 删会话
+      deleteConversation: (id) =>
+        request('DELETE', '/api/ai/chat/conversations/' + encodeURIComponent(id)),
+      // 推荐追问
+      messageSuggestions: (messageId) =>
+        request('GET', '/api/ai/chat/messages/' + encodeURIComponent(messageId) + '/suggestions'),
+      // 发起问答（流式）
+      sendMessageStream: (body, callbacks) =>
+        stream('/api/ai/chat/messages/stream', body, callbacks),
+      // 停止生成
+      stopRun: (requestId) =>
+        request('POST', '/api/ai/chat/runs/' + encodeURIComponent(requestId) + '/stop'),
+      // 选品库列表（带分页与筛选）
+      offerSearchList: (params) =>
+        request('POST', '/api/offerSearch/queryList', { body: params }),
+      // 首页1688选品
+      offerSearchHome: (params) =>
+        request('POST', '/api/offerSearch/queryHomeOfferList', { body: params }),
+      // 选品推荐
+      offerSearchRecommend: (params) =>
+        request('POST', '/api/offerSearch/recommend', { body: params })
+    };
+  })();
+
+  /* =====================================================
+   * 数据接入状态标记：
+   * - 页面打开后立即尝试调 /api/members/getMemberDetail
+   * - 成功：用真实数据渲染顶部胶囊/积分/套餐
+   * - 失败：保留 mock 数据 + 控制台错误提示，不阻塞 UI
+   * ===================================================== */
+  (async function bootstrapDld() {
+    // 1. 顶部账号信息
+    try {
+      const res = await DLD.getMemberDetail();
+      const d = res.result || {};
+      if (d.loginAccount) {
+        const acName = document.getElementById('accountName');
+        const acAvatar = document.getElementById('accountAvatar');
+        const acRole = document.getElementById('accountRole');
+        if (acName) acName.textContent = (d.loginAccount || '主账号') + (d.mobilePhone ? '·' + d.mobilePhone.replace(/^(\d{3})\d{4}(\d{4})$/, '$1****$2') : '');
+        if (acAvatar) acAvatar.textContent = '🐯';
+        if (acRole) acRole.textContent = d.isSlave ? '子' : '主';
+      }
+    } catch (e) {
+      console.warn('[DLD] getMemberDetail 失败 → 保留 mock：', e.message);
+    }
+
+    // 2. 积分余额（limitType 含义待后端确认，0 作为常见默认值）
+    try {
+      const res = await DLD.getMemberLimit(0);
+      const d = res.result || {};
+      const coin = document.getElementById('coinText');
+      if (coin && d.limitNum != null) {
+        const used = d.usedNum || 0;
+        coin.textContent = String(Math.max(0, d.limitNum - used));
+        coin.title = (d.packageName || '当前套餐') + '：剩余 ' + (d.limitNum - used) + ' / ' + d.limitNum;
+      }
+    } catch (e) {
+      console.warn('[DLD] getMemberLimit 失败 → 保留 mock：', e.message);
+    }
+
+    // 3. 套餐信息（用于积分中心套餐列表）
+    try {
+      const res = await DLD.getMemberVerObj();
+      const d = res.result || {};
+      window.__dldMember = d;  // 给 openWallet 使用
+    } catch (e) {
+      console.warn('[DLD] getMemberVerObj 失败：', e.message);
+    }
+
+    // 4. 智能体列表（用于顶部可选 Chatflow）
+    try {
+      const res = await DLD.chatApps();
+      const list = res.result || [];
+      if (Array.isArray(list) && list.length) {
+        window.__dldApps = list;
+        const first = list[0];
+        const chatTitle = document.querySelector('.chat-head .title');
+        if (chatTitle && first.name) chatTitle.textContent = '与 ' + first.name + ' 对话';
+      }
+    } catch (e) {
+      console.warn('[DLD] chatApps 失败：', e.message);
+    }
+
+    // 5. 会话列表
+    try {
+      const res = await DLD.conversations(null, null, 20);
+      const list = (res.result && res.result.list) || [];
+      window.__dldConversations = list;
+      console.info('[DLD] 会话列表共', list.length, '条；首条：', list[0]);
+      // 把真实会话灌入 SESSIONS_BY_ACCOUNT 的主账号桶，并通知左栏重渲染
+      if (typeof SESSIONS_BY_ACCOUNT !== 'undefined' && list.length) {
+        const mapped = list.map(c => ({
+          id: c.conversationId,
+          convId: c.conversationId,
+          appCode: c.appCode,
+          title: c.title || '(无标题)',
+          tag: (c.appCode || 'chat').slice(0, 8),
+          time: c.lastMessageAt ? formatRelativeTime(c.lastMessageAt) : '刚刚',
+          timestamp: c.lastMessageAt ? new Date(c.lastMessageAt).getTime() : Date.now()
+        }));
+        SESSIONS_BY_ACCOUNT.main = mapped;
+        document.dispatchEvent(new CustomEvent('dld:conversations-updated', { detail: { list: mapped } }));
+      }
+    } catch (e) {
+      console.warn('[DLD] conversations 失败：', e.message);
+    }
+
+    // 6. 默认拉一次首页1688选品 → 渲染右侧商品表格
+    try {
+      const res = await DLD.offerSearchHome({
+        pageIndex: 1, pageSize: 20,
+        sortField: 'bookedCount', sortType: 'desc',
+        query: { sourceType: 1, cycle: 30 }
+      });
+      const list = (res.result && res.result.list) || [];
+      window.__dldOffers = list;
+      if (typeof renderOffers === 'function') renderOffers(list, res.result || {});
+      console.info('[DLD] 首页选品共', list.length, '款；样本字段：', Object.keys(list[0] || {}).slice(0, 10));
+    } catch (e) {
+      console.warn('[DLD] offerSearchHome 失败：', e.message);
+    }
+  })();
+
+  // ISO 时间 → 友好相对时间
+  function formatRelativeTime(iso) {
+    const t = new Date(iso).getTime();
+    if (!t) return '';
+    const diff = (Date.now() - t) / 1000;
+    if (diff < 60) return '刚刚';
+    if (diff < 3600) return Math.floor(diff / 60) + ' 分钟前';
+    if (diff < 86400) return Math.floor(diff / 3600) + ' 小时前';
+    if (diff < 7 * 86400) return Math.floor(diff / 86400) + ' 天前';
+    return new Date(iso).toISOString().slice(0, 10);
+  }
+
+  /* =====================================================
+   * 右栏商品表格渲染（DLD 真实数据）
+   * - list: OfferSearchResp[]（字段名以 Apifox 文档为准：标题、价格、订单数等）
+   * - meta: { totalCount, pageIndex, pageSize }
+   * ===================================================== */
+  // 全局 HTML 转义（renderOffers / renderMessageBubble 共用）
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  }
+  function renderOffers(list, meta) {
+    const table = document.getElementById('previewTable');
+    const titleEl = document.getElementById('previewTitle');
+    const metaEl = document.getElementById('previewMeta');
+    if (!table) return;
+    const total = (meta && meta.totalCount) || list.length || 0;
+    if (titleEl) titleEl.textContent = '1688 商品选品结果（共 ' + total + ' 款）';
+    if (metaEl) {
+      const now = new Date().toLocaleString('zh-CN', { hour12: false });
+      metaEl.innerHTML = '执行时间 · ' + now + ' · 共 <strong>' + total + '</strong> 条 · 当前展示前 ' + list.length + ' 条';
+    }
+    if (!list.length) {
+      table.querySelector('tbody').innerHTML = '<tr><td colspan="13" style="text-align:center;padding:40px;color:#909399">暂无商品数据</td></tr>';
+      return;
+    }
+    table.querySelector('tbody').innerHTML = list.map((o, i) => {
+      const title = escapeHtml(o.title || o.offerTitle || o.name || ('商品 #' + (o.offerId || o.id || i + 1)));
+      const offerId = o.offerId || o.id || '';
+      const price = (o.price != null) ? ('¥' + Number(o.price).toFixed(2)) : '¥--';
+      const startQty = o.startQuantity || o.beginStartQuantity || 1;
+      const priceRange = (o.priceLow != null && o.priceHigh != null)
+        ? ('≥' + startQty + '件 ¥' + Number(o.priceLow).toFixed(2))
+        : (o.priceRange || '—');
+      const created = (o.offerCreateTime || o.beginOfferCreateTime || '').toString().slice(0, 16).replace('T', ' ');
+      const booked30 = o.bookedCount30d ?? o.bookedCount ?? o.recentOrders ?? 0;
+      const saleCount = o.saleCount30d ?? o.saleCount ?? 0;
+      const saleVol = (o.saleVolume30d != null) ? ('¥' + Number(o.saleVolume30d).toFixed(2) + '万+') : (o.saleVolume || '—');
+      const total = o.totalBookedCount ?? o.totalOrders ?? 0;
+      const totalCount = o.totalSaleCount ?? 0;
+      const repurchase = (o.repurchaseRate != null) ? (Number(o.repurchaseRate).toFixed(1) + '%') : (o.repurchase || '—');
+      const consign = (o.consignPrice != null) ? ('¥' + Number(o.consignPrice).toFixed(2)) : (o.consignPrice || '—');
+      const thumb = o.imageUrl || o.picUrl || o.image || '';
+      const emoji = title.match(/[👟👜👗👕🎒📱💄💍🧸🪑🍵🪞⌚💎🛍🎩🥻]/);
+      const thumbHtml = thumb
+        ? '<img src="' + escapeHtml(thumb) + '" loading="lazy" onerror="this.outerHTML=\'<div class=img-cell>📦</div>\'">'
+        : '<div class="img-cell">' + (emoji ? emoji[0] : '📦') + '</div>';
+      return `<tr class="product-main" data-offer-id="${escapeHtml(offerId)}" data-conv-id="${escapeHtml(o.convId || '')}">
+        <td>${i + 1}</td>
+        <td><div class="product-info">${thumbHtml}<div class="product-title">${title}<br><span class="mini-tag">1688</span>${o.isFactory ? '<span class="mini-tag green">工厂</span>' : ''}${o.isPower ? '<span class="mini-tag blue">实力商家</span>' : ''}</div></div></td>
+        <td>${created || '—'}</td>
+        <td class="price">${price}</td>
+        <td>${priceRange}</td>
+        <td>${booked30}</td>
+        <td>${saleCount}</td>
+        <td>${saleVol}</td>
+        <td>${renderSpark(o.salesTrend || o.bookedTrend7d || [])}</td>
+        <td>${total}</td>
+        <td>${totalCount}</td>
+        <td class="ratio-up">${repurchase}</td>
+        <td>${consign}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  /* 简单 7 日销售趋势 sparkline（无数据给占位） */
+  function renderSpark(arr) {
+    if (!Array.isArray(arr) || arr.length < 2) return '<svg class="trend" viewBox="0 0 76 30"><path class="axis" d="M0 27H76"/><path d="M0 27 L10 20 L20 22 L30 15 L40 18 L50 12 L60 16 L70 10 L76 14" stroke="#00C84B" fill="none"/></svg>';
+    const max = Math.max.apply(null, arr), min = Math.min.apply(null, arr);
+    const range = (max - min) || 1;
+    const w = 76, h = 30;
+    const step = w / (arr.length - 1 || 1);
+    const pts = arr.map((v, i) => {
+      const x = (i * step).toFixed(2);
+      const y = (h - 2 - ((v - min) / range) * (h - 4)).toFixed(2);
+      return (i === 0 ? 'M' : 'L') + x + ' ' + y;
+    }).join(' ');
+    return '<svg class="trend" viewBox="0 0 ' + w + ' ' + h + '"><path class="axis" d="M0 ' + (h - 3) + 'H' + w + '"/><path d="' + pts + '" stroke="#00C84B" fill="none" stroke-width="1.2"/></svg>';
+  }
 </script>
 </body>
 </html>
