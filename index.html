@@ -7,15 +7,11 @@
 <link rel="apple-touch-icon" href="favicon.png">
 <meta name="theme-color" content="#00C84B">
 <style>
-  /* 默认按 16:9 比例渲染三栏（左 16% / 中 flex-1 / 右 39%）—— 用 !important 压住后续固定宽度规则 */
+  /* trae 风格三栏比例：左 15% / 中 flex-1 / 右 40% —— 用 !important 压住后续固定宽度规则 */
   @media (min-width: 1280px) {
     .work { max-width: 100vw !important; }
-    .col-left  { width: 16vw !important; min-width: 200px; }
-    .col-right { width: 39vw !important; min-width: 380px; max-width: 560px; }
-  }
-  @media (min-width: 1600px) {
-    .col-left  { width: 17vw !important; }
-    .col-right { width: 41vw !important; }
+    .col-left  { width: 15vw !important; min-width: 200px; }
+    .col-right { width: 40vw !important; min-width: 380px; max-width: 640px; }
   }
 </style>
 <style>
@@ -57,7 +53,7 @@
   button { font-family: inherit; }
 
   /* ==================== 三栏 ==================== */
-  /* 默认按 16:9 比例（窗口≥1280 时）渲染三栏：左 16% / 中 45% / 右 39% */
+  /* trae 风格三栏（窗口≥1280 时）：左 15% / 中 45% / 右 40%（比例规则见 <head> media query） */
   .work { display: flex; height: 100vh; min-width: 1100px; }
 
   @media (max-width: 1280px) {
