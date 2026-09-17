@@ -7,11 +7,11 @@
 <link rel="apple-touch-icon" href="favicon.png">
 <meta name="theme-color" content="#00C84B">
 <style>
-  /* trae 风格三栏比例：左 15% / 中 flex-1 / 右 40% —— 用 !important 压住后续固定宽度规则 */
+  /* trae 风格三栏比例：左 15% / 中 flex-1 / 右 40%（默认宽度；折叠/悬浮状态由后文 collapsed 规则覆盖） */
   @media (min-width: 1280px) {
-    .work { max-width: 100vw !important; }
-    .col-left  { width: 15vw !important; min-width: 200px; }
-    .col-right { width: 40vw !important; min-width: 380px; max-width: 640px; }
+    .work { max-width: 100vw; }
+    .work .col-left  { width: 15vw; min-width: 200px; }
+    .work .col-right { width: 40vw; min-width: 380px; max-width: 640px; }
   }
 </style>
 <style>
@@ -72,10 +72,67 @@
     border-right: 1px solid var(--border);
     display: flex; flex-direction: column;
     flex-shrink: 0;
-    transition: width .25s ease;
+    transition: width .22s ease, border-color .22s ease;
     position: relative;
+    overflow: visible;
   }
-  .col-left.collapsed { width: 0; overflow: hidden; border-right: 0; }
+  .col-left.collapsed {
+    width: 28px !important;
+    min-width: 0 !important;
+    border-right-color: var(--border-light);
+    background: transparent;
+    z-index: 5;
+  }
+  .col-left.collapsed.peek {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 240px !important;
+    min-width: 0 !important;
+    background: var(--card);
+    border-right-color: var(--border);
+    box-shadow: 8px 0 24px rgba(31,35,41,.12);
+    z-index: 20;
+  }
+  .col-left.collapsed > *:not(.col-left-toggle) {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .14s ease, visibility 0s linear .14s;
+  }
+  .col-left.collapsed.peek > *:not(.col-left-toggle) {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity .16s ease .04s, visibility 0s linear;
+  }
+  .col-left.collapsed .col-left-toggle {
+    right: 0;
+    top: 50%;
+    width: 28px;
+    height: 64px;
+    transform: translateY(-50%);
+    border: 0;
+    border-radius: 0 4px 4px 0;
+    box-shadow: 1px 0 4px rgba(31,35,41,.08);
+    background: var(--bg);
+    color: var(--brand-dark);
+    flex-direction: column;
+    gap: 4px;
+    font-size: 14px;
+  }
+  .col-left.collapsed.peek .col-left-toggle {
+    right: 0;
+    background: var(--card);
+    box-shadow: none;
+  }
+  .col-left.collapsed .col-left-toggle::after {
+    content: '对话';
+    font-size: 10px;
+    writing-mode: vertical-rl;
+    color: var(--text-muted);
+  }
   .col-left-resizer {
     width: 8px;
     margin: 0 -4px;
@@ -118,9 +175,8 @@
   }
   .col-left-toggle:hover { color: var(--brand); border-color: var(--brand); }
   .col-left.collapsed ~ .col-left-resizer { display: none; }
-  .col-left-expand { display: none; position: fixed; left: 0; top: 12px; width: 24px; height: 28px; border: 1px solid var(--border); background: #fff; border-radius: 0 4px 4px 0; color: var(--text-muted); cursor: pointer; z-index: 6; box-shadow: var(--shadow-sm); align-items: center; justify-content: center; font-size: 12px; }
-  .col-left-expand:hover { color: var(--brand); border-color: var(--brand); }
-  .col-left.collapsed ~ .col-left-expand { display: flex; }
+  .col-left.collapsed.peek ~ .col-left-resizer { display: block; }
+  .col-left-expand { display: none; }
   .col-resizer { display: none; }
   .col-mid-resizer, .col-right-resizer {
     width: 8px;
@@ -163,14 +219,6 @@
     display: flex; align-items: center; justify-content: center; gap: 4px;
   }
   .new-btn:hover { background: var(--brand-dark); }
-  .ic-btn {
-    width: 34px; height: 34px;
-    border: 1px solid var(--border); background: #fff;
-    border-radius: var(--r); cursor: pointer;
-    color: var(--text-muted);
-    display: flex; align-items: center; justify-content: center;
-  }
-  .ic-btn:hover { color: var(--brand); border-color: var(--brand); }
   /* 左侧搜索框 */
   .left-search {
     padding: 10px 12px;
@@ -385,6 +433,22 @@
     min-width: 0;
   }
   .chat-head > * { min-width: 0; }
+  /* ==================== 折叠竖条按钮：悬停提示 ==================== */
+  .col-left-toggle .cl-tip {
+    position: absolute;
+    right: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: #1F2329; color: #fff;
+    font-size: 12px; line-height: 1;
+    padding: 7px 10px; border-radius: 6px;
+    white-space: nowrap;
+    display: none; align-items: center; gap: 8px;
+    box-shadow: 0 4px 12px rgba(31,35,41,.18);
+    pointer-events: none;
+  }
+  .col-left-toggle .cl-tip i { font-style: normal; color: #9CA3AF; font-size: 11px; }
+  .col-left-toggle:hover .cl-tip { display: inline-flex; }
   .chat-head .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); flex-shrink: 0; }
   .chat-head .title { font-size: 14px; font-weight: 500; color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .chat-head .agent-tag {
@@ -392,7 +456,7 @@
     font-size: 11px; padding: 2px 8px; border-radius: 3px;
     flex-shrink: 0; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .chat-head .right { margin-left: auto; display: flex; gap: 4px; flex-shrink: 0; align-items: center; }
+  .chat-head .right { margin-left: auto; display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
   .chat-head .right > * { flex-shrink: 0; }
   .chat-head .right span {
     color: var(--text-muted); cursor: pointer; font-size: 13px;
@@ -401,51 +465,45 @@
     min-width: 24px; height: 28px;
   }
   .chat-head .right span:hover { background: var(--bg); color: var(--brand); }
+  /* 设置按钮：图标+文字，与账号/积分胶囊统一为白底描边家族 */
   .chat-head .right .account-settings-btn {
-    width: 28px; height: 28px; padding: 0; border: 0; background: transparent;
-    color: var(--text-muted); cursor: pointer; border-radius: var(--r-sm);
-    display: inline-flex; align-items: center; justify-content: center;
+    display: inline-flex; align-items: center; gap: 5px;
+    height: 28px; padding: 0 11px; margin-left: 0;
+    background: #fff; border: 1px solid var(--border); border-radius: 14px;
+    color: var(--text-muted); cursor: pointer; font-size: 12px; font-weight: 600;
+    transition: background .15s, border-color .15s, color .15s;
   }
-  .chat-head .right .account-settings-btn:hover { background: var(--bg); color: var(--brand); }
-  /* 积分胶囊 */
-  .chat-head .coin-chip {
-    background: var(--brand-soft) !important;
-    color: var(--brand-dark) !important;
-    font-weight: 600;
-    font-size: 12px !important;
-    padding: 3px 10px !important;
-    border-radius: 12px !important;
-    cursor: default !important;
-  }
-  .chat-head .coin-chip:hover { background: var(--brand-soft) !important; color: var(--brand-dark) !important; }
-  .coin-chip.clickable { cursor: pointer !important; }
+  .chat-head .right .account-settings-btn:hover { background: var(--brand-soft); border-color: #b8eacd; color: var(--brand-dark); }
+  .chat-head .right .account-settings-btn svg { flex-shrink: 0; }
 
   /* ==================== 主/子账号胶囊与切换 ==================== */
-  .account-chip {
+  .chat-head .right .account-chip {
     display:inline-flex; align-items:center; gap:6px;
-    height:28px; padding:0 8px 0 4px;
-    background:var(--brand-soft); color:var(--brand-dark);
+    height:28px; min-width:0; padding:0 9px 0 4px;
+    background:#fff; color:var(--text);
+    border:1px solid var(--border);
     border-radius:14px; font-size:12px; font-weight:600;
     cursor:pointer; user-select:none; position:relative;
     white-space:nowrap; overflow:hidden;
+    transition:background .15s, border-color .15s, color .15s;
     z-index:250;
   }
-  .account-chip:hover { background:#d6f3e1; }
+  .chat-head .right .account-chip:hover { background:var(--brand-soft); border-color:#b8eacd; color:var(--brand-dark); }
   /* 模态弹窗打开时回归普通层级，避免账号胶囊穿透遮罩 */
   body.modal-active .account-chip { z-index:auto; }
   .account-chip .ac-avatar {
     width:22px; height:22px; border-radius:50%;
-    background:#fff; display:inline-flex; align-items:center; justify-content:center;
-    font-size:13px; color:var(--brand-dark); border:1px solid #b8eacd; flex-shrink:0;
+    background:var(--bg); display:inline-flex; align-items:center; justify-content:center;
+    font-size:13px; color:var(--brand-dark); border:1px solid var(--border-light); flex-shrink:0;
   }
   .account-chip #accountName {
     max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
   .account-chip .ac-role {
-    background:var(--brand); color:#fff; font-size:9px;
-    padding:1px 4px; border-radius:3px; font-weight:500; flex-shrink:0;
+    background:var(--brand-soft); color:var(--brand-dark); font-size:9px;
+    padding:1px 4px; border-radius:3px; font-weight:600; flex-shrink:0;
   }
-  .account-chip .ac-arrow { font-size:9px; color:var(--brand-dark); margin-left:2px; flex-shrink:0; }
+  .account-chip .ac-arrow { font-size:8px; color:var(--text-dim); margin-left:1px; flex-shrink:0; }
 
   /* 独立积分药丸：紧跟账号胶囊右侧，可独立点击唤起购买弹窗 */
   .coin-chip {
@@ -461,6 +519,9 @@
   .coin-chip:hover { background:#FFF8E1; border-color:#FFC53D; box-shadow:0 2px 6px rgba(255,197,61,.25); }
   .coin-chip:active { transform:scale(.95); }
   .coin-chip .cc-icon { flex-shrink:0; display:block; }
+  /* 提高特异性：防止被 .chat-head .right span 通用规则覆盖金色文字与 hover 背景 */
+  .chat-head .right .coin-chip { color:#b8860b; }
+  .chat-head .right .coin-chip:hover { background:#FFF8E1; border-color:#FFC53D; color:#b8860b; }
 
   /* 账号下拉：固定定位，由脚本算出位置 */
   .account-popover {
@@ -550,14 +611,7 @@
   .account-popover .ap-reset:active { transform:scale(.95); }
   .account-popover .ap-reset svg { display:block; }
 
-  /* 子账号设置 */
-  .account-settings-btn {
-    width:24px; height:24px; border:1px solid var(--border-light);
-    background:#fff; border-radius:4px; color:var(--text-muted);
-    cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
-    font-size:13px; margin-left:4px;
-  }
-  .account-settings-btn:hover { color:var(--brand); border-color:var(--brand); }
+  /* 子账号设置按钮样式统一在 .chat-head .right .account-settings-btn 中定义 */
 
   .settings-modal { position:fixed; inset:0; z-index:120; display:none; align-items:center; justify-content:center; background:rgba(31,35,41,.38); padding:20px; }
   .settings-modal.open { display:flex; }
@@ -657,7 +711,6 @@
   .wallet-package .wp-price { color:var(--orange); font-size:13px; font-weight:600; }
   .wallet-package .wp-action { width:100%; height:30px; border:1px solid var(--border); background:#fff; border-radius:4px; color:var(--text-muted); cursor:pointer; font-size:12px; }
   .wallet-package .wp-actions { display:flex; gap:6px; margin-top:10px; }
-  .wallet-package.selected .wp-action.wp-select { color:#fff; border-color:var(--brand); background:var(--brand); }
   .wallet-package .wp-action.wp-buy { color: var(--brand-dark); border-color: var(--brand); background: var(--brand-soft); }
   .wallet-package .wp-action.wp-buy:hover { background: var(--brand); color:#fff; border-color: var(--brand); }
   .wallet-package.selected .wp-action.wp-buy { background: var(--brand); color:#fff; border-color: var(--brand); }
@@ -1342,24 +1395,49 @@
     display: flex; flex-direction: column;
     flex-shrink: 0;
     border: 1px solid var(--border-light);
-    transition: width .25s ease, margin .25s ease;
+    transition: width .22s ease, margin .22s ease, border-color .22s ease;
     position: relative;
   }
   .col-right.collapsed {
-    width: 40px;
+    width: 48px !important;
+    min-width: 48px !important;
+    max-width: 48px !important;
     margin-left: 0;
+    border-color: var(--border);
   }
   .col-right.collapsed .right-tabs,
   .col-right.collapsed .right-body {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity .12s ease, visibility 0s linear .12s;
+  }
+  /* ==================== 右栏空态（内容全部删除时） ==================== */
+  .col-right .right-empty {
     display: none;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 24px;
+    text-align: center;
   }
-  .col-right.collapsed .right-collapse-btn {
-    /* 折叠态：按钮浮在面板顶部 */
-    top: 0;
-    border-radius: 0 0 var(--r) var(--r);
-    background: var(--brand);
-    color: #fff;
+  .col-right.panel-empty .right-empty { display: flex; }
+  .col-right.panel-empty .right-tabs,
+  .col-right.panel-empty .right-body { display: none; }
+  .col-right.collapsed .right-empty { display: none !important; }
+  .right-empty .re-icon {
+    width: 64px; height: 64px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    font-size: 28px;
+    opacity: .8;
   }
+  .right-empty .re-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .right-empty .re-desc { font-size: 12px; color: var(--text-muted); line-height: 1.7; max-width: 220px; }
   .col-right.collapsed .right-collapse-btn .arrow {
     transform: rotate(180deg);
   }
@@ -1392,23 +1470,26 @@
   }
   /* 折叠态下让按钮变绿底白字（突出"展开"提示） */
   .col-right.collapsed .right-collapse-btn {
-    position: relative;
-    top: 0; right: 0;
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
-    border-radius: var(--r-lg);
     border: 0;
-    font-size: 18px;
+    border-radius: 0;
+    font-size: 17px;
     background: var(--bg);
-    color: var(--brand);
+    color: var(--brand-dark);
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
   }
   .col-right.collapsed .right-collapse-btn::after {
     content: "预览";
     font-size: 11px;
-    color: var(--brand-dark);
-    margin-top: 4px;
+    writing-mode: vertical-rl;
+    color: var(--text-muted);
+  }
+  .col-right.collapsed .right-collapse-btn:hover {
+    background: #f4f7f5;
   }
 
   /* 右侧面板折叠时，tabs 区域隐藏，所以正常态下给 tabs 预留右内边距，避免遮挡 */
@@ -1474,7 +1555,7 @@
     background: var(--bg);
   }
   .summary-pill .num {
-    font-size: 16px; font-weight: 600; color: var(--brand-dark); display: block;
+    font-size: 16px; font-weight: 600; color: #FF6600; display: block;
   }
   .summary-pill .lbl { font-size: 11px; color: var(--text-muted); }
   .preview-h {
@@ -1485,7 +1566,7 @@
     border-left: 3px solid var(--brand);
   }
   .preview-p { font-size: 12px; line-height: 1.75; color: var(--text); margin: 0 0 8px; }
-  .preview-p strong { color: var(--brand-dark); }
+  .preview-p strong { color: #FF6600; }
 
   .excel-wrap {
     margin-top: 8px;
@@ -1536,9 +1617,25 @@
   .preview-table td { padding: 8px; border-bottom: 1px solid #edf0f2; vertical-align: middle; white-space: nowrap; }
   .preview-table .product-main:hover td { background: #fbfefc; }
   .preview-table .product-detail td { padding: 5px 8px 7px; background: #fff; color: #7b858e; border-bottom: 1px solid #e7eaed; }
-  .preview-table .price { color: #39434e; font-weight: 600; }
   .preview-table .ratio-up { color: #f04b4b; }
-  .preview-table .img-cell { width: 40px; height: 40px; background: #f1f3f5; border-radius: 2px; display:flex; align-items:center; justify-content:center; font-size: 20px; overflow:hidden; }
+  /* ==================== 1688 价格体系风格 ==================== */
+  .preview-table .price { color: #FF6600; font-weight: 700; }
+  .preview-table .price .rmb, .preview-table .ladder b .rmb, .preview-table td.consign .rmb { font-size: 10px; font-weight: 500; margin-right: 1px; }
+  .preview-table .price { font-size: 14px; }
+  .preview-table td.consign { color: #FF6600; font-weight: 600; font-size: 12px; }
+  .preview-table td.ladder { font-size: 10px; color: #61666d; line-height: 1.7; white-space: nowrap; }
+  .preview-table td.ladder b { color: #FF6600; font-weight: 600; }
+  .preview-table td.ladder .rmb { font-size: 10px; color: #FF6600; }
+  .preview-table .img-cell { width: 40px; height: 40px; min-width: 40px; background: #f1f3f5; border-radius: 2px; display:flex; align-items:center; justify-content:center; font-size: 20px; overflow:hidden; }
+  .preview-table .img-cell img,
+  .preview-table td > img {
+    width: 40px; height: 40px;
+    max-width: 40px; max-height: 40px;
+    object-fit: cover;
+    border-radius: 2px;
+    display: block;
+    background: #f1f3f5;
+  }
   .preview-table .product-info { display:flex; align-items:center; gap:7px; min-width:170px; max-width:220px; }
   .preview-table .product-title { white-space:normal; line-height:1.35; color:#303943; font-size:10px; }
   .preview-table .trend { width:76px; height:30px; display:block; }
@@ -1711,7 +1808,6 @@
   <aside class="col-left">
     <div class="left-head">
       <button class="new-btn" id="newConversationBtn">＋ 新建对话</button>
-      <button class="ic-btn" title="刷新">⟳</button>
     </div>
     <!-- 搜索框 -->
     <div class="left-search">
@@ -1720,7 +1816,7 @@
         <span class="clear-x" id="searchClear" title="清空">×</span>
       </div>
     </div>
-    <div class="left-section">历史对话</div>
+    <div class="left-section">最近对话</div>
     <div class="conv-list" id="convList">
       <div class="conv-item active">
         <div class="conv-title">搜索美国亚马逊 20 款近 30 天新品</div>
@@ -1747,7 +1843,7 @@
         <div class="conv-meta">· 3d</div>
       </div>
     </div>
-    <button class="col-left-toggle" id="colLeftToggle" title="折叠/展开左侧">‹</button>
+    <button class="col-left-toggle" id="colLeftToggle" aria-label="折叠侧栏"><span class="cl-arrow" id="clArrow">‹</span><span class="cl-tip" id="clTip">折叠侧栏</span></button>
   </aside>
   <div class="col-left-resizer" id="colLeftResizer"></div>
 
@@ -1776,7 +1872,7 @@
             <div class="account-self" id="accountSelf"></div>
             <div class="account-list" id="accountList"></div>
             <div class="ap-foot">
-              <button class="ap-tip" id="apWalletEntry" type="button" title="查看积分中心 / 选择套餐 / 充值明细">
+              <button class="ap-tip" id="apWalletEntry" type="button" title="查看积分中心 / 充值明细">
                 <svg class="ap-coin-ic" width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true"><circle cx="6" cy="6" r="5" fill="#FFC53D" stroke="#E8A200" stroke-width="1.2"/><path d="M4.3 3.8 6 5.9m1.7-2.1L6 5.9m0 0v2.5M4.7 6.5h2.6M4.7 7.9h2.6" stroke="#A66F00" stroke-width=".9" stroke-linecap="round"/></svg>
                 积分中心
               </button>
@@ -1789,7 +1885,10 @@
               </span>
             </div>
           </div>
-          <button class="account-settings-btn" id="accountSettingsBtn" title="子账号设置">⚙</button>
+          <button class="account-settings-btn" id="accountSettingsBtn" title="子账号设置">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33h.08a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.08a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            设置
+          </button>
         </div>
       </div>
 
@@ -1955,7 +2054,7 @@
   <div class="col-right-resizer" id="colRightResizer"></div>
   <aside class="col-right" id="rightPanel">
     <!-- 折叠 / 展开按钮 -->
-    <button class="right-collapse-btn" id="rightCollapseBtn" title="折叠预览面板">
+    <button class="right-collapse-btn" id="rightCollapseBtn" title="折叠结果预览" aria-label="折叠结果预览">
       <span class="arrow">›</span>
     </button>
 
@@ -1963,6 +2062,13 @@
       <div class="right-tab active"><span class="rt-name">📊 美国亚马逊连衣裙 (20款)</span><span class="x">×</span></div>
       <div class="right-tab"><span class="rt-name">📄 选品报告</span><span class="x">×</span></div>
       <div class="right-tab">＋</div>
+    </div>
+
+    <!-- 空态：内容全部删除后显示 -->
+    <div class="right-empty" id="rightEmpty">
+      <div class="re-icon">📊</div>
+      <div class="re-title">暂无预览内容</div>
+      <div class="re-desc">发起选品查询后，报告和商品数据会显示在这里</div>
     </div>
 
     <div class="right-body">
@@ -1973,9 +2079,9 @@
 
       <div class="summary-row">
         <div class="summary-pill"><span class="num">20</span><span class="lbl">命中商品</span></div>
-        <div class="summary-pill"><span class="num">$9.99</span><span class="lbl">最低价</span></div>
-        <div class="summary-pill"><span class="num">$34.99</span><span class="lbl">最高价</span></div>
-        <div class="summary-pill"><span class="num">4.7</span><span class="lbl">平均评分</span></div>
+        <div class="summary-pill"><span class="num">¥0.80</span><span class="lbl">最低批发价</span></div>
+        <div class="summary-pill"><span class="num">¥64.00</span><span class="lbl">最高批发价</span></div>
+        <div class="summary-pill"><span class="num">4,580</span><span class="lbl">Top1 近30天订单</span></div>
       </div>
 
       <div class="excel-wrap">
@@ -2008,25 +2114,25 @@
             <tr class="product-main" data-group="1">
               <td>1</td>
               <td><div class="product-info"><div class="img-cell">👟</div><div class="product-title">碎皮板·复古尖头内增高高跟鞋<br><span class="mini-tag">1688严选</span><span class="mini-tag green">代发</span></div></div></td>
-              <td>2026-06-20<br>13:24:00</td><td class="price">¥64</td><td>≥1双¥64.00</td><td>4580</td><td>4652</td><td>¥29.77万+</td>
+              <td>2026-06-20<br>13:24:00</td><td class="price"><span class="rmb">¥</span>64.00</td><td class="ladder">≥1双 <b><span class="rmb">¥</span>64.00</b></td><td>4580</td><td>4652</td><td>¥29.77万+</td>
               <td><svg class="trend" viewBox="0 0 76 30"><path class="axis" d="M0 27H76"/><path d="M0 25 C9 25 8 10 19 10 S28 1 39 7 S48 0 57 5 S65 29 76 17"/></svg></td>
-              <td>5487</td><td>5570</td><td class="ratio-up">61.0%</td><td>¥65</td>
+              <td>5487</td><td>5570</td><td class="ratio-up">61.0%</td><td class="consign"><span class="rmb">¥</span>65.00</td>
             </tr>
             <tr class="product-detail" data-group="1"><td colspan="13"><div class="detail-line"><span class="label">商品类目：</span><span class="value">鞋 &gt; 女鞋 &gt; 女式高跟鞋</span><span class="label">月代发订单：</span><span class="query">◉ 查询</span><span class="label">收藏客户：</span><span class="query">◉ 查询</span><span class="label">发货地：</span><span class="value">广东鞋料</span><span class="stars">★ ★ ★ ★ ☆</span><span class="action">实际分析</span></div></td></tr>
             <tr class="product-main" data-group="2">
               <td>2</td>
               <td><div class="product-info"><div class="img-cell">👞</div><div class="product-title">新款韩版尖头女鞋粗跟2026春季<br><span class="mini-tag blue">厂家直供</span><span class="mini-tag green">代发</span></div></div></td>
-              <td>2026-04-04<br>02:25:00</td><td class="price">¥55</td><td>1~99双¥58.00<br>≥100双¥55.00</td><td>1831</td><td>1850</td><td>¥10.17万+</td>
+              <td>2026-04-04<br>02:25:00</td><td class="price"><span class="rmb">¥</span>55.00</td><td class="ladder">1~99双 <b><span class="rmb">¥</span>58.00</b><br>≥100双 <b><span class="rmb">¥</span>55.00</b></td><td>1831</td><td>1850</td><td>¥10.17万+</td>
               <td><svg class="trend" viewBox="0 0 76 30"><path class="axis" d="M0 27H76"/><path d="M0 27 C10 27 12 5 22 5 S31 26 40 17 S53 8 62 15 S70 23 76 21"/></svg></td>
-              <td>4512</td><td>4577</td><td class="ratio-up">40.0%</td><td>¥58</td>
+              <td>4512</td><td>4577</td><td class="ratio-up">40.0%</td><td class="consign"><span class="rmb">¥</span>58.00</td>
             </tr>
             <tr class="product-detail" data-group="2"><td colspan="13"><div class="detail-line"><span class="label">商品类目：</span><span class="value">鞋 &gt; 女鞋 &gt; 女式单鞋</span><span class="label">月代发订单：</span><span class="query">◉ 查询</span><span class="label">库存：</span><span class="query">◉ 查询</span><span class="label">发货地：</span><span class="value">广东鞋料</span><span class="stars">★ ★ ★ ★ ☆</span><span class="action">实际分析</span></div></td></tr>
             <tr class="product-main" data-group="3">
               <td>3</td>
               <td><div class="product-info"><div class="img-cell">👜</div><div class="product-title">植绒金色链条小方包2026新款<br><span class="mini-tag">1688严选</span><span class="mini-tag green">代发</span></div></div></td>
-              <td>2026-01-07<br>10:44:00</td><td class="price">¥0.8</td><td>1个¥0.8</td><td>1361</td><td>4506</td><td>¥3604.8</td>
+              <td>2026-01-07<br>10:44:00</td><td class="price"><span class="rmb">¥</span>0.80</td><td class="ladder">≥1个 <b><span class="rmb">¥</span>0.80</b></td><td>1361</td><td>4506</td><td>¥3604.8</td>
               <td><svg class="trend" viewBox="0 0 76 30"><path class="axis" d="M0 27H76"/><path d="M0 27 C8 27 10 5 20 5 S30 2 39 16 S52 28 60 25 S68 23 76 22"/></svg></td>
-              <td>6433</td><td>1.25万+</td><td class="ratio-up">65.0%</td><td>¥0.8</td>
+              <td>6433</td><td>1.25万+</td><td class="ratio-up">65.0%</td><td class="consign"><span class="rmb">¥</span>0.80</td>
             </tr>
             <tr class="product-detail" data-group="3"><td colspan="13"><div class="detail-line"><span class="label">商品类目：</span><span class="value">箱包 &gt; 女包 &gt; 斜挎包</span><span class="label">月代发订单：</span><span class="query">◉ 查询</span><span class="label">收藏客户：</span><span class="query">◉ 查询</span><span class="label">发货地：</span><span class="value">广东潮州</span><span class="stars">★ ★ ★ ☆ ☆</span><span class="action">实际分析</span></div></td></tr>
           </tbody>
@@ -2095,7 +2201,6 @@
 </div>
 
 <!-- 折叠态展示的“展开左侧”按钮 -->
-  <button class="col-left-expand" id="colLeftExpand" title="展开左侧会话列表" aria-label="展开左侧">›</button>
 
   <!-- ========== 积分中心弹窗（仅余额 + 充值） ========== -->
 <div class="wallet-modal" id="walletModal" role="dialog" aria-modal="true" aria-labelledby="walletTitle">
@@ -2116,9 +2221,9 @@
       </div>
       <div class="wallet-section-title"><span>充值套餐</span><small>演示价格，正式版接入支付</small></div>
       <div class="wallet-packages">
-        <div class="wallet-package" data-coins="500" data-price="9.9" data-pkg-name="体验包"><div class="wp-name">体验包</div><div class="wp-coins">500 积分</div><div class="wp-price">¥9.9</div><div class="wp-actions"><button class="wp-action wp-select">选择套餐</button><button class="wp-action wp-buy">立即购买</button></div></div>
-        <div class="wallet-package selected" data-coins="2000" data-price="29.9" data-pkg-name="常用包"><div class="wp-name">常用包</div><div class="wp-coins">2,000 积分</div><div class="wp-price">¥29.9</div><div class="wp-actions"><button class="wp-action wp-select">选择套餐</button><button class="wp-action wp-buy">立即购买</button></div></div>
-        <div class="wallet-package" data-coins="10000" data-price="99" data-pkg-name="专业包"><div class="wp-name">专业包</div><div class="wp-coins">10,000 积分</div><div class="wp-price">¥99</div><div class="wp-actions"><button class="wp-action wp-select">选择套餐</button><button class="wp-action wp-buy">立即购买</button></div></div>
+        <div class="wallet-package" data-coins="500" data-price="9.9" data-pkg-name="体验包"><div class="wp-name">体验包</div><div class="wp-coins">500 积分</div><div class="wp-price">¥9.9</div><div class="wp-actions"><button class="wp-action wp-buy">立即购买</button></div></div>
+        <div class="wallet-package selected" data-coins="2000" data-price="29.9" data-pkg-name="常用包"><div class="wp-name">常用包</div><div class="wp-coins">2,000 积分</div><div class="wp-price">¥29.9</div><div class="wp-actions"><button class="wp-action wp-buy">立即购买</button></div></div>
+        <div class="wallet-package" data-coins="10000" data-price="99" data-pkg-name="专业包"><div class="wp-name">专业包</div><div class="wp-coins">10,000 积分</div><div class="wp-price">¥99</div><div class="wp-actions"><button class="wp-action wp-buy">立即购买</button></div></div>
       </div>
     </div>
   </div>
@@ -2546,7 +2651,10 @@
           const idx = list.indexOf(target);
           if (idx >= 0) list.splice(idx, 1);
           rerenderConvList();
-          if (list.length === 0) showEmptyConversation();
+          if (list.length === 0) {
+            showEmptyConversation();
+            document.dispatchEvent(new CustomEvent('dld:right-empty', { detail: { empty: true } }));
+          }
           else selectConvItem(convList.querySelector('.conv-item'));
         } else if (action === 'share') {
           const url = location.href.split('#')[0] + '#conv=' + id;
@@ -2587,6 +2695,8 @@
     }
     function selectConvItem(el) {
       if (!el) return;
+      // 选中历史会话后右栏恢复内容视图
+      document.dispatchEvent(new CustomEvent('dld:right-empty', { detail: { empty: false } }));
       convList.querySelectorAll('.conv-item').forEach(x => x.classList.remove('active'));
       el.classList.add('active');
       const id = el.dataset.conv;
@@ -3099,12 +3209,6 @@
     pkg.addEventListener('click', e => {
       if (e.target.closest('.wp-buy')) {
         openBuyConfirm(pkg);
-        e.stopPropagation();
-        return;
-      }
-      if (e.target.closest('.wp-select')) {
-        walletModal.querySelectorAll('.wallet-package').forEach(x => x.classList.remove('selected'));
-        pkg.classList.add('selected');
         e.stopPropagation();
         return;
       }
@@ -3709,7 +3813,6 @@
   /* ===================== 左侧：折叠 / 展开 + 三栏拖动 ===================== */
   const colLeft = document.querySelector('.col-left');
   const colLeftToggle = document.getElementById('colLeftToggle');
-  const colLeftExpand = document.getElementById('colLeftExpand');
   const colLeftResizer = document.getElementById('colLeftResizer');
   const colMidResizer = document.getElementById('colMidResizer');
   const colRightResizer = document.getElementById('colRightResizer');
@@ -3718,11 +3821,24 @@
   const LEFT_WIDTH_KEY = 'dld_left_width';
   const RIGHT_WIDTH_KEY = 'dld_right_width';
 
-  function setLeftCollapsed(collapsed) {
+  let leftPinnedOpen = false;
+  function setLeftCollapsed(collapsed, options = {}) {
+    const pinned = options.pinned ?? !collapsed;
+    leftPinnedOpen = pinned && !collapsed;
     colLeft.classList.toggle('collapsed', collapsed);
-    colLeftToggle.textContent = collapsed ? '›' : '‹';
-    colLeftToggle.title = collapsed ? '展开左侧' : '折叠左侧';
+    colLeft.classList.remove('peek');
+    const clArrow = colLeftToggle.querySelector('.cl-arrow');
+    if (clArrow) clArrow.textContent = collapsed ? '›' : '‹';
+    colLeftToggle.title = '';
+    colLeftToggle.setAttribute('aria-label', colLeftToggle.title);
     try { localStorage.setItem(LEFT_KEY, collapsed ? '1' : '0'); } catch (e) {}
+    syncLeftToggleLabel();
+  }
+  function syncLeftToggleLabel() {
+    const collapsed = colLeft.classList.contains('collapsed');
+    const clTip = document.getElementById('clTip');
+    if (clTip) clTip.textContent = collapsed ? '展开侧栏' : '折叠侧栏';
+    colLeftToggle.setAttribute('aria-label', collapsed ? '展开侧栏' : '折叠侧栏');
   }
   function setLeftWidth(px) {
     const min = 180, max = 360;
@@ -3738,12 +3854,14 @@
     colRight.style.marginLeft = '0';
     try { localStorage.setItem(RIGHT_WIDTH_KEY, String(w)); } catch (e) {}
   }
-  colLeftToggle.addEventListener('click', () => setLeftCollapsed(!colLeft.classList.contains('collapsed')));
-  colLeftExpand.addEventListener('click', () => setLeftCollapsed(false));
+  colLeftToggle.addEventListener('click', () => {
+    const collapsed = colLeft.classList.contains('collapsed');
+    setLeftCollapsed(!collapsed, { pinned: collapsed });
+  });
   try {
-    if (localStorage.getItem(LEFT_KEY) === '1') setLeftCollapsed(true);
+    if (localStorage.getItem(LEFT_KEY) === '1') setLeftCollapsed(true, { pinned: false });
     const savedLeft = Number(localStorage.getItem(LEFT_WIDTH_KEY));
-    if (savedLeft) setLeftWidth(savedLeft);
+    if (savedLeft && !colLeft.classList.contains('collapsed')) setLeftWidth(savedLeft);
     const savedRight = Number(localStorage.getItem(RIGHT_WIDTH_KEY));
     if (savedRight) setRightWidth(savedRight);
   } catch (e) {}
@@ -3812,9 +3930,18 @@
 
   function setCollapsed(collapsed) {
     rightPanel.classList.toggle('collapsed', collapsed);
-    collapseBtn.title = collapsed ? '展开预览面板' : '折叠预览面板';
+    collapseBtn.title = collapsed ? '展开结果预览' : '折叠结果预览';
+    collapseBtn.setAttribute('aria-label', collapseBtn.title);
     try { localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0'); } catch(e) {}
   }
+  // 无内容空态：面板切换为空态视图，且自动收起为窄条；恢复内容时若收起由空态引起则自动展开
+  function setRightEmpty(empty) {
+    const wasEmpty = rightPanel.classList.contains('panel-empty');
+    rightPanel.classList.toggle('panel-empty', !!empty);
+    if (empty) setCollapsed(true);
+    else if (wasEmpty) setCollapsed(false);
+  }
+  document.addEventListener('dld:right-empty', e => setRightEmpty(!!(e.detail && e.detail.empty)));
   // 恢复上次状态
   try {
     if (localStorage.getItem(COLLAPSE_KEY) === '1') setCollapsed(true);
@@ -3874,7 +4001,10 @@
     }));
     input.focus();
   }
-  newConversationBtn.addEventListener('click', showEmptyConversation);
+  newConversationBtn.addEventListener('click', () => {
+    showEmptyConversation();
+    document.dispatchEvent(new CustomEvent('dld:right-empty', { detail: { empty: true } }));
+  });
   stopBtn.addEventListener('click', async () => {
     ABORT_RUN = true;
     const runId = stopBtn.getAttribute('data-dld-run');
@@ -3910,6 +4040,7 @@
     SEND_BUSY = true;
     ABORT_RUN = false;
     LAST_QUERY = text;
+    document.dispatchEvent(new CustomEvent('dld:right-empty', { detail: { empty: false } }));
     sendBtn.disabled = true;
     sendBtn.classList.add('busy');
     sendBtn.title = '执行中...';
@@ -4427,11 +4558,13 @@
     table.querySelector('tbody').innerHTML = list.map((o, i) => {
       const title = escapeHtml(o.title || o.offerTitle || o.name || ('商品 #' + (o.offerId || o.id || i + 1)));
       const offerId = o.offerId || o.id || '';
-      const price = (o.price != null) ? ('¥' + Number(o.price).toFixed(2)) : '¥--';
+      const rmb = v => '<span class="rmb">¥</span>' + Number(v).toFixed(2);
+      const price = (o.price != null) ? rmb(o.price) : '¥--';
       const startQty = o.startQuantity || o.beginStartQuantity || 1;
+      const fmtLadder = s => escapeHtml(s).replace(/(¥[\d.]+)/g, '<b>$1</b>');
       const priceRange = (o.priceLow != null && o.priceHigh != null)
-        ? ('≥' + startQty + '件 ¥' + Number(o.priceLow).toFixed(2))
-        : (o.priceRange || '—');
+        ? ('≥' + escapeHtml(String(startQty)) + '件 <b>' + rmb(o.priceLow) + '</b>')
+        : (o.priceRange ? fmtLadder(o.priceRange) : '—');
       const created = (o.offerCreateTime || o.beginOfferCreateTime || '').toString().slice(0, 16).replace('T', ' ');
       const booked30 = o.bookedCount30d ?? o.bookedCount ?? o.recentOrders ?? 0;
       const saleCount = o.saleCount30d ?? o.saleCount ?? 0;
@@ -4439,26 +4572,27 @@
       const total = o.totalBookedCount ?? o.totalOrders ?? 0;
       const totalCount = o.totalSaleCount ?? 0;
       const repurchase = (o.repurchaseRate != null) ? (Number(o.repurchaseRate).toFixed(1) + '%') : (o.repurchase || '—');
-      const consign = (o.consignPrice != null) ? ('¥' + Number(o.consignPrice).toFixed(2)) : (o.consignPrice || '—');
+      const repurchaseCls = (repurchase === '—') ? '' : ' class="ratio-up"';
+      const consign = (o.consignPrice != null) ? rmb(o.consignPrice) : (o.consignPrice || '—');
       const thumb = o.imageUrl || o.picUrl || o.image || '';
       const emoji = title.match(/[👟👜👗👕🎒📱💄💍🧸🪑🍵🪞⌚💎🛍🎩🥻]/);
       const thumbHtml = thumb
-        ? '<img src="' + escapeHtml(thumb) + '" loading="lazy" onerror="this.outerHTML=\'<div class=img-cell>📦</div>\'">'
+        ? '<div class="img-cell"><img src="' + escapeHtml(thumb) + '" loading="lazy" onerror="this.outerHTML=\'📦\'"></div>'
         : '<div class="img-cell">' + (emoji ? emoji[0] : '📦') + '</div>';
       return `<tr class="product-main" data-offer-id="${escapeHtml(offerId)}" data-conv-id="${escapeHtml(o.convId || '')}">
         <td>${i + 1}</td>
         <td><div class="product-info">${thumbHtml}<div class="product-title">${title}<br><span class="mini-tag">1688</span>${o.isFactory ? '<span class="mini-tag green">工厂</span>' : ''}${o.isPower ? '<span class="mini-tag blue">实力商家</span>' : ''}</div></div></td>
         <td>${created || '—'}</td>
         <td class="price">${price}</td>
-        <td>${priceRange}</td>
+        <td class="ladder">${priceRange}</td>
         <td>${booked30}</td>
         <td>${saleCount}</td>
         <td>${saleVol}</td>
         <td>${renderSpark(o.salesTrend || o.bookedTrend7d || [])}</td>
         <td>${total}</td>
         <td>${totalCount}</td>
-        <td class="ratio-up">${repurchase}</td>
-        <td>${consign}</td>
+        <td${repurchaseCls}>${repurchase}</td>
+        <td class="consign">${consign}</td>
       </tr>`;
     }).join('');
   }
