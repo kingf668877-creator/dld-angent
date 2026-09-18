@@ -485,11 +485,11 @@
 
   /* ==================== 主/子账号胶囊与切换 ==================== */
   .chat-head .right .account-chip {
-    display:inline-flex; align-items:center; gap:5px;
-    height:28px; min-width:0; padding:0 8px 0 4px;
+    display:inline-flex; align-items:center; gap:0;
+    height:30px; min-width:0; padding:0 9px 0 4px;
     background:#fff; color:#1f2329;
-    border:1px solid #dfe3e8;
-    border-radius:14px; font-size:12px; font-weight:600;
+    border:1px solid #e1e5e9;
+    border-radius:15px; font-size:12px; font-weight:600;
     cursor:pointer; user-select:none; position:relative;
     white-space:nowrap; overflow:hidden;
     transition:background .15s, border-color .15s, color .15s, box-shadow .15s;
@@ -499,21 +499,23 @@
   .chat-head .right .account-chip:hover { background:#f8faf9; border-color:#cbd5d0; color:#1f2329; box-shadow:0 1px 4px rgba(31,35,41,.08); }
   .chat-head .right .account-chip:active { transform:scale(.97); }
   .account-chip .ac-avatar {
-    width:20px; height:20px; border-radius:6px;
-    background:#e8f7ee;
+    width:22px; height:22px; margin-right:7px; border-radius:7px;
+    background:#e5f6ec;
     display:inline-flex; align-items:center; justify-content:center;
-    color:#16a35a; flex-shrink:0;
-    box-shadow:inset 0 0 0 1px rgba(22,163,90,.18);
+    color:#159957; flex-shrink:0;
+    box-shadow:inset 0 0 0 1px rgba(21,153,87,.16);
   }
   .account-chip .ac-avatar svg { display:block; width:14px; height:14px; }
   .account-chip #accountName {
-    max-width:84px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-    letter-spacing:0;
+    max-width:72px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    letter-spacing:0; line-height:1;
   }
   .account-chip .ac-phone {
     display:inline-flex; align-items:center; flex-shrink:0;
-    color:var(--text-dim); font-size:10px; font-weight:500;
-    letter-spacing:.15px; font-variant-numeric:tabular-nums;
+    margin-left:8px; padding-left:8px;
+    border-left:1px solid #e8ebee;
+    color:#7a8490; font-size:10px; font-weight:500;
+    letter-spacing:.15px; font-variant-numeric:tabular-nums; line-height:1;
   }
   /* 主/子账号徽章：浅底描边胶囊，配色由 data-role 驱动（主=绿 / 子=蓝） */
   /* 主账号隐藏徽章：胶囊名字"主账号·xxx"已表达身份，避免与下拉箭头挤在一起 */
@@ -530,8 +532,9 @@
   }
   /* 下拉箭头：细线 chevron，下拉展开时旋转 180° */
   .account-chip .ac-arrow {
-    display:inline-flex; align-items:center; margin-left:1px; flex-shrink:0;
-    color:var(--text-dim); transition:transform .18s, color .15s;
+    display:inline-flex; align-items:center; margin-left:9px; padding-left:8px;
+    border-left:1px solid #e8ebee; flex-shrink:0;
+    color:#8b949e; transition:transform .18s, color .15s;
   }
   .account-chip .ac-arrow svg { display:block; }
   .account-chip:hover .ac-arrow { color:var(--brand-dark); }
@@ -541,10 +544,10 @@
      与账号胶囊统一为白底描边家族：金色只保留在金币图标上做语义点缀，
      避免整圈金边+金字在白灰顶栏里突兀 */
   .coin-chip {
-    display:inline-flex; align-items:center; gap:5px;
-    height:28px; padding:0 10px;
+    display:inline-flex; align-items:center; gap:6px;
+    height:30px; padding:0 11px;
     background:#fff; color:#4e5969;
-    border:1px solid #dfe3e8; border-radius:14px;
+    border:1px solid #e1e5e9; border-radius:15px;
     font-size:12px; font-weight:600;
     cursor:pointer; user-select:none;
     transition:background .15s, border-color .15s, transform .12s, box-shadow .15s;
@@ -552,9 +555,10 @@
   }
   .coin-chip:hover { background:#fafbfc; border-color:#cbd2d9; box-shadow:0 1px 4px rgba(31,35,41,.08); }
   .coin-chip:active { transform:scale(.97); }
-  .coin-chip .cc-icon { flex-shrink:0; display:block; }
+  .coin-chip .cc-icon { flex-shrink:0; display:block; width:14px; height:14px; }
+  .coin-chip #coinText { font-variant-numeric:tabular-nums; letter-spacing:.1px; }
   /* 提高特异性：防止被 .chat-head .right span:hover 通用规则把数字染成品牌绿 */
-  .chat-head .right .coin-chip { color:var(--text); }
+  .chat-head .right .coin-chip { height:30px; color:#4E5969; }
   .chat-head .right .coin-chip:hover { background:#fafbfc; border-color:#cbd2d9; color:#4E5969; }
   .chat-head .right .coin-chip:hover #coinText { color:#4E5969; }
 
