@@ -502,9 +502,10 @@
     width:20px; height:20px; border-radius:6px;
     background:linear-gradient(135deg,#dcf5e7 0%,#bfeed2 100%);
     display:inline-flex; align-items:center; justify-content:center;
-    font-size:11px; color:var(--brand-dark); flex-shrink:0;
+    color:var(--brand-dark); flex-shrink:0;
     box-shadow:inset 0 0 0 1px rgba(16,173,83,.14);
   }
+  .account-chip .ac-avatar svg { display:block; width:14px; height:14px; }
   .account-chip #accountName {
     max-width:84px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
     letter-spacing:0;
@@ -554,7 +555,8 @@
   .coin-chip .cc-icon { flex-shrink:0; display:block; }
   /* 提高特异性：防止被 .chat-head .right span:hover 通用规则把数字染成品牌绿 */
   .chat-head .right .coin-chip { color:var(--text); }
-  .chat-head .right .coin-chip:hover { background:#FFFBEA; border-color:#FFD66B; color:var(--text); }
+  .chat-head .right .coin-chip:hover { background:#FFFBEA; border-color:#FFD66B; color:#4E5969; }
+  .chat-head .right .coin-chip:hover #coinText { color:#4E5969; }
 
   /* 账号下拉：固定定位，由脚本算出位置 */
   .account-popover {
@@ -2282,7 +2284,7 @@
           <button class="stop-btn" id="stopBtn" title="停止当前生成">■ 停止生成</button>
           <!-- 主/子账号胶囊（独立，不含积分） -->
           <span class="account-chip" id="accountChip" title="切换账号">
-            <span class="ac-avatar" id="accountAvatar">🐯</span>
+            <span class="ac-avatar" id="accountAvatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 20c.8-3.5 3.2-5.4 6.5-5.4s5.7 1.9 6.5 5.4"/></svg></span>
             <span id="accountName">主店·青虎AI</span>
             <span class="ac-phone" id="accountPhone">176****6666</span>
             <span class="ac-role" id="accountRole" data-role="main">主</span>
@@ -2885,7 +2887,7 @@
 
   function isMainAccount() { return CURRENT_ACCOUNT && CURRENT_ACCOUNT.role === 'main'; }
   function renderAccountChip() {
-    accountAvatar.textContent = CURRENT_ACCOUNT.avatar;
+    accountAvatar.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.2"/><path d="M5.5 20c.8-3.5 3.2-5.4 6.5-5.4s5.7 1.9 6.5 5.4"/></svg>';
     accountName.textContent = CURRENT_ACCOUNT.name.length > 10 ? CURRENT_ACCOUNT.name.slice(0, 10) + '…' : CURRENT_ACCOUNT.name;
     accountPhone.textContent = CURRENT_ACCOUNT.phone || '';
     accountRole.textContent = CURRENT_ACCOUNT.roleLabel;
