@@ -1372,12 +1372,12 @@
   .stop-sq::before { content: ''; width: 8px; height: 8px; background: #fff; border-radius: 1.5px; }
   .cb-go.stop-state .stop-sq { display: inline-flex; }
 
-  /* 回到底部浮动按钮（单层绿色圆形纯图标）：上滑离开底部时出现在消息流右下角，点击回到最新消息 */
+  /* 回到底部浮动按钮（白底绿色箭头圆形纯图标）：上滑离开底部时出现在消息流右下角，点击回到最新消息 */
   .jump-latest {
     position: absolute; right: 20px; bottom: 116px;
     width: 32px; height: 32px; padding: 0; border-radius: 50%;
-    background: #10ad53; border: none;
-    box-shadow: 0 4px 14px rgba(16, 173, 83, .35);
+    background: #fff; border: 1px solid var(--border-light);
+    box-shadow: 0 4px 14px rgba(17, 24, 39, .14);
     display: inline-flex; align-items: center; justify-content: center;
     cursor: pointer;
     z-index: 30; opacity: 0; transform: translateY(8px);
@@ -1385,7 +1385,7 @@
     pointer-events: none;
   }
   .jump-latest.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
-  .jump-latest:hover { background: #0d9a49; }
+  .jump-latest:hover { border-color: #10ad53; }
   .jump-latest .jl-ic {
     width: 18px; height: 18px; flex-shrink: 0;
     display: inline-flex; align-items: center; justify-content: center;
@@ -2353,7 +2353,7 @@
 
       <!-- 回到底部浮动按钮（纯图标）：上滑浏览历史时出现，点击回到最新消息 -->
       <button class="jump-latest" id="jumpLatest" type="button" title="回到最新消息" aria-label="回到最新消息">
-        <span class="jl-ic"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M12 5v13M6 12.5l6 6 6-6" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="jl-ic"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M12 5v13M6 12.5l6 6 6-6" stroke="#10ad53" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
       </button>
 
       <!-- Composer（参考图风格：圆角一体容器 + 附件横排 chip + 底部工具栏） -->
