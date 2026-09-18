@@ -436,6 +436,7 @@
     border-radius: var(--r-lg);
     border: 1px solid var(--border-light);
     display: flex; flex-direction: column;
+    position: relative;
     overflow: hidden;
     box-shadow: var(--shadow-sm);
     min-height: 0;
@@ -1370,6 +1371,26 @@
   }
   .stop-sq::before { content: ''; width: 8px; height: 8px; background: #fff; border-radius: 1.5px; }
   .cb-go.stop-state .stop-sq { display: inline-flex; }
+
+  /* 回到底部浮动按钮：上滑离开底部时出现在消息流右下角，点击回到最新消息 */
+  .jump-latest {
+    position: absolute; right: 20px; bottom: 116px;
+    height: 32px; padding: 0 12px 0 7px; border-radius: 16px;
+    background: #fff; border: 1px solid var(--border-light);
+    box-shadow: 0 4px 14px rgba(17, 24, 39, .14);
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: #5b6572; cursor: pointer;
+    z-index: 30; opacity: 0; transform: translateY(8px);
+    transition: opacity .18s ease, transform .18s ease;
+    pointer-events: none;
+  }
+  .jump-latest.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .jump-latest:hover { border-color: #10ad53; color: #00873C; }
+  .jump-latest .jl-ic {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: #10ad53; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
 
   .attach-chip .ac-info {
     flex: 1; min-width: 0;
@@ -2331,6 +2352,12 @@
         </div>
       </div>
 
+      <!-- 回到底部浮动按钮：上滑浏览历史时出现，点击回到最新消息 -->
+      <button class="jump-latest" id="jumpLatest" type="button" title="回到最新消息">
+        <span class="jl-ic"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M12 5v13M6 12.5l6 6 6-6" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        回到底部
+      </button>
+
       <!-- Composer（参考图风格：圆角一体容器 + 附件横排 chip + 底部工具栏） -->
       <div class="composer" id="composer">
         <!-- 已选附件：横滑 chip 列表（位于输入文字上方，有文件时出现，溢出时两端浮现箭头） -->
@@ -2831,17 +2858,13 @@
     return el;
   }
   // 把会话视图容器挂载到中部 stream（切换 = 卸载当前视图 + 挂载目标视图，离屏视图保留在 CONV_VIEWS）
+  // 需求：无论上次滚动到哪，每次进入会话都定位到最新消息（不恢复历史滚动位置）
   function switchToView(viewEl) {
     const stream = document.getElementById('stream');
     if (!stream || !viewEl) return;
-    const cur = stream.firstElementChild;
-    if (cur && cur !== viewEl && cur.classList && cur.classList.contains('conv-view')) {
-      const cv = CONV_VIEWS.get(cur.dataset.conv);
-      if (cv) cv.scrollPos = stream.scrollTop;
-    }
-    if (cur !== viewEl) { stream.innerHTML = ''; stream.appendChild(viewEl); }
-    const cv2 = CONV_VIEWS.get(viewEl.dataset.conv);
-    stream.scrollTop = (cv2 && cv2.scrollPos != null) ? cv2.scrollPos : stream.scrollHeight;
+    if (stream.firstElementChild !== viewEl) { stream.innerHTML = ''; stream.appendChild(viewEl); }
+    stream.scrollTop = stream.scrollHeight;
+    updateJumpLatest();
   }
   // 按当前活跃会话是否在跑，刷新发送/停止按钮（不再全局互斥）
   function refreshRunUI() {
@@ -4432,7 +4455,29 @@
 
   // 执行流工具：等待 / 滚动到底部
   const sleep = ms => new Promise(r => setTimeout(r, ms));
-  function scrollBottom() { stream.scrollTop = stream.scrollHeight; }
+  function scrollBottom() { stream.scrollTop = stream.scrollHeight; updateJumpLatest(); }
+  // 智能跟随：用户位于底部附近才自动跟随新内容；上滑浏览历史时不打断（右下角出现「回到底部」按钮）
+  function followBottom() {
+    const dist = stream.scrollHeight - stream.scrollTop - stream.clientHeight;
+    if (dist < 140) scrollBottom(); else updateJumpLatest();
+  }
+  // 「回到底部」浮动按钮：距底超过 120px 显示，点击平滑滚回最新消息
+  // 注意：updateJumpLatest 会被 switchToView 在初始化早期调用，必须惰性查询元素（避免顶层 const 的 TDZ 报错中断初始化）
+  function updateJumpLatest() {
+    const btn = document.getElementById('jumpLatest');
+    const st = document.getElementById('stream');
+    if (!btn || !st) return;
+    const dist = st.scrollHeight - st.scrollTop - st.clientHeight;
+    btn.classList.toggle('show', dist > 120);
+  }
+  const jumpLatestBtn = document.getElementById('jumpLatest');
+  const jumpStreamEl = document.getElementById('stream');
+  if (jumpLatestBtn && jumpStreamEl) {
+    jumpLatestBtn.addEventListener('click', () => jumpStreamEl.scrollTo({ top: jumpStreamEl.scrollHeight, behavior: 'smooth' }));
+    jumpStreamEl.addEventListener('scroll', () => updateJumpLatest(), { passive: true });
+  }
+  // 初始进入：定位到最新消息
+  scrollBottom();
 
   // 需求解析（演示版：关键词提取）
   function parseRequirements(text) {
@@ -4590,8 +4635,10 @@
     const roleTime = ai.querySelector('.time');
 
     (async () => {
-      // 会话独立滚动：后台任务的流式输出只滚动自己的容器，不干扰当前显示的会话
-      const scrollBottom = () => { view.el.scrollTop = view.el.scrollHeight; };
+      // 会话独立滚动：该会话视图为当前显示视图时智能跟随（底部附近才自动滚，上滑不打断）；后台任务不干扰当前会话视图
+      const scrollBottom = () => {
+        if (view.el.isConnected && view.el.parentElement === stream) followBottom();
+      };
       const finishRun = () => {
         RUNNING_TASKS.delete(convKey);  // 释放该会话的运行锁（其他会话不受影响）
         refreshRunUI();
