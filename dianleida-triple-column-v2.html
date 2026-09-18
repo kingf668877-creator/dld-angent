@@ -494,14 +494,11 @@
     cursor:pointer; user-select:none; position:relative;
     white-space:nowrap; overflow:hidden;
     transition:background .15s, border-color .15s, color .15s, box-shadow .15s;
-    z-index:250;
+    /* 顶栏胶囊层级统一压在所有模态遮罩(z-index:400)之下，杜绝胶囊穿透弹窗（历史反复复发的根因） */
+    z-index:60;
   }
   .chat-head .right .account-chip:hover { background:var(--brand-soft); border-color:#b8eacd; color:var(--brand-dark); box-shadow:0 1px 4px rgba(22,163,74,.10); }
   .chat-head .right .account-chip:active { transform:scale(.97); }
-  /* 模态弹窗打开时回归普通层级，避免账号胶囊穿透遮罩。
-     选择器必须与上面的基础规则等特异性（.chat-head .right .account-chip = 0,3,0），
-     否则 body.modal-active 前缀算出的特异性不足以覆盖 z-index:250 */
-  body.modal-active .chat-head .right .account-chip { z-index:auto; position:static; }
   .account-chip .ac-avatar {
     width:21px; height:21px; border-radius:50%;
     background:var(--brand-soft); display:inline-flex; align-items:center; justify-content:center;
@@ -646,7 +643,7 @@
 
   /* 子账号设置按钮样式统一在 .chat-head .right .account-settings-btn 中定义 */
 
-  .settings-modal { position:fixed; inset:0; z-index:120; display:none; align-items:center; justify-content:center; background:rgba(31,35,41,.38); padding:20px; }
+  .settings-modal { position:fixed; inset:0; z-index:400; display:none; align-items:center; justify-content:center; background:rgba(31,35,41,.38); padding:20px; }
   .settings-modal.open { display:flex; }
   .settings-dialog { width:min(560px, 100%); background:#fff; border-radius:10px; box-shadow:0 16px 50px rgba(31,35,41,.22); overflow:hidden; }
   .settings-head { display:flex; align-items:center; gap:10px; padding:16px 20px; border-bottom:1px solid var(--border-light); }
@@ -696,7 +693,7 @@
   @keyframes loadingBar { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
 
   /* ==================== 积分中心弹窗 ==================== */
-  .wallet-modal { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; background: rgba(31,35,41,.38); padding: 20px; }
+  .wallet-modal { position: fixed; inset: 0; z-index: 400; display: none; align-items: center; justify-content: center; background: rgba(31,35,41,.38); padding: 20px; }
   .wallet-modal.open { display: flex; }
   .wallet-dialog { width: min(760px, 100%); max-height: min(720px, 92vh); overflow-y: auto; background: #fff; border-radius: 10px; box-shadow: 0 16px 50px rgba(31,35,41,.22); }
   .wallet-head { display:flex; align-items:center; gap:10px; padding:18px 22px; border-bottom:1px solid var(--border-light); }
@@ -749,7 +746,7 @@
   .wallet-package.selected .wp-action.wp-buy { background: var(--brand); color:#fff; border-color: var(--brand); }
 
   /* ==================== 购买确认弹窗 ==================== */
-  .confirm-modal { position: fixed; inset: 0; z-index: 110; display: none; align-items: center; justify-content: center; background: rgba(31,35,41,.45); padding: 20px; }
+  .confirm-modal { position: fixed; inset: 0; z-index: 400; display: none; align-items: center; justify-content: center; background: rgba(31,35,41,.45); padding: 20px; }
   .confirm-modal.open { display: flex; }
   .confirm-dialog { width: min(420px, 100%); background: #fff; border-radius: 10px; box-shadow: 0 16px 50px rgba(31,35,41,.22); overflow: hidden; }
   .confirm-head { padding: 18px 20px 6px; display: flex; align-items: center; gap: 10px; }
@@ -1408,7 +1405,7 @@
 
   /* 删除会话确认弹窗（TRAE 风格）：红色感叹号图标 + 提示正文 + 取消/删除双按钮 */
   .confirm-modal {
-    position: fixed; inset: 0; z-index: 120;
+    position: fixed; inset: 0; z-index: 400;
     display: none; align-items: center; justify-content: center;
     background: rgba(31, 35, 41, .38); padding: 20px;
   }
@@ -1455,8 +1452,8 @@
     transition: border-color .12s ease, box-shadow .12s ease;
   }
   .rn-input:focus { border-color: var(--text); box-shadow: 0 0 0 2px rgba(31, 35, 41, .06); }
-  .cf-primary { border: 1px solid #1f2329; background: #1f2329; color: #fff; }
-  .cf-primary:hover { background: #383d45; border-color: #383d45; }
+  .cf-primary { border: 1px solid var(--brand); background: var(--brand); color: #fff; }
+  .cf-primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
 
   .attach-chip .ac-info {
     flex: 1; min-width: 0;
@@ -3515,7 +3512,7 @@
     if (!el) {
       el = document.createElement('div');
       el.id = 'flashToast';
-      el.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%);background:#1f2329;color:#fff;padding:8px 16px;border-radius:6px;font-size:12px;z-index:300;box-shadow:0 8px 24px rgba(0,0,0,.2);opacity:0;transition:opacity .2s;';
+      el.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%);background:#1f2329;color:#fff;padding:8px 16px;border-radius:6px;font-size:12px;z-index:500;box-shadow:0 8px 24px rgba(0,0,0,.2);opacity:0;transition:opacity .2s;';
       document.body.appendChild(el);
     }
     el.textContent = text;
@@ -4050,21 +4047,8 @@
   }
   bindDetailLinks();
 
-  // 同步任意模态弹窗的开启状态到 body.modal-active：弹窗打开时顶部账号胶囊回归普通层级，不再穿透遮罩层
-  (function syncModalActiveFlag() {
-    const modals = ['walletModal', 'buyConfirm', 'settingsModal', 'shareModal', 'accountPopover']
-      .map(id => document.getElementById(id))
-      .filter(Boolean);
-    if (!modals.length) return;
-    const apply = () => {
-      const anyOpen = modals.some(el => el.classList.contains('open'));
-      document.body.classList.toggle('modal-active', anyOpen);
-    };
-    modals.forEach(el => {
-      new MutationObserver(apply).observe(el, { attributes: true, attributeFilter: ['class'] });
-    });
-    apply();
-  })();
+  // 顶栏胶囊与弹窗层级已由 CSS 统一规范：胶囊 z-index:60 < 模态遮罩 z-index:400 < toast z-index:500，
+  // 新增弹窗只需沿用现有遮罩类（z-index:400），无需再维护 JS 白名单（历史反复复发的补丁已移除）
 
   // 右侧表格：价格、销量、评分排序 + CSV 导出
   function parseCellNumber(value) {
