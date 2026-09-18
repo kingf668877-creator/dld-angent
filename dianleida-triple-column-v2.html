@@ -485,10 +485,10 @@
 
   /* ==================== 主/子账号胶囊与切换 ==================== */
   .chat-head .right .account-chip {
-    display:inline-flex; align-items:center; gap:4px;
-    height:28px; min-width:0; padding:0 7px 0 4px;
-    background:#fff; color:var(--text);
-    border:1px solid var(--border);
+    display:inline-flex; align-items:center; gap:5px;
+    height:28px; min-width:0; padding:0 8px 0 4px;
+    background:#fff; color:#1f2329;
+    border:1px solid #dfe3e8;
     border-radius:14px; font-size:12px; font-weight:600;
     cursor:pointer; user-select:none; position:relative;
     white-space:nowrap; overflow:hidden;
@@ -496,14 +496,14 @@
     /* 顶栏胶囊层级统一压在所有模态遮罩(z-index:400)之下，杜绝胶囊穿透弹窗（历史反复复发的根因） */
     z-index:60;
   }
-  .chat-head .right .account-chip:hover { background:var(--brand-soft); border-color:#b8eacd; color:var(--brand-dark); box-shadow:0 1px 4px rgba(22,163,74,.10); }
+  .chat-head .right .account-chip:hover { background:#f8faf9; border-color:#cbd5d0; color:#1f2329; box-shadow:0 1px 4px rgba(31,35,41,.08); }
   .chat-head .right .account-chip:active { transform:scale(.97); }
   .account-chip .ac-avatar {
     width:20px; height:20px; border-radius:6px;
-    background:linear-gradient(135deg,#dcf5e7 0%,#bfeed2 100%);
+    background:#e8f7ee;
     display:inline-flex; align-items:center; justify-content:center;
-    color:var(--brand-dark); flex-shrink:0;
-    box-shadow:inset 0 0 0 1px rgba(16,173,83,.14);
+    color:#16a35a; flex-shrink:0;
+    box-shadow:inset 0 0 0 1px rgba(22,163,90,.18);
   }
   .account-chip .ac-avatar svg { display:block; width:14px; height:14px; }
   .account-chip #accountName {
@@ -541,21 +541,21 @@
      与账号胶囊统一为白底描边家族：金色只保留在金币图标上做语义点缀，
      避免整圈金边+金字在白灰顶栏里突兀 */
   .coin-chip {
-    display:inline-flex; align-items:center; gap:4px;
+    display:inline-flex; align-items:center; gap:5px;
     height:28px; padding:0 10px;
-    background:#fff; color:var(--text);
-    border:1px solid var(--border); border-radius:14px;
+    background:#fff; color:#4e5969;
+    border:1px solid #dfe3e8; border-radius:14px;
     font-size:12px; font-weight:600;
     cursor:pointer; user-select:none;
     transition:background .15s, border-color .15s, transform .12s, box-shadow .15s;
     white-space:nowrap;
   }
-  .coin-chip:hover { background:#FFFBEA; border-color:#FFD66B; box-shadow:0 1px 4px rgba(255,197,61,.12); }
+  .coin-chip:hover { background:#fafbfc; border-color:#cbd2d9; box-shadow:0 1px 4px rgba(31,35,41,.08); }
   .coin-chip:active { transform:scale(.97); }
   .coin-chip .cc-icon { flex-shrink:0; display:block; }
   /* 提高特异性：防止被 .chat-head .right span:hover 通用规则把数字染成品牌绿 */
   .chat-head .right .coin-chip { color:var(--text); }
-  .chat-head .right .coin-chip:hover { background:#FFFBEA; border-color:#FFD66B; color:#4E5969; }
+  .chat-head .right .coin-chip:hover { background:#fafbfc; border-color:#cbd2d9; color:#4E5969; }
   .chat-head .right .coin-chip:hover #coinText { color:#4E5969; }
 
   /* 账号下拉：固定定位，由脚本算出位置 */
