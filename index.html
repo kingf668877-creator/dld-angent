@@ -370,6 +370,23 @@
     transition: background .12s, color .12s, border-color .12s;
   }
   .conv-actions .conv-trigger:hover { color: var(--brand); background:#fff; border-color: var(--brand); }
+  /* 会话项"停止生成"按钮（运行中常显） */
+  .conv-actions .conv-stop {
+    width: 22px; height: 22px; border: 1px solid transparent;
+    background: transparent; color: #d6493a;
+    border-radius: 3px; cursor: pointer; font-size: 9px; line-height: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .conv-actions .conv-stop:hover { background:#fef0ef; border-color:#d6493a; }
+  /* 运行中会话：绿色脉冲点 + 操作按钮常显 */
+  .conv-item.running .conv-actions { opacity: 1; pointer-events: auto; transform: none; }
+  .run-dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--brand, #22a06b); margin-right: 6px; vertical-align: 1.5px;
+    animation: dldRunPulse 1.2s ease-in-out infinite; flex: none;
+  }
+  @keyframes dldRunPulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
 
   /* 会话右键菜单（context menu） */
   .conv-menu {
@@ -478,50 +495,71 @@
 
   /* ==================== 主/子账号胶囊与切换 ==================== */
   .chat-head .right .account-chip {
-    display:inline-flex; align-items:center; gap:6px;
-    height:28px; min-width:0; padding:0 9px 0 4px;
+    display:inline-flex; align-items:center; gap:5px;
+    height:28px; min-width:0; padding:0 8px 0 4px;
     background:#fff; color:var(--text);
     border:1px solid var(--border);
     border-radius:14px; font-size:12px; font-weight:600;
     cursor:pointer; user-select:none; position:relative;
     white-space:nowrap; overflow:hidden;
-    transition:background .15s, border-color .15s, color .15s;
+    transition:background .15s, border-color .15s, color .15s, box-shadow .15s;
     z-index:250;
   }
-  .chat-head .right .account-chip:hover { background:var(--brand-soft); border-color:#b8eacd; color:var(--brand-dark); }
-  /* 模态弹窗打开时回归普通层级，避免账号胶囊穿透遮罩 */
-  body.modal-active .account-chip { z-index:auto; }
+  .chat-head .right .account-chip:hover { background:var(--brand-soft); border-color:#b8eacd; color:var(--brand-dark); box-shadow:0 1px 4px rgba(22,163,74,.10); }
+  .chat-head .right .account-chip:active { transform:scale(.97); }
+  /* 模态弹窗打开时回归普通层级，避免账号胶囊穿透遮罩。
+     选择器必须与上面的基础规则等特异性（.chat-head .right .account-chip = 0,3,0），
+     否则 body.modal-active 前缀算出的特异性不足以覆盖 z-index:250 */
+  body.modal-active .chat-head .right .account-chip { z-index:auto; position:static; }
   .account-chip .ac-avatar {
-    width:22px; height:22px; border-radius:50%;
-    background:var(--bg); display:inline-flex; align-items:center; justify-content:center;
-    font-size:13px; color:var(--brand-dark); border:1px solid var(--border-light); flex-shrink:0;
+    width:21px; height:21px; border-radius:50%;
+    background:var(--brand-soft); display:inline-flex; align-items:center; justify-content:center;
+    font-size:12px; color:var(--brand-dark); flex-shrink:0;
   }
   .account-chip #accountName {
     max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
+  /* 主/子账号徽章：浅底描边胶囊，配色由 data-role 驱动（主=绿 / 子=蓝） */
+  /* 主账号隐藏徽章：胶囊名字"主账号·xxx"已表达身份，避免与下拉箭头挤在一起 */
   .account-chip .ac-role {
-    background:var(--brand-soft); color:var(--brand-dark); font-size:9px;
-    padding:1px 4px; border-radius:3px; font-weight:600; flex-shrink:0;
+    font-size:10px; line-height:1; padding:3px 5px; border-radius:4px;
+    font-weight:700; letter-spacing:.5px; flex-shrink:0;
+    background:var(--brand-soft); color:var(--brand-dark);
+    box-shadow:inset 0 0 0 1px rgba(22,163,74,.22);
   }
-  .account-chip .ac-arrow { font-size:8px; color:var(--text-dim); margin-left:1px; flex-shrink:0; }
+  .account-chip .ac-role[data-role="main"] { display:none; }
+  .account-chip .ac-role[data-role="slave"] {
+    background:#e8f4ff; color:#1668dc;
+    box-shadow:inset 0 0 0 1px rgba(24,144,255,.25);
+  }
+  /* 下拉箭头：细线 chevron，下拉展开时旋转 180° */
+  .account-chip .ac-arrow {
+    display:inline-flex; align-items:center; margin-left:1px; flex-shrink:0;
+    color:var(--text-dim); transition:transform .18s, color .15s;
+  }
+  .account-chip .ac-arrow svg { display:block; }
+  .account-chip:hover .ac-arrow { color:var(--brand-dark); }
+  .account-chip.open .ac-arrow { transform:rotate(180deg); }
 
-  /* 独立积分药丸：紧跟账号胶囊右侧，可独立点击唤起购买弹窗 */
+  /* 独立积分药丸：紧跟账号胶囊右侧，可独立点击唤起购买弹窗。
+     与账号胶囊统一为白底描边家族：金色只保留在金币图标上做语义点缀，
+     避免整圈金边+金字在白灰顶栏里突兀 */
   .coin-chip {
     display:inline-flex; align-items:center; gap:4px;
     height:28px; padding:0 10px;
-    background:#fff; color:#b8860b;
-    border:1px solid #FFD66B; border-radius:14px;
-    font-size:12px; font-weight:700;
+    background:#fff; color:var(--text);
+    border:1px solid var(--border); border-radius:14px;
+    font-size:12px; font-weight:600;
     cursor:pointer; user-select:none;
     transition:background .15s, border-color .15s, transform .12s, box-shadow .15s;
     white-space:nowrap;
   }
-  .coin-chip:hover { background:#FFF8E1; border-color:#FFC53D; box-shadow:0 2px 6px rgba(255,197,61,.25); }
-  .coin-chip:active { transform:scale(.95); }
+  .coin-chip:hover { background:#FFFBEA; border-color:#FFD66B; box-shadow:0 1px 4px rgba(255,197,61,.12); }
+  .coin-chip:active { transform:scale(.97); }
   .coin-chip .cc-icon { flex-shrink:0; display:block; }
-  /* 提高特异性：防止被 .chat-head .right span 通用规则覆盖金色文字与 hover 背景 */
-  .chat-head .right .coin-chip { color:#b8860b; }
-  .chat-head .right .coin-chip:hover { background:#FFF8E1; border-color:#FFC53D; color:#b8860b; }
+  /* 提高特异性：防止被 .chat-head .right span:hover 通用规则把数字染成品牌绿 */
+  .chat-head .right .coin-chip { color:var(--text); }
+  .chat-head .right .coin-chip:hover { background:#FFFBEA; border-color:#FFD66B; color:var(--text); }
 
   /* 账号下拉：固定定位，由脚本算出位置 */
   .account-popover {
@@ -549,9 +587,12 @@
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
   }
   .account-self .as-role {
-    flex-shrink:0; background:var(--brand); color:#fff; font-size:9px;
-    padding:1px 4px; border-radius:3px; font-weight:500;
+    flex-shrink:0; font-size:10px; line-height:1; padding:3px 5px; border-radius:4px;
+    font-weight:700; letter-spacing:.5px;
+    background:var(--brand-soft); color:var(--brand-dark);
+    box-shadow:inset 0 0 0 1px rgba(22,163,74,.22);
   }
+  .account-self .as-role[data-role="main"] { display:none; }
   .account-self .as-shop {
     font-size:11px; color:var(--text-muted); margin-top:3px;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
@@ -575,12 +616,13 @@
     display:flex; align-items:center; gap:5px;
   }
   .account-list .al-name .al-role {
-    background:#e8f4ff; color:#1890ff; font-size:9px;
-    padding:1px 4px; border-radius:3px;
+    font-size:10px; line-height:1; padding:3px 5px; border-radius:4px;
+    font-weight:700; letter-spacing:.5px;
+    background:#e8f4ff; color:#1668dc;
+    box-shadow:inset 0 0 0 1px rgba(24,144,255,.25);
   }
-  .account-list .al-name .al-role.main {
-    background:#fff5e6; color:#d68a00;
-  }
+  /* 列表内主账号同样隐藏徽章：名字"主账号·xxx"已表达身份 */
+  .account-list .al-name .al-role.main { display:none; }
   .account-list .al-shop { font-size:11px; color:var(--text-dim); margin-top:1px; }
   .account-list .al-time { font-size:10px; color:var(--text-dim); margin-left:auto; }
   .account-empty { padding:18px; text-align:center; color:var(--text-dim); font-size:12px; }
@@ -732,7 +774,8 @@
   .confirm-foot { padding: 14px 20px 18px; display: flex; justify-content: flex-end; gap: 8px; }
   .confirm-foot button { height: 34px; padding: 0 18px; border-radius: 4px; border: 1px solid var(--border); background: #fff; color: var(--text-muted); cursor: pointer; font-size: 13px; }
   .confirm-foot button.primary { background: var(--brand); border-color: var(--brand); color: #fff; }
-  .confirm-foot button.primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+  /* primary hover 需显式压回白字：通用 button:hover 的深绿字与本规则特异性相同且声明在后 */
+  .confirm-foot button.primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); color: #fff; }
   .confirm-foot button:hover { color: var(--brand-dark); border-color: var(--brand); }
 
   /* ==================== 商品详情对比表（点击“查看详情”后展开） ==================== */
@@ -1651,6 +1694,31 @@
   .preview-table .detail-line .stars { color:#ff4c4c; letter-spacing:2px; }
   .preview-table .detail-line .action { margin-left:auto; color:#1689e8; cursor:pointer; }
   .preview-table .detail-line .action:hover { text-decoration:underline; }
+  /* ==================== 选品表卡片式风格（仅主商品表 #previewTable） ==================== */
+  #previewTable { border-spacing: 0 8px; font-size: 12px; color: #3c4652; }
+  #previewTable th {
+    background: #fff; color: #8a939d; font-weight: 500; font-size: 11px;
+    padding: 4px 10px 8px; border-bottom: 1px solid #eef1f4;
+  }
+  #previewTable th.sortable:hover { color: var(--brand-dark); background: #f7faf8; }
+  #previewTable th.sort-active { color: var(--brand-dark); font-weight: 700; }
+  #previewTable td {
+    padding: 13px 10px; background: #fff; vertical-align: middle; white-space: nowrap;
+    border-top: 1px solid #eef1f4; border-bottom: 1px solid #eef1f4;
+    box-shadow: 0 1px 3px rgba(16,24,40,.05);
+  }
+  #previewTable td:first-child { border-left: 1px solid #eef1f4; border-radius: 12px 0 0 12px; }
+  #previewTable td:last-child { border-right: 1px solid #eef1f4; border-radius: 0 12px 12px 0; }
+  #previewTable tr.product-main:hover td { background: #fafcfe; box-shadow: 0 4px 12px rgba(16,24,40,.09); border-color: #e3e9ef; }
+  #previewTable td.idx-cell { font-size: 20px; font-weight: 700; color: #2f3a45; text-align: center; min-width: 42px; }
+  #previewTable td.time-cell { color: #6f7a85; font-size: 11px; line-height: 1.5; }
+  #previewTable .price { font-size: 17px; }
+  #previewTable td.ladder { font-size: 11px; }
+  #previewTable .img-cell { width: 56px; height: 56px; min-width: 56px; border-radius: 8px; font-size: 26px; }
+  #previewTable .img-cell img, #previewTable td > img { width: 56px; height: 56px; max-width: 56px; max-height: 56px; border-radius: 8px; }
+  #previewTable .product-info { min-width: 210px; max-width: 290px; gap: 10px; }
+  #previewTable .product-title { color: #2b3540; font-size: 12px; font-weight: 500; line-height: 1.45; }
+  #previewTable .mini-tag { margin: 2px 4px 0 0; padding: 1px 5px; border-radius: 3px; font-size: 10px; }
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 3px; }
@@ -1780,6 +1848,79 @@
   }
   .thinking-line .tdots span:nth-child(2) { animation-delay: .2s; }
   .thinking-line .tdots span:nth-child(3) { animation-delay: .4s; }
+  .status-line .tdots span {
+    display: inline-block; width: 3px; height: 3px; border-radius: 50%;
+    background: var(--text-dim); margin-left: 3px;
+    animation: dotsBlink 1.2s infinite;
+  }
+  .status-line .tdots span:nth-child(2) { animation-delay: .2s; }
+  .status-line .tdots span:nth-child(3) { animation-delay: .4s; }
+
+  /* 表格生成中的骨架屏 */
+  .table-skeleton {
+    margin: 8px 0 4px; padding: 10px 12px;
+    border: 1px solid var(--border-light); border-radius: var(--r);
+    background: #fafbfc;
+    animation: fadeInUp .35s ease;
+  }
+  .table-skeleton .sk-row {
+    height: 10px; border-radius: 3px; margin: 8px 0;
+    background: linear-gradient(90deg, #eef0f2 25%, #e2e6ea 37%, #eef0f2 63%);
+    background-size: 400% 100%;
+    animation: skShimmer 1.3s ease infinite;
+  }
+  .table-skeleton .sk-row.w60 { width: 60%; }
+  .table-skeleton .sk-row.w80 { width: 80%; }
+  .table-skeleton .sk-label {
+    display: flex; align-items: center; font-size: 12px; color: var(--text-dim); margin-top: 6px;
+  }
+  @keyframes skShimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+  }
+
+  /* 分析进度卡：阶段步骤条 + 秒级计时 + 可展开推理明细 */
+  .analyze-card {
+    margin: 8px 0 4px; background: #fff;
+    border: 1px solid var(--border-light); border-radius: var(--r);
+    overflow: hidden; animation: fadeInUp .35s ease;
+  }
+  .analyze-head {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px; cursor: pointer; user-select: none;
+  }
+  .analyze-head .az-ic {
+    width: 22px; height: 22px; flex: none;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; color: #7c5cff; background: #f1edff; border-radius: 5px;
+    animation: azPulse 1.6s ease infinite;
+  }
+  .analyze-head .az-stage { font-size: 13px; font-weight: 500; color: var(--text); }
+  .analyze-head .az-time {
+    font-size: 11px; color: var(--text-dim);
+    background: #f5f6f8; border-radius: 9px; padding: 1px 7px;
+    font-variant-numeric: tabular-nums;
+  }
+  .analyze-head .az-arrow { margin-left: auto; color: var(--text-dim); font-size: 11px; transition: transform .2s; }
+  .analyze-card.collapsed .az-arrow { transform: rotate(180deg); }
+  .analyze-card.collapsed .analyze-body { display: none; }
+  @keyframes azPulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+  .analyze-steps { display: flex; align-items: center; gap: 5px; padding: 0 12px 10px; flex-wrap: wrap; }
+  .analyze-steps .az-step {
+    font-size: 10.5px; color: var(--text-dim);
+    padding: 2px 8px; border-radius: 9px; background: #f5f6f8; white-space: nowrap;
+    transition: all .25s;
+  }
+  .analyze-steps .az-step.on { color: #c2560a; background: #fff1e6; font-weight: 500; }
+  .analyze-steps .az-step.done { color: #1689e8; background: #eef6fd; }
+  .analyze-steps .az-sep { color: #d3d9df; font-size: 10px; }
+  .analyze-body {
+    margin: 0 12px 10px; padding: 8px 10px;
+    max-height: 150px; overflow-y: auto;
+    border-left: 2px solid #e3e8ee;
+    font-size: 11.5px; line-height: 1.7; color: var(--text-muted);
+    white-space: pre-wrap; word-break: break-word;
+  }
 
   /* 第 1 批：空状态、停止与重新生成 */
   .chat-head .stop-btn {
@@ -1798,6 +1939,161 @@
   .empty-prompts button:hover { background: var(--brand-soft); }
   .regen-btn { margin-top: 10px; border: 1px solid var(--border); background: #fff; color: var(--text-muted); border-radius: var(--r-sm); padding: 5px 10px; font-size: 12px; cursor: pointer; }
   .regen-btn:hover { border-color: var(--brand); color: var(--brand-dark); }
+
+  /* ==================== Markdown 渲染样式 ==================== */
+  .md-think { margin: 4px 0 8px; border: 1px solid var(--border-light); border-radius: var(--r); background: #f9fafb; overflow: hidden; }
+  .md-think summary { cursor: pointer; padding: 6px 10px; font-size: 12px; color: var(--text-dim); user-select: none; }
+  .md-think summary:hover { background: #f0f1f2; }
+  .md-think-body { padding: 8px 12px; font-size: 12px; color: var(--text-dim); line-height: 1.6; }
+  .md-h1 { font-size: 16px; font-weight: 700; margin: 10px 0 6px; color: var(--text); }
+  .md-h2 { font-size: 14px; font-weight: 600; margin: 8px 0 4px; color: var(--text); }
+  .md-h3 { font-size: 13px; font-weight: 600; margin: 6px 0 4px; color: var(--text); }
+  .md-h4 { font-size: 12px; font-weight: 600; margin: 4px 0 2px; color: var(--text-muted); }
+  .md-p { margin: 0 0 6px; font-size: 13px; line-height: 1.7; color: var(--text); }
+  .md-quote { margin: 6px 0; padding: 6px 10px; border-left: 3px solid var(--brand); background: var(--brand-soft); border-radius: 0 var(--r-sm) var(--r-sm) 0; font-size: 12px; color: var(--text-muted); }
+  .md-ul, .md-ol { margin: 4px 0 6px; padding-left: 20px; font-size: 13px; line-height: 1.7; color: var(--text); }
+  .md-ul li { list-style: disc; }
+  .md-ol li { list-style: decimal; }
+  .md-link { color: #1890FF; text-decoration: none; }
+  .md-link:hover { text-decoration: underline; }
+  .md-img { max-width: 60px; max-height: 60px; border-radius: 2px; vertical-align: middle; }
+  .md-code { font-size: 11px; background: #f0f0f0; padding: 1px 4px; border-radius: 2px; }
+  /* 对话表格：卡片式宽表格（与右栏选品表同风格：横向滚动、单元格不折行、圆角卡片行） */
+  .md-table-wrap { margin: 8px 0 4px; overflow-x: auto; border-radius: 10px; }
+  .md-table { min-width: 720px; border-collapse: separate; border-spacing: 0 6px; font-size: 12px; line-height: 1.5; color: #3c4652; }
+  .md-table th { background: #fff; padding: 2px 10px 6px; text-align: left; font-weight: 500; font-size: 11px; color: #8a939d; white-space: nowrap; border-bottom: 1px solid #eef1f4; }
+  .md-table td { padding: 12px 10px; background: #fff; color: #3c4652; vertical-align: middle; white-space: nowrap; border-top: 1px solid #eef1f4; border-bottom: 1px solid #eef1f4; box-shadow: 0 1px 3px rgba(16,24,40,.05); }
+  .md-table td:first-child { border-left: 1px solid #eef1f4; border-radius: 12px 0 0 12px; }
+  .md-table td:last-child { border-right: 1px solid #eef1f4; border-radius: 0 12px 12px 0; }
+  .md-table tr:hover td { background: #fafcfe; }
+  .md-table strong { color: #FF6600; }
+  .md-table .md-img { width: 44px; height: 44px; max-width: 44px; max-height: 44px; border-radius: 6px; object-fit: cover; flex: none; }
+  /* 含图片的单元格（商品信息列）：图左文右，仅商品文字允许换行 */
+  .md-cell-prod { display: flex; align-items: center; gap: 9px; min-width: 190px; max-width: 270px; }
+  .md-cell-prod .prod-txt { white-space: normal; color: #2b3540; font-size: 12px; line-height: 1.45; }
+  .md-cell-prod .prod-txt .mini-tag { margin: 1px 4px 0 0; padding: 1px 5px; border-radius: 3px; font-size: 10px; background: #f2f4f7; color: #6b7683; display: inline-block; }
+
+  /* 表格"查看更多"按钮（中栏，超过阈值行数时出现在表格底部） */
+  .md-more-btn {
+    width: 100%; padding: 9px 0; text-align: center; font-size: 11px; margin-top: 8px;
+    color: #1689e8; background: #f7fafd; border: 1px solid #e8edf2; border-radius: 10px;
+    cursor: pointer; user-select: none;
+  }
+  .md-more-btn:hover { background: #eef5fc; color: var(--brand-dark); font-weight: 600; }
+
+  /* 右栏：对话表格完整数据视图 */
+  .md-preview-wrap { margin-bottom: 14px; }
+  .md-preview-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .md-preview-toolbar .md-preview-title { font-size: 13px; font-weight: 700; color: #303943; flex: 1; }
+  .md-preview-toolbar .md-preview-close {
+    width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    color: #909399; cursor: pointer; font-size: 15px; background: #f1f3f5; flex: none;
+  }
+  .md-preview-toolbar .md-preview-close:hover { background: #e4e7ea; color: #303943; }
+  .md-preview-meta { font-size: 11px; color: #7b858e; margin-bottom: 8px; }
+  .md-full-table th { white-space: nowrap; }
+  .md-full-table td { white-space: normal; min-width: 90px; }
+  /* 表格详情模式下，隐藏右栏 1688 商品区块，只显示对话表格完整视图 */
+  .right-body.md-full-mode > *:not(#mdTablePreview) { display: none; }
+  /* —— "报告已生成"卡片：报告类回复完成后中栏展示，点击打开右栏预览 —— */
+  .rd-done-card {
+    display: flex; align-items: center; gap: 12px; max-width: 100%;
+    margin: 8px 0 4px; padding: 14px 16px;
+    background: linear-gradient(135deg, #F4FBF6, #EAF6EF);
+    border: 1px solid #C8E8D4; border-radius: 12px;
+    cursor: pointer; user-select: none;
+    transition: box-shadow .18s, transform .18s, border-color .18s;
+  }
+  .rd-done-card:hover { border-color: #00B050; box-shadow: 0 4px 16px rgba(0,135,60,.14); transform: translateY(-1px); }
+  .rd-done-card:active { transform: translateY(0); }
+  .rdc-ic {
+    flex: none; width: 40px; height: 40px; border-radius: 11px;
+    background: linear-gradient(135deg, #00B050, #00873C);
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+    box-shadow: 0 3px 8px rgba(0,135,60,.25);
+  }
+  .rdc-main { flex: 1; min-width: 0; }
+  .rdc-title { font-size: 13.5px; font-weight: 800; color: #00873C; margin-bottom: 4px; }
+  .rdc-meta { font-size: 11.5px; color: #7B858E; line-height: 1.5; }
+  .rdc-meta b { color: #00873C; }
+  .rdc-btn {
+    flex: none; padding: 7px 14px; font-size: 12px; font-weight: 700; color: #fff;
+    background: linear-gradient(135deg, #00B050, #00873C); border-radius: 16px;
+    box-shadow: 0 2px 6px rgba(0,135,60,.22);
+  }
+  .rd-done-card:hover .rdc-btn { background: linear-gradient(135deg, #00873C, #006C30); }
+
+  /* 报告模式下，隐藏右栏其他区块，只显示 HTML 报告视图 */
+  .right-body.report-mode > *:not(#reportView) { display: none; }
+
+  /* —— HTML 选品报告视图 —— */
+  .report-view { padding-bottom: 20px; }
+  .report-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .report-toolbar .rp-title { flex: 1; font-size: 15px; font-weight: 700; color: #303943; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .report-toolbar .rp-btn {
+    flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px;
+    font-size: 11px; color: #00873C; background: #EAF6EF; border: 1px solid #BFE3CD; border-radius: 14px; cursor: pointer;
+  }
+  .report-toolbar .rp-btn:hover { background: #D8F0E1; color: #006C30; }
+  .report-meta { font-size: 11px; color: #7b858e; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border-light); }
+  /* 报告文档（店雷达绿主题，与导出 HTML 同构） */
+  .report-doc {
+    background: #F8F9FA; border: 1px solid var(--border-light); border-radius: 10px;
+    padding: 10px; font-size: 12.5px; line-height: 1.75; color: #1F2D1F;
+  }
+  .rd-hero {
+    position: relative; overflow: hidden; border-radius: 10px; padding: 18px 16px 15px; margin-bottom: 12px;
+    background: linear-gradient(135deg, #006C30 0%, #00873C 50%, #00B050 100%); color: #fff;
+  }
+  .rd-hero::after { content: ''; position: absolute; right: -30px; top: -40px; width: 130px; height: 130px; border-radius: 50%; background: rgba(255,255,255,.10); }
+  .rd-hero::before { content: ''; position: absolute; right: 44px; bottom: -50px; width: 100px; height: 100px; border-radius: 50%; background: rgba(255,255,255,.07); }
+  .rd-hero-badge { position: relative; z-index: 1; display: inline-block; font-size: 10px; letter-spacing: 1px; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35); padding: 2px 8px; border-radius: 10px; margin-bottom: 8px; }
+  .rd-hero h1 { position: relative; z-index: 1; margin: 0 0 6px; font-size: 16px; line-height: 1.45; font-weight: 800; color: #fff; }
+  .rd-hero a { color: #fff; text-decoration: underline; }
+  .rd-hero-sub { position: relative; z-index: 1; font-size: 10.5px; color: rgba(255,255,255,.85); }
+  .rd-conclusion { background: linear-gradient(135deg, #F0F9F3, #E6F4EB); border-left: 4px solid #00873C; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; }
+  .rd-con-title { font-size: 12px; font-weight: 800; color: #00873C; margin-bottom: 6px; }
+  .rd-conclusion .md-p { margin: 4px 0; }
+  .rd-section { background: #fff; border: 1px solid #E5E7EB; border-radius: 10px; padding: 12px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,135,60,.05); }
+  .rd-sec-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .rd-sec-no { flex: none; width: 22px; height: 22px; border-radius: 7px; background: linear-gradient(135deg, #00B050, #00873C); color: #fff; font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .rd-sec-head h2 { margin: 0; font-size: 13.5px; font-weight: 800; color: #0F3D22; line-height: 1.4; }
+  .rd-sec-body > :first-child { margin-top: 0; }
+  .rd-sec-body > :last-child { margin-bottom: 0; }
+  .rd-kpi-cap { font-size: 10.5px; color: #7b858e; margin: 2px 0 8px; }
+  .rd-kpi-cap span { color: #B9C2BF; }
+  .rd-kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
+  .rd-kpi { background: #F7FBF8; border: 1px solid #E3EFE7; border-radius: 9px; padding: 9px 10px; }
+  .rd-kpi .k-label { font-size: 10.5px; color: #6E7F76; margin-bottom: 3px; }
+  .rd-kpi .k-value { font-size: 15px; font-weight: 800; color: #00873C; line-height: 1.3; word-break: break-all; }
+  .report-doc .md-h1, .report-doc .md-h2 { font-size: 13.5px; font-weight: 800; color: #0F3D22; margin: 12px 0 8px; padding-left: 9px; border-left: 4px solid #00B050; line-height: 1.4; }
+  .report-doc .md-h1:first-child, .report-doc .md-h2:first-child { margin-top: 0; }
+  .report-doc .md-h3, .report-doc .md-h4 { font-size: 12.5px; font-weight: 700; color: #24352B; margin: 10px 0 6px; }
+  .report-doc strong { color: #00873C; }
+  .report-doc .md-quote { background: #F0F7F2; border-left: 3px solid #00B050; color: #3D5247; }
+  .report-doc .md-p { margin: 6px 0; }
+  /* 报告表格：绿头横幅 + 圆角 */
+  .report-doc .md-table-wrap { border: 1px solid #E1EAE4; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,135,60,.05); }
+  .report-doc .md-table { border-collapse: collapse; border-spacing: 0; font-size: 11px; min-width: 420px; }
+  .report-doc .md-table th { background: linear-gradient(135deg, #00873C, #00A34A); color: #fff; padding: 6px 9px; font-weight: 600; border-bottom: none; white-space: nowrap; }
+  .report-doc .md-table td { white-space: normal; padding: 5px 9px; font-size: 11px; border: none; border-bottom: 1px solid #EDF2EF; box-shadow: none; background: transparent; border-radius: 0; }
+  .report-doc .md-table tr:hover td { background: #F4FAF6; }
+  .report-doc .md-cell-prod { min-width: 0; max-width: none; }
+  .report-doc .md-cell-prod .prod-txt { white-space: normal; }
+  .report-doc .md-more-btn { margin-top: 0; border: none; border-top: 1px solid #EDF2EF; border-radius: 0; color: #00873C; background: #F7FBF8; }
+  /* 步骤卡（有序列表） */
+  .report-doc .md-ol { counter-reset: rstep; list-style: none; padding-left: 0; margin: 8px 0; }
+  .report-doc .md-ol li { counter-increment: rstep; position: relative; padding: 7px 9px 7px 32px; margin: 6px 0; background: #FAFDFB; border: 1px solid #E6F1EA; border-radius: 8px; }
+  .report-doc .md-ol li::before {
+    content: counter(rstep); position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+    width: 17px; height: 17px; border-radius: 50%; background: linear-gradient(135deg, #00B050, #00873C);
+    color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  }
+  .report-doc .md-ul li { margin: 4px 0; }
+  .report-doc .md-ul li::marker { color: #00B050; }
+  .report-empty { text-align: center; padding: 60px 20px; color: #909399; }
+  .report-empty .re-ic { font-size: 34px; margin-bottom: 10px; }
+  .report-empty .re-t { font-size: 13px; font-weight: 600; color: #59636d; margin-bottom: 6px; }
 </style>
 </head>
 <body>
@@ -1859,8 +2155,8 @@
           <span class="account-chip" id="accountChip" title="切换账号">
             <span class="ac-avatar" id="accountAvatar">🐯</span>
             <span id="accountName">主店·青虎AI</span>
-            <span class="ac-role" id="accountRole">主</span>
-            <span class="ac-arrow">▼</span>
+            <span class="ac-role" id="accountRole" data-role="main">主</span>
+            <span class="ac-arrow"><svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 3.5 5 6.5 8 3.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
           </span>
           <!-- 独立积分入口：点击先打开积分中心，再从套餐进入确认充值 -->
           <span class="coin-chip" id="coinChip" title="点击充值积分" role="button" tabindex="0">
@@ -2059,7 +2355,7 @@
     </button>
 
     <div class="right-tabs">
-      <div class="right-tab active"><span class="rt-name">📊 美国亚马逊连衣裙 (20款)</span><span class="x">×</span></div>
+      <div class="right-tab active"><span class="rt-name" id="previewTabName">📊 美国亚马逊连衣裙 (20款)</span><span class="x">×</span></div>
       <div class="right-tab"><span class="rt-name">📄 选品报告</span><span class="x">×</span></div>
       <div class="right-tab">＋</div>
     </div>
@@ -2095,55 +2391,71 @@
         <table class="preview-table" id="previewTable">
           <thead>
             <tr>
-              <th>序号</th>
+              <th style="width:52px">序号</th>
               <th>商品信息</th>
               <th>上架时间</th>
-              <th class="sortable" data-sort-key="price">批发价 <span class="sort-indicator">↕</span></th>
+              <th class="sortable" data-sort-key="price">批发价 <span class="sort-indicator">⇕</span></th>
               <th>起批范围</th>
-              <th class="sortable" data-sort-key="sales">近30天订单数 <span class="sort-indicator">↕</span></th>
-              <th>近30天件数</th>
-              <th>近30天销售额</th>
-              <th>近7天销售趋势</th>
-              <th class="sortable" data-sort-key="rating">总订单数 <span class="sort-indicator">↕</span></th>
-              <th>总件数</th>
-              <th>复购率</th>
-              <th>代发价</th>
+              <th class="sortable" data-sort-key="sales">近30天订单数 <span class="sort-indicator">⇕</span></th>
+              <th class="sortable" data-sort-key="count">近30天件数 <span class="sort-indicator">⇕</span></th>
             </tr>
           </thead>
           <tbody>
             <tr class="product-main" data-group="1">
-              <td>1</td>
+              <td class="idx-cell">1</td>
               <td><div class="product-info"><div class="img-cell">👟</div><div class="product-title">碎皮板·复古尖头内增高高跟鞋<br><span class="mini-tag">1688严选</span><span class="mini-tag green">代发</span></div></div></td>
-              <td>2026-06-20<br>13:24:00</td><td class="price"><span class="rmb">¥</span>64.00</td><td class="ladder">≥1双 <b><span class="rmb">¥</span>64.00</b></td><td>4580</td><td>4652</td><td>¥29.77万+</td>
-              <td><svg class="trend" viewBox="0 0 76 30"><path class="axis" d="M0 27H76"/><path d="M0 25 C9 25 8 10 19 10 S28 1 39 7 S48 0 57 5 S65 29 76 17"/></svg></td>
-              <td>5487</td><td>5570</td><td class="ratio-up">61.0%</td><td class="consign"><span class="rmb">¥</span>65.00</td>
+              <td class="time-cell">2026-06-20 13:24</td><td class="price"><span class="rmb">¥</span>64.00</td><td class="ladder">≥1双 <b><span class="rmb">¥</span>64.00</b></td><td>2,295</td><td>480,201</td>
             </tr>
-            <tr class="product-detail" data-group="1"><td colspan="13"><div class="detail-line"><span class="label">商品类目：</span><span class="value">鞋 &gt; 女鞋 &gt; 女式高跟鞋</span><span class="label">月代发订单：</span><span class="query">◉ 查询</span><span class="label">收藏客户：</span><span class="query">◉ 查询</span><span class="label">发货地：</span><span class="value">广东鞋料</span><span class="stars">★ ★ ★ ★ ☆</span><span class="action">实际分析</span></div></td></tr>
             <tr class="product-main" data-group="2">
-              <td>2</td>
+              <td class="idx-cell">2</td>
               <td><div class="product-info"><div class="img-cell">👞</div><div class="product-title">新款韩版尖头女鞋粗跟2026春季<br><span class="mini-tag blue">厂家直供</span><span class="mini-tag green">代发</span></div></div></td>
-              <td>2026-04-04<br>02:25:00</td><td class="price"><span class="rmb">¥</span>55.00</td><td class="ladder">1~99双 <b><span class="rmb">¥</span>58.00</b><br>≥100双 <b><span class="rmb">¥</span>55.00</b></td><td>1831</td><td>1850</td><td>¥10.17万+</td>
-              <td><svg class="trend" viewBox="0 0 76 30"><path class="axis" d="M0 27H76"/><path d="M0 27 C10 27 12 5 22 5 S31 26 40 17 S53 8 62 15 S70 23 76 21"/></svg></td>
-              <td>4512</td><td>4577</td><td class="ratio-up">40.0%</td><td class="consign"><span class="rmb">¥</span>58.00</td>
+              <td class="time-cell">2026-04-04 02:25</td><td class="price"><span class="rmb">¥</span>55.00</td><td class="ladder">1~99双 <b><span class="rmb">¥</span>58.00</b><br>≥100双 <b><span class="rmb">¥</span>55.00</b></td><td>1,897</td><td>257,123</td>
             </tr>
-            <tr class="product-detail" data-group="2"><td colspan="13"><div class="detail-line"><span class="label">商品类目：</span><span class="value">鞋 &gt; 女鞋 &gt; 女式单鞋</span><span class="label">月代发订单：</span><span class="query">◉ 查询</span><span class="label">库存：</span><span class="query">◉ 查询</span><span class="label">发货地：</span><span class="value">广东鞋料</span><span class="stars">★ ★ ★ ★ ☆</span><span class="action">实际分析</span></div></td></tr>
             <tr class="product-main" data-group="3">
-              <td>3</td>
+              <td class="idx-cell">3</td>
               <td><div class="product-info"><div class="img-cell">👜</div><div class="product-title">植绒金色链条小方包2026新款<br><span class="mini-tag">1688严选</span><span class="mini-tag green">代发</span></div></div></td>
-              <td>2026-01-07<br>10:44:00</td><td class="price"><span class="rmb">¥</span>0.80</td><td class="ladder">≥1个 <b><span class="rmb">¥</span>0.80</b></td><td>1361</td><td>4506</td><td>¥3604.8</td>
-              <td><svg class="trend" viewBox="0 0 76 30"><path class="axis" d="M0 27H76"/><path d="M0 27 C8 27 10 5 20 5 S30 2 39 16 S52 28 60 25 S68 23 76 22"/></svg></td>
-              <td>6433</td><td>1.25万+</td><td class="ratio-up">65.0%</td><td class="consign"><span class="rmb">¥</span>0.80</td>
+              <td class="time-cell">2026-01-07 10:44</td><td class="price"><span class="rmb">¥</span>0.80</td><td class="ladder">≥1个 <b><span class="rmb">¥</span>0.80</b></td><td>76,101</td><td>3,074,537</td>
             </tr>
-            <tr class="product-detail" data-group="3"><td colspan="13"><div class="detail-line"><span class="label">商品类目：</span><span class="value">箱包 &gt; 女包 &gt; 斜挎包</span><span class="label">月代发订单：</span><span class="query">◉ 查询</span><span class="label">收藏客户：</span><span class="query">◉ 查询</span><span class="label">发货地：</span><span class="value">广东潮州</span><span class="stars">★ ★ ★ ☆ ☆</span><span class="action">实际分析</span></div></td></tr>
           </tbody>
         </table>
       </div>
 
       <div class="preview-h">选品摘要</div>
-      <p class="preview-p">覆盖 <strong>20</strong> 款 1688 商品，批发价区间 <strong>¥0.8 ~ ¥64</strong>，近 30 天订单 Top1 <strong>4,580 单</strong>，当前以商品库密集模式展示。</p>
+      <p class="preview-p" id="previewSummary">覆盖 <strong>20</strong> 款 1688 商品，批发价区间 <strong>¥0.8 ~ ¥64</strong>，近 30 天订单 Top1 <strong>4,580 单</strong>，当前以商品库密集模式展示。</p>
 
       <div class="preview-h">下一步建议</div>
       <p class="preview-p">① 立即下载完整 Excel<br>② 加入监控跟踪 7 日增长率<br>③ 对比 1688 / OZON 同款货源</p>
+
+      <!-- 对话表格完整数据视图（点击中栏表格"查看更多"时展示） -->
+      <div class="md-preview-wrap" id="mdTablePreview" style="display:none">
+        <div class="md-preview-toolbar">
+          <span class="md-preview-title" id="mdPreviewTitle">📋 对话表格详情</span>
+          <span class="md-preview-close" id="mdPreviewClose" title="返回商品数据">×</span>
+        </div>
+        <div class="md-preview-meta" id="mdPreviewMeta"></div>
+        <div class="excel-wrap" style="margin:0">
+          <div class="excel-toolbar">
+            <span class="name" id="mdPreviewCsvName">📊 对话表格详情.csv</span>
+            <span class="spacer"></span>
+            <span class="ic" id="mdPreviewExport" title="导出 Excel">⤓</span>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="preview-table md-full-table" id="mdPreviewTable"></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- HTML 选品报告视图（AI 回复完成后自动生成，点击"选品报告"Tab 查看） -->
+      <div class="report-view" id="reportView" style="display:none">
+        <div class="report-toolbar">
+          <div class="rp-title" id="reportViewTitle">选品报告</div>
+          <div class="rp-actions">
+            <span class="rp-btn" id="reportDownloadBtn" title="下载独立 HTML 文件">⤓ 下载 HTML</span>
+          </div>
+        </div>
+        <div class="report-meta" id="reportViewMeta"></div>
+        <div class="report-doc" id="reportViewDoc"></div>
+      </div>
     </div>
   </aside>
 </div>
@@ -2409,7 +2721,7 @@
     accountAvatar.textContent = CURRENT_ACCOUNT.avatar;
     accountName.textContent = CURRENT_ACCOUNT.name.length > 10 ? CURRENT_ACCOUNT.name.slice(0, 10) + '…' : CURRENT_ACCOUNT.name;
     accountRole.textContent = CURRENT_ACCOUNT.roleLabel;
-    accountRole.style.background = CURRENT_ACCOUNT.role === 'main' ? 'var(--brand)' : '#1890ff';
+    accountRole.dataset.role = CURRENT_ACCOUNT.role === 'main' ? 'main' : 'slave';
     accountSettingsBtn.style.display = isMainAccount() ? 'inline-flex' : 'none';
   }
 
@@ -2426,9 +2738,11 @@
     pop.style.left = left + 'px';
     pop.style.top = top + 'px';
     accountPopover.classList.add('open');
+    accountChip.classList.add('open');
   }
   function closeAccountPopover() {
     accountPopover.classList.remove('open');
+    accountChip.classList.remove('open');
   }
   accountChip.addEventListener('click', e => {
     // 账号胶囊：开/关账号下拉
@@ -2486,17 +2800,92 @@
     }, 600);
   }
 
+  /* ============ 并行任务注册表：按会话隔离运行中任务 ============
+   * RUNNING_TASKS: 会话key → { runId, startedAt }  替代旧全局 SEND_BUSY 单任务锁
+   * CONV_VIEWS:    会话key → { el: 会话视图容器, loaded, scrollPos }  每会话独立消息缓冲
+   * ACTIVE_CONV_KEY: 当前活跃会话 key（真实会话 id / draft-xxx / ''=新建草稿态）
+   * 注意：声明必须位于 loadAccountSessions 定义之前（顶层调用早于 stream/sendBtn/stopBtn 的 const 声明） */
+  const RUNNING_TASKS = new Map();
+  const CONV_VIEWS = new Map();
+  let ACTIVE_CONV_KEY = '';
+  let DRAFT_SEQ = 0;
+  function makeConvView(key) {
+    const el = document.createElement('div');
+    el.className = 'conv-view';
+    el.dataset.conv = key;
+    return el;
+  }
+  // 把会话视图容器挂载到中部 stream（切换 = 卸载当前视图 + 挂载目标视图，离屏视图保留在 CONV_VIEWS）
+  function switchToView(viewEl) {
+    const stream = document.getElementById('stream');
+    if (!stream || !viewEl) return;
+    const cur = stream.firstElementChild;
+    if (cur && cur !== viewEl && cur.classList && cur.classList.contains('conv-view')) {
+      const cv = CONV_VIEWS.get(cur.dataset.conv);
+      if (cv) cv.scrollPos = stream.scrollTop;
+    }
+    if (cur !== viewEl) { stream.innerHTML = ''; stream.appendChild(viewEl); }
+    const cv2 = CONV_VIEWS.get(viewEl.dataset.conv);
+    stream.scrollTop = (cv2 && cv2.scrollPos != null) ? cv2.scrollPos : stream.scrollHeight;
+  }
+  // 按当前活跃会话是否在跑，刷新发送/停止按钮（不再全局互斥）
+  function refreshRunUI() {
+    const sendBtn = document.getElementById('sendBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const task = ACTIVE_CONV_KEY ? RUNNING_TASKS.get(ACTIVE_CONV_KEY) : null;
+    if (sendBtn) {
+      sendBtn.disabled = !!task;
+      sendBtn.classList.toggle('busy', !!task);
+      sendBtn.title = task ? '执行中...' : '发送（Enter）';
+    }
+    if (stopBtn) {
+      stopBtn.classList.toggle('show', !!task);
+      if (task && task.runId) stopBtn.setAttribute('data-dld-run', task.runId);
+      else stopBtn.removeAttribute('data-dld-run');
+    }
+  }
+  // 同步单个会话项的"运行中"徽章与停止按钮（列表重渲染后由 renderConvItem 直接生成，此处用于增量更新）
+  function refreshConvItemRunning(convKey) {
+    const item = document.querySelector('.conv-item[data-conv="' + convKey + '"]');
+    if (!item) return;
+    const running = RUNNING_TASKS.has(convKey);
+    item.classList.toggle('running', running);
+    const titleEl = item.querySelector('.conv-title');
+    let dot = item.querySelector('.run-dot');
+    if (running && !dot && titleEl) {
+      dot = document.createElement('span'); dot.className = 'run-dot';
+      titleEl.insertBefore(dot, titleEl.firstChild);
+    } else if (!running && dot) dot.remove();
+    const acts = item.querySelector('.conv-actions');
+    let stop = item.querySelector('.conv-stop');
+    if (running && !stop && acts) {
+      stop = document.createElement('button');
+      stop.className = 'conv-stop'; stop.title = '停止生成';
+      stop.setAttribute('data-stop', convKey);
+      stop.textContent = '■';
+      acts.insertBefore(stop, acts.firstChild);
+    } else if (!running && stop) stop.remove();
+  }
+  // 停止指定会话的运行中任务（服务端断流 → 客户端 reader 结束 → onDone → finishRun 收尾）
+  function stopTask(convKey) {
+    const task = RUNNING_TASKS.get(convKey);
+    if (!task || !task.runId || typeof DLD === 'undefined' || !DLD.stopRun) return;
+    DLD.stopRun(task.runId).catch(e => console.warn('[DLD] stopRun 失败：', e.message));
+  }
+
   function loadAccountSessions() {
     const convList = document.getElementById('convList');
     if (!convList) return;
     // 会话操作工具：置顶 / 重命名 / 删除
     function renderConvItem(s, active = false) {
+      const running = RUNNING_TASKS.has(s.id);
       const pinned = s.pinned ? ' pinned' : '';
       const act = active ? ' active' : '';
-      return `<div class="conv-item${pinned}${act}" data-account="${CURRENT_ACCOUNT.id}" data-conv="${s.id}">
-        <div class="conv-title">${s.title}</div>
+      return `<div class="conv-item${pinned}${act}${running ? ' running' : ''}" data-account="${CURRENT_ACCOUNT.id}" data-conv="${s.id}">
+        <div class="conv-title">${running ? '<span class="run-dot"></span>' : ''}${s.title}</div>
         <div class="conv-meta"><span class="tag">${s.tag}</span>· ${s.time}</div>
         <div class="conv-actions">
+          ${running ? `<button class="conv-stop" title="停止生成" data-stop="${s.id}">■</button>` : ''}
           <button class="conv-trigger" title="更多操作" data-action="more" data-conv="${s.id}">⋮</button>
         </div>
       </div>`;
@@ -2612,6 +3001,13 @@
           openConvMenu(btn.closest('.conv-item'), rect.right - 184, rect.bottom + 4);
         });
       });
+      // 会话级停止按钮：停止该会话的运行中任务（不切换当前视图）
+      convList.querySelectorAll('.conv-stop').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          stopTask(btn.getAttribute('data-stop'));
+        });
+      });
     }
     const convMenu = document.getElementById('convMenu');
     const convMenuPinLabel = document.getElementById('convMenuPinLabel');
@@ -2648,6 +3044,9 @@
           startRenameConv(target);
         } else if (action === 'delete') {
           if (!confirm('确定删除该对话吗？')) return;
+          // 运行中会话被删除：停止其任务并清理视图缓冲
+          if (RUNNING_TASKS.has(id)) stopTask(id);
+          CONV_VIEWS.delete(id);
           const idx = list.indexOf(target);
           if (idx >= 0) list.splice(idx, 1);
           rerenderConvList();
@@ -2700,43 +3099,61 @@
       convList.querySelectorAll('.conv-item').forEach(x => x.classList.remove('active'));
       el.classList.add('active');
       const id = el.dataset.conv;
+      ACTIVE_CONV_KEY = id;  // 并行模式：活跃会话跟随点击，发送/停止按钮都作用于它
       const list = SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] || [];
       const target = list.find(s => s.id === id);
       if (!target) return;
       const title = document.querySelector('.chat-head .title');
       if (title) title.textContent = target.title;
+      refreshRunUI();
+
+      // 容器模型：已加载过的会话直接挂载离屏视图恢复（后台任务的流式缓冲不丢）
+      let view = CONV_VIEWS.get(id);
+      if (view && view.loaded) { switchToView(view.el); return; }
+      if (!view) { view = { el: makeConvView(id), loaded: false, scrollPos: null }; CONV_VIEWS.set(id, view); }
 
       // 如果这条会话带真实 convId（来自 DLD 真实会话列表），拉真实消息历史
       if (target.convId && typeof DLD !== 'undefined') {
-        loadRealMessages(target);
+        loadRealMessages(target, view);
         return;
       }
-      renderConvMockMessages(target);
+      renderConvMockMessages(target, view);
     }
 
-    /* 把 DLD 返回的消息历史渲染到中部 stream */
-    async function loadRealMessages(target) {
-      const stream = document.getElementById('stream');
-      if (!stream) return;
-      stream.classList.remove('conv-fade-in'); void stream.offsetWidth;
-      stream.innerHTML = '<div class="loading-state" style="padding:40px;text-align:center;color:#909399">消息加载中…</div>';
+    /* 把 DLD 返回的消息历史渲染到该会话的视图容器（并行模式：写入各自容器，互不影响） */
+    async function loadRealMessages(target, view) {
+      if (!view) return;
+      if (view.loaded) { switchToView(view.el); return; }
+      view.el.innerHTML = '<div class="loading-state" style="padding:40px;text-align:center;color:#909399">消息加载中…</div>';
+      switchToView(view.el);
       try {
         const res = await DLD.conversationMessages(target.convId, null, 50);
-        const messages = extractMessages(res);
-        if (!messages.length) {
-          stream.innerHTML = '<div class="empty-state"><div class="empty-inner"><div class="empty-title">该会话暂无消息</div><div class="empty-desc">会话 ' + target.convId + ' 当前没有可加载的历史消息。</div></div></div>';
+        // 历史请求期间该会话已发起新任务：保留流式内容，仅移除加载占位
+        if (RUNNING_TASKS.has(target.id)) {
+          const ph = view.el.querySelector('.loading-state');
+          if (ph) ph.remove();
+          view.loaded = true;
           return;
         }
-        stream.innerHTML = messages.map(renderMessageBubble).join('');
-        stream.classList.add('conv-fade-in');
-        bindSuggestionClicks(stream);
-        stream.querySelectorAll('.task-head').forEach(h => {
+        const messages = extractMessages(res);
+        if (!messages.length) {
+          view.el.innerHTML = '<div class="empty-state"><div class="empty-inner"><div class="empty-title">该会话暂无消息</div><div class="empty-desc">会话 ' + target.convId + ' 当前没有可加载的历史消息。</div></div></div>';
+          view.loaded = true;
+          switchToView(view.el);
+          return;
+        }
+        view.el.innerHTML = messages.map(renderMessageBubble).join('');
+        view.el.classList.add('conv-fade-in');
+        bindSuggestionClicks(view.el);
+        view.el.querySelectorAll('.task-head').forEach(h => {
           h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed'));
         });
-        stream.scrollTop = stream.scrollHeight;
+        view.loaded = true;
+        switchToView(view.el);
       } catch (e) {
         console.warn('[DLD] conversationMessages 失败：', e.message);
-        stream.innerHTML = '<div class="empty-state"><div class="empty-inner"><div class="empty-title">消息加载失败</div><div class="empty-desc">' + e.message + '</div></div></div>';
+        view.el.innerHTML = '<div class="empty-state"><div class="empty-inner"><div class="empty-title">消息加载失败</div><div class="empty-desc">' + e.message + '</div></div></div>';
+        view.loaded = true;
       }
     }
 
@@ -2749,33 +3166,46 @@
       else if (Array.isArray(r.messages)) list = r.messages;
       else if (Array.isArray(r)) list = r;
       else if (Array.isArray(r.data && r.data.data)) list = r.data.data;  // Dify 嵌套
-      return list.map(normalizeMessage);
+      return list.flatMap(normalizeMessage);
     }
     function normalizeMessage(m) {
-      // Dify 风格：{ role, content, id, created_at } → 兼容
-      const role = (m.role || m.from || (m.from_account_id ? 'user' : 'assistant')).toLowerCase();
-      let content = m.content || m.text || m.message || '';
-      if (typeof content !== 'string') {
-        // Dify content 多为数组 [{type:'text', text:'...'}]
-        content = (content && Array.isArray(content))
-          ? content.filter(c => c.type === 'text').map(c => c.text).join('\n')
-          : JSON.stringify(content);
-      }
-      return {
-        id: m.id || m.message_id || '',
-        role: role.includes('user') || role.includes('human') ? 'user' : 'assistant',
-        content,
-        createdAt: m.created_at || m.createdAt || m.timestamp || null
+      // 后端 /messages 返回"问答记录"：一条同时含 query（用户提问）+ answer（AI 回复）
+      // 兼容 Dify 风格 { role, content, id, created_at }
+      const toStr = (c) => {
+        if (typeof c === 'string') return c;
+        if (c && Array.isArray(c)) return c.filter(x => x.type === 'text').map(x => x.text).join('\n');
+        return c == null ? '' : JSON.stringify(c);
       };
+      const ts = m.created_at || m.createdAt || m.timestamp || null;
+      // 秒级时间戳 → 毫秒
+      const n = Number(ts);
+      const createdAt = (ts && isFinite(n) && n > 0) ? (n > 1e12 ? n : n * 1000) : null;
+      const mid = m.id || m.message_id || '';
+      const role = String(m.role || m.from || '').toLowerCase();
+      const q = toStr(m.query || m.question || '');
+      const a = toStr(m.answer || m.content || m.text || m.message || '');
+      const out = [];
+      if (role.includes('user') || role.includes('human')) {
+        out.push({ id: mid, role: 'user', content: a || q, createdAt });
+      } else if (role.includes('assistant') || role.includes('ai')) {
+        out.push({ id: mid, role: 'assistant', content: a || q, createdAt });
+      } else {
+        // 问答记录结构：拆成 用户 + AI 两条
+        if (q) out.push({ id: mid ? mid + '-q' : '', role: 'user', content: q, createdAt });
+        if (a) out.push({ id: mid ? mid + '-a' : '', role: 'assistant', content: a, createdAt: createdAt != null ? createdAt + 1 : null });
+      }
+      return out;
     }
     function renderMessageBubble(m) {
       const time = m.createdAt ? new Date(m.createdAt).toLocaleString('zh-CN', { hour12: false }) : '';
       if (m.role === 'user') {
         return `<div class="msg user"><div class="avatar">我</div><div class="msg-body"><div class="msg-role">我 <span class="time">${time}</span></div><div class="msg-bubble"><p>${escapeHtml(m.content)}</p></div></div></div>`;
       }
-      // AI 消息：如果是 markdown-ish 文本，保留换行；否则原样
-      const html = escapeHtml(m.content).replace(/\n/g, '<br>');
-      return `<div class="msg ai"><div class="avatar">AI</div><div class="msg-body"><div class="msg-role">${CURRENT_ACCOUNT.agent || '店雷达 AI'} <span class="time">${time} · 已完成</span></div><div class="msg-bubble"><p>${html}</p></div></div></div>`;
+      // AI 消息：走 Markdown 渲染（think 折叠 / 表格 / 图片 / 链接），与流式完成后一致
+      const html = (typeof renderMarkdown === 'function')
+        ? renderMarkdown(m.content)
+        : escapeHtml(m.content).replace(/\n/g, '<br>');
+      return `<div class="msg ai"><div class="avatar">AI</div><div class="msg-body"><div class="msg-role">${CURRENT_ACCOUNT.agent || '店雷达 AI'} <span class="time">${time} · 已完成</span></div><div class="msg-bubble">${html}</div></div></div>`;
     }
     function escapeHtml(s) {
       // 使用外层全局 escapeHtml；此处保留空实现以兼容旧引用
@@ -2783,11 +3213,12 @@
     }
 
     /* 渲染无真实 convId 的会话（本地 mock）—— 保留原 selectConvItem 逻辑 */
-    function renderConvMockMessages(target) {
-      const stream = document.getElementById('stream');
-      if (!stream) return;
-      stream.classList.remove('conv-fade-in'); void stream.offsetWidth;
-      stream.innerHTML = `
+    function renderConvMockMessages(target, view) {
+      if (!view) return;
+      if (view.loaded) { switchToView(view.el); return; }
+      const viewEl = view.el;
+      viewEl.classList.remove('conv-fade-in'); void viewEl.offsetWidth;
+      viewEl.innerHTML = `
         <div class="msg user"><div class="avatar">我</div><div class="msg-body"><div class="msg-role">${CURRENT_ACCOUNT.name} <span class="time">· ${target.time}</span></div><div class="msg-bubble"><p>${target.snippet}</p></div></div></div>
         <div class="msg ai"><div class="avatar">AI</div><div class="msg-body"><div class="msg-role">${target.agent} <span class="time">· 已完成</span></div>
           <div class="task-card">
@@ -2837,30 +3268,40 @@
             <div class="cb-total"><div class="cb-num">-${Math.floor(8 + Math.random() * 18)}</div><div class="cb-unit">积分</div></div>
           </div>
         </div></div>`;
-      stream.classList.add('conv-fade-in');
-      bindRegenerate(stream);
-      bindDetailLinks(stream);
-      bindSuggestionClicks(stream);
-      stream.querySelectorAll('.task-head').forEach(h => {
+      viewEl.classList.add('conv-fade-in');
+      view.loaded = true;
+      bindRegenerate(viewEl);
+      bindDetailLinks(viewEl);
+      bindSuggestionClicks(viewEl);
+      viewEl.querySelectorAll('.task-head').forEach(h => {
         h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed'));
       });
+      switchToView(viewEl);
     }
     function showEmptyConversation() {
-      const stream = document.getElementById('stream');
-      if (stream) stream.innerHTML = `
+      // 并行模式：新建"草稿"视图容器，不阻断其他会话的运行中任务
+      CONV_VIEWS.forEach((v, k) => { if (k.indexOf('draft-') === 0 && !RUNNING_TASKS.has(k) && !v.el.querySelector('.msg')) CONV_VIEWS.delete(k); });
+      const key = 'draft-' + (++DRAFT_SEQ);
+      ACTIVE_CONV_KEY = key;
+      const view = { el: makeConvView(key), loaded: false, scrollPos: null };
+      CONV_VIEWS.set(key, view);
+      view.el.innerHTML = `
         <div class="empty-state"><div class="empty-inner"><div class="empty-mark">AI</div><div class="empty-title">开始一次新的选品分析</div><div class="empty-desc">先用假数据演示完整交互，后续可直接替换为 Dify / MCP 真实返回。</div><div class="empty-prompts"><button data-q="帮我筛选 1688 近 30 天销量增长快的收纳盒">1688 增长款</button><button data-q="查找 OZON 热销麻将包并对比 1688 货源">OZON 同款对比</button><button data-q="帮我找适合 TikTok Shop 的宠物用品">TikTok 潜力品</button></div></div></div>`;
+      switchToView(view.el);
       const title = document.querySelector('.chat-head .title');
       if (title) title.textContent = '新建对话';
       const tag = document.querySelector('.chat-head .agent-tag');
       if (tag) tag.textContent = '店雷达 AI';
-      stream.querySelectorAll('.empty-prompts button').forEach(btn => btn.addEventListener('click', () => {
+      view.el.querySelectorAll('.empty-prompts button').forEach(btn => btn.addEventListener('click', () => {
         input.value = btn.dataset.q;
         send();
       }));
+      refreshRunUI();
     }
     const list = SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] || [];
     if (list.length === 0) {
       convList.innerHTML = '<div class="conv-empty">该账号暂无历史对话</div>';
+      ACTIVE_CONV_KEY = '';  // 无历史会话：清空活跃标记，首次发送时自动创建新草稿视图
       bindGroupEvents();
       // 清空右侧对话区
       const stream = document.getElementById('stream');
@@ -2877,10 +3318,11 @@
     if (firstItem) selectConvItem(firstItem);
 
     // 监听 DLD 真实会话加载完成事件 → 自动刷新左栏
-    document.addEventListener('dld:conversations-updated', () => {
+    document.addEventListener('dld:conversations-updated', (e) => {
       const list = (SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] || []);
       if (list.length === 0) return;
       rerenderConvList();
+      if (e.detail && e.detail.skipSelect) return;
       const fi = convList.querySelector('.conv-item');
       if (fi) selectConvItem(fi);
     });
@@ -2932,7 +3374,7 @@
       <div class="as-info">
         <div class="as-top">
           <span class="as-name">${CURRENT_ACCOUNT.name}</span>
-          <span class="as-role">${CURRENT_ACCOUNT.roleLabel}</span>
+          <span class="as-role" data-role="${CURRENT_ACCOUNT.role === 'main' ? 'main' : 'slave'}">${CURRENT_ACCOUNT.roleLabel}</span>
         </div>
         <div class="as-shop">${CURRENT_ACCOUNT.shop} · ${CURRENT_ACCOUNT.lastActive}</div>
       </div>`;
@@ -3307,11 +3749,21 @@
       if (e.target.classList.contains('x')) {
         e.stopPropagation();
         if (t.classList.contains('active')) return;
+        // 关闭"选品报告"Tab 时同步退出报告视图
+        const rtName = t.querySelector('.rt-name');
+        if (rtName && rtName.textContent.includes('选品报告') && typeof closeReportView === 'function') closeReportView();
         t.remove();
         return;
       }
       document.querySelectorAll('.right-tab').forEach(x => x.classList.remove('active'));
       t.classList.add('active');
+      // "选品报告"Tab：展示 HTML 报告视图；切到其他 Tab 自动退出
+      const rtName = t.querySelector('.rt-name');
+      if (rtName && rtName.textContent.includes('选品报告')) {
+        if (typeof openReportView === 'function') openReportView();
+      } else if (typeof closeReportView === 'function') {
+        closeReportView();
+      }
     });
   });
 
@@ -3461,7 +3913,7 @@
           x.classList.remove('sort-active');
           x.dataset.direction = '';
           const icon = x.querySelector('.sort-indicator');
-          if (icon) icon.textContent = '↕';
+          if (icon) icon.textContent = '⇕';
         });
         th.classList.add('sort-active');
         th.dataset.direction = direction;
@@ -3487,15 +3939,21 @@
     const table = document.querySelector('.preview-table');
     if (!table) return;
     const rows = Array.from(table.rows).map(row => Array.from(row.cells).map(cell => {
-      const image = cell.querySelector('.img-cell');
-      return image ? image.textContent.trim() : cell.textContent.trim();
+      // 商品信息列：移除图片容器后取剩余文字（product-title），保证商品名完整导出
+      if (cell.querySelector('.img-cell')) {
+        const clone = cell.cloneNode(true);
+        clone.querySelectorAll('.img-cell').forEach(el => el.remove());
+        clone.querySelectorAll('br').forEach(br => br.replaceWith(' '));
+        return clone.textContent.trim().replace(/\s+/g, ' ');
+      }
+      return cell.textContent.trim();
     }));
     const csv = '\uFEFF' + rows.map(row => row.map(csvEscape).join(',')).join('\r\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = '1688商品选品结果-20款.csv';
+    link.download = '1688商品选品结果-' + ((window.__dldOffers || []).length || 20) + '款.csv';
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -3975,8 +4433,7 @@
     return { platform, category, reqs };
   }
 
-  let SEND_BUSY = false;
-  let ABORT_RUN = false;
+  // 并行模式：全局 SEND_BUSY 单任务锁与 ABORT_RUN 已由 RUNNING_TASKS 注册表取代（见 loadAccountSessions 前的基础层）
 
   let LAST_QUERY = '';
   function bindRegenerate(scope) {
@@ -3991,27 +4448,30 @@
   }
 
   function showEmptyConversation() {
-    if (SEND_BUSY) return;
     document.querySelectorAll('.conv-item').forEach(x => x.classList.remove('active'));
     chatTitle.textContent = '新建对话';
-    stream.innerHTML = `<div class="empty-state"><div class="empty-inner"><div class="empty-mark">AI</div><div class="empty-title">开始一次新的选品分析</div><div class="empty-desc">先用假数据演示完整交互，后续可直接替换为 Dify / MCP 真实返回。</div><div class="empty-prompts"><button data-q="帮我筛选 1688 近 30 天销量增长快的收纳盒">1688 增长款</button><button data-q="查找 OZON 热销麻将包并对比 1688 货源">OZON 同款对比</button><button data-q="帮我找适合 TikTok Shop 的宠物用品">TikTok 潜力品</button></div></div></div>`;
-    stream.querySelectorAll('.empty-prompts button').forEach(btn => btn.addEventListener('click', () => {
+    // 并行模式：新建"草稿"视图容器，其他会话运行中的任务不受影响
+    CONV_VIEWS.forEach((v, k) => { if (k.indexOf('draft-') === 0 && !RUNNING_TASKS.has(k) && !v.el.querySelector('.msg')) CONV_VIEWS.delete(k); });
+    const key = 'draft-' + (++DRAFT_SEQ);
+    ACTIVE_CONV_KEY = key;
+    const view = { el: makeConvView(key), loaded: false, scrollPos: null };
+    CONV_VIEWS.set(key, view);
+    view.el.innerHTML = `<div class="empty-state"><div class="empty-inner"><div class="empty-mark">AI</div><div class="empty-title">开始一次新的选品分析</div><div class="empty-desc">先用假数据演示完整交互，后续可直接替换为 Dify / MCP 真实返回。</div><div class="empty-prompts"><button data-q="帮我筛选 1688 近 30 天销量增长快的收纳盒">1688 增长款</button><button data-q="查找 OZON 热销麻将包并对比 1688 货源">OZON 同款对比</button><button data-q="帮我找适合 TikTok Shop 的宠物用品">TikTok 潜力品</button></div></div></div>`;
+    switchToView(view.el);
+    view.el.querySelectorAll('.empty-prompts button').forEach(btn => btn.addEventListener('click', () => {
       input.value = btn.dataset.q;
       send();
     }));
+    refreshRunUI();
     input.focus();
   }
   newConversationBtn.addEventListener('click', () => {
     showEmptyConversation();
     document.dispatchEvent(new CustomEvent('dld:right-empty', { detail: { empty: true } }));
   });
-  stopBtn.addEventListener('click', async () => {
-    ABORT_RUN = true;
-    const runId = stopBtn.getAttribute('data-dld-run');
-    if (runId && typeof DLD !== 'undefined' && DLD.stopRun) {
-      try { await DLD.stopRun(runId); }
-      catch (e) { console.warn('[DLD] stopRun 失败：', e.message); }
-    }
+  stopBtn.addEventListener('click', () => {
+    // 并行模式：只停止当前活跃会话的任务，其他会话继续运行
+    if (ACTIVE_CONV_KEY) stopTask(ACTIVE_CONV_KEY);
   });
 
   function addWalletLedger(label, amount, type) {
@@ -4030,22 +4490,31 @@
   function send(regenerate = false) {
     const text = input.value.trim();
     if (!text && attaches.length === 0) return;
-    if (SEND_BUSY) return;
+    // 确定目标会话 key：当前活跃会话；无（首次发送的空白态）→ 自动创建草稿
+    let convKey = ACTIVE_CONV_KEY;
+    if (!convKey) {
+      convKey = 'draft-' + (++DRAFT_SEQ);
+      ACTIVE_CONV_KEY = convKey;
+      CONV_VIEWS.set(convKey, { el: makeConvView(convKey), loaded: false, scrollPos: null });
+    }
+    // 按会话隔离的运行锁：该会话已在跑则忽略；其他会话不受影响，可并行
+    if (RUNNING_TASKS.has(convKey)) return;
+    let view = CONV_VIEWS.get(convKey);
+    if (!view) { view = { el: makeConvView(convKey), loaded: false, scrollPos: null }; CONV_VIEWS.set(convKey, view); }
     const estimatedCost = computeCost(text, attaches.length, CURRENT_MODEL).coins;
     if (TOTAL_COINS < estimatedCost) {
       openWallet();
       walletModal.querySelector('.ws-tip').textContent = `余额不足，本次预计需要 ${estimatedCost} 积分，请先充值。`;
       return;
     }
-    SEND_BUSY = true;
-    ABORT_RUN = false;
+    RUNNING_TASKS.set(convKey, { runId: null, startedAt: Date.now() });
     LAST_QUERY = text;
     document.dispatchEvent(new CustomEvent('dld:right-empty', { detail: { empty: false } }));
-    sendBtn.disabled = true;
-    sendBtn.classList.add('busy');
-    sendBtn.title = '执行中...';
-    stopBtn.classList.add('show');
-    if (stream.querySelector('.empty-state')) stream.innerHTML = '';
+    refreshRunUI();
+    refreshConvItemRunning(convKey);
+    view.loaded = true;  // 发送后该视图进入"会话流"模式，切换时直接恢复缓冲而非重新拉历史
+    if (view.el.querySelector('.empty-state')) view.el.innerHTML = '';
+    switchToView(view.el);
 
     // 构建用户消息
     const wrap = document.createElement('div');
@@ -4075,7 +4544,7 @@
       const node = wrap.querySelectorAll('.msg-attach .ma-name')[i];
       if (node) node.textContent = a.name;
     });
-    stream.appendChild(wrap);
+    view.el.appendChild(wrap);
 
     // 发送后清空附件
     const attachCount = attaches.length;
@@ -4090,7 +4559,7 @@
         <div class="msg-role">亚马逊 Agent <span class="time">· 正在执行</span></div>
         <div class="msg-bubble"></div>
       </div>`;
-    stream.appendChild(ai);
+    view.el.appendChild(ai);
     input.value = '';
     fitInput();
     scrollBottom();
@@ -4099,16 +4568,17 @@
     const roleTime = ai.querySelector('.time');
 
     (async () => {
+      // 会话独立滚动：后台任务的流式输出只滚动自己的容器，不干扰当前显示的会话
+      const scrollBottom = () => { view.el.scrollTop = view.el.scrollHeight; };
       const finishRun = () => {
-        SEND_BUSY = false;
-        sendBtn.disabled = false;
-        sendBtn.classList.remove('busy');
-        sendBtn.title = '发送（Enter）';
-        stopBtn.classList.remove('show');
-        stopBtn.removeAttribute('data-dld-run');
+        RUNNING_TASKS.delete(convKey);  // 释放该会话的运行锁（其他会话不受影响）
+        refreshRunUI();
+        refreshConvItemRunning(convKey);
       };
       const showError = (msg) => {
         roleTime.textContent = '· 失败';
+        // 清理加载中交互（分析进度卡/骨架屏），避免失败后仍在转圈
+        bubble.querySelectorAll('.analyze-card, .table-skeleton').forEach(el => el.remove());
         bubble.insertAdjacentHTML('beforeend', `<div class="ai-summary" style="border-left:3px solid #d6493a;padding:8px 12px;background:#fef0ef;color:#d6493a;border-radius:4px;margin-top:8px"><b>请求失败：</b>${escapeHtml(msg)}</div>`);
       };
 
@@ -4116,11 +4586,8 @@
       bubble.insertAdjacentHTML('beforeend',
         `<div class="thinking-line" data-live>正在连接 AI<span class="tdots"><span></span><span></span><span></span></span></div>`);
 
-      // 当前选中会话的 convId（首条消息为空 → 服务端会创建并通过 X-AI-Conversation-Id 回传）
-      const activeConvItem = convList.querySelector('.conv-item.active');
-      const activeSess = activeConvItem
-        ? (SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] || []).find(s => s.id === activeConvItem.dataset.conv)
-        : null;
+      // 目标会话（convKey）的 convId；草稿为空 → 服务端创建新会话并通过 X-AI-Conversation-Id 回传
+      const activeSess = (SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] || []).find(s => s.id === convKey);
       const convId = activeSess && activeSess.convId ? activeSess.convId : '';
       const appCode = (typeof window.__dldApps !== 'undefined' && window.__dldApps[0] && window.__dldApps[0].appCode) || '1';
       const clientRequestId = 'dld-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
@@ -4128,33 +4595,138 @@
       // 累积已收到的 AI 文本（用于 message 事件增量拼接）
       let accAnswer = '';
       let liveTextEl = null;
+      let analyzeEl = null;   // 分析进度卡片（阶段+计时+可展开推理明细）
+      let skeletonEl = null;  // 表格生成骨架屏
+      // 剥离 <think>…</think> 与未闭合的 <think>…，只保留可见正文
+      const visibleAnswer = (s) => {
+        let t = s.replace(/<think>[\s\S]*?<\/think>/g, '');
+        const i = t.indexOf('<think>');
+        if (i >= 0) t = t.slice(0, i);
+        return t;
+      };
+      const inThink = (s) => s.includes('<think>') && s.lastIndexOf('<think>') > s.lastIndexOf('</think>');
+      // 统一的"分析中"进度卡片：阶段步骤条 + 秒级计时 + 可展开推理明细
+      let analyzeState = null;
+      const AZ_STEPS = [
+        { key: 'plan',   label: '理解需求', kw: /理解|需求|规划|任务|目标|思路|意图|understand|user is asking|request|goal|intent/i },
+        { key: 'search', label: '检索数据', kw: /检索|搜索|查询|调用|选品|1688|采集|获取|search|tool|retriev|fetch|look up|collect/i },
+        { key: 'judge',  label: '分析对比', kw: /筛选|过滤|对比|评估|分析|价格|销量|转化|竞争|维度|filter|compar|evaluat|analyz|rank|score|criteria|sales|review/i },
+        { key: 'build',  label: '生成结果', kw: /整理|汇总|生成|输出|报告|表格|结论|推荐|编制|summar|organi|format|table|report|final|conclusion|recommend|present/i }
+      ];
+      // 从推理文本推断当前阶段：取关键词最后命中位置最大的阶段
+      const inferStage = (txt) => {
+        let best = 0, pos = -1;
+        AZ_STEPS.forEach((s, i) => {
+          const m = s.kw.exec(txt);
+          if (m) { const p = txt.lastIndexOf(m[0]); if (p > pos) { pos = p; best = i; } }
+        });
+        return best;
+      };
+      const applyStage = (idx) => {
+        if (!analyzeState) return;
+        analyzeState.stepIdx = idx;
+        analyzeState.stageEl.textContent = AZ_STEPS[idx].label + '中';
+        analyzeState.stepsEl.querySelectorAll('.az-step').forEach((el, i) => {
+          el.classList.toggle('on', i === idx);
+          el.classList.toggle('done', i < idx);
+        });
+      };
+      const showAnalyze = () => {
+        if (analyzeEl) return;
+        const thinking = bubble.querySelector('.thinking-line[data-live]');
+        if (thinking) thinking.remove();
+        analyzeEl = document.createElement('div');
+        analyzeEl.className = 'analyze-card';
+        analyzeEl.innerHTML =
+          '<div class="analyze-head">' +
+            '<span class="az-ic">📊</span>' +
+            '<span class="az-stage">理解需求中</span>' +
+            '<span class="az-time">0s</span>' +
+            '<span class="az-arrow">⌃</span>' +
+          '</div>' +
+          '<div class="analyze-steps">' +
+            AZ_STEPS.map(s => '<span class="az-step" data-step="' + s.key + '">' + s.label + '</span>').join('<span class="az-sep">›</span>') +
+          '</div>' +
+          '<div class="analyze-body"></div>';
+        analyzeEl.querySelector('.analyze-head')
+          .addEventListener('click', () => analyzeEl && analyzeEl.classList.toggle('collapsed'));
+        bubble.appendChild(analyzeEl);
+        analyzeState = {
+          stageEl: analyzeEl.querySelector('.az-stage'),
+          timeEl:  analyzeEl.querySelector('.az-time'),
+          stepsEl: analyzeEl.querySelector('.analyze-steps'),
+          bodyEl:  analyzeEl.querySelector('.analyze-body'),
+          stepIdx: 0,
+          customStage: false,
+          startTs: Date.now(),
+          timer: setInterval(() => {
+            if (analyzeState) analyzeState.timeEl.textContent = Math.round((Date.now() - analyzeState.startTs) / 1000) + 's';
+          }, 1000)
+        };
+        applyStage(0);
+        scrollBottom();
+      };
+      // 流式推理文本 → 更新明细窗（滚底）+ 关键词推断当前阶段
+      const updateAnalyze = (thinkTxt) => {
+        if (!analyzeState || !thinkTxt) return;
+        const clean = String(thinkTxt).replace(/<!--[\s\S]*?-->/g, '');
+        analyzeState.bodyEl.textContent = clean.trim().slice(-500);
+        analyzeState.bodyEl.scrollTop = analyzeState.bodyEl.scrollHeight;
+        if (!analyzeState.customStage) {
+          const idx = inferStage(clean.slice(-1200));
+          if (idx !== analyzeState.stepIdx) applyStage(idx);
+        }
+      };
+      const removeTransient = () => {
+        if (analyzeEl) { analyzeEl.remove(); analyzeEl = null; }
+        if (analyzeState) { clearInterval(analyzeState.timer); analyzeState = null; }
+        if (skeletonEl) { skeletonEl.remove(); skeletonEl = null; }
+      };
+      const ensureLiveText = () => {
+        if (liveTextEl) return;
+        const thinking = bubble.querySelector('.thinking-line[data-live]');
+        if (thinking) thinking.remove();
+        const live = document.createElement('div');
+        live.className = 'live-answer';
+        live.style.cssText = 'white-space:pre-wrap;line-height:1.7;margin:6px 0 4px;';
+        liveTextEl = document.createElement('div');
+        liveTextEl.className = 'live-text';
+        liveTextEl.style.cssText = 'white-space:pre-wrap;line-height:1.7;';
+        live.appendChild(liveTextEl);
+        bubble.appendChild(live);
+      };
       const appendDelta = (delta) => {
         if (!delta) return;
-        // 第一次收到文本 → 把"正在连接"行换成流式容器
-        if (!liveTextEl) {
-          const thinking = bubble.querySelector('.thinking-line[data-live]');
-          if (thinking) thinking.remove();
-          const live = document.createElement('div');
-          live.className = 'live-answer';
-          live.style.cssText = 'white-space:pre-wrap;line-height:1.7;margin:6px 0 4px;';
-          liveTextEl = document.createElement('div');
-          liveTextEl.className = 'live-text';
-          liveTextEl.style.cssText = 'white-space:pre-wrap;line-height:1.7;';
-          live.appendChild(liveTextEl);
-          bubble.appendChild(live);
-          scrollBottom();
-        }
         accAnswer += delta;
-        liveTextEl.textContent = accAnswer;
+        // 分析阶段（think 未闭合）：推理内容实时进进度卡片（阶段+计时+明细）
+        if (inThink(accAnswer)) {
+          showAnalyze();
+          const ti = accAnswer.lastIndexOf('<think>');
+          if (ti >= 0) updateAnalyze(accAnswer.slice(ti + 7));
+          return;
+        }
+        const vis = visibleAnswer(accAnswer);
+        if (!vis.trim()) { scrollBottom(); return; }
+        removeTransient();
+        ensureLiveText();
+        // 表格开始 → 正文截断到表格前，改用骨架屏告知"正在生成表格"
+        const tableIdx = vis.search(/^[ \t]*\|/m);
+        if (tableIdx >= 0) {
+          liveTextEl.textContent = vis.slice(0, tableIdx);
+          if (!skeletonEl) {
+            skeletonEl = document.createElement('div');
+            skeletonEl.className = 'table-skeleton';
+            skeletonEl.innerHTML = '<div class="sk-row w80"></div><div class="sk-row"></div><div class="sk-row w60"></div><div class="sk-row"></div><div class="sk-label">📋 正在生成选品表格<span class="tdots"><span></span><span></span><span></span></span></div>';
+            bubble.appendChild(skeletonEl);
+          }
+        } else {
+          liveTextEl.textContent = vis;
+        }
         scrollBottom();
       };
 
-      let runId = null;
       let convIdFromHeader = null;
-      // 把当前 runId 写到 stopBtn，点击时 stopRun 即可
-      const tagStopBtn = (id) => {
-        stopBtn.setAttribute('data-dld-run', id || '');
-      };
+      // 并行模式：runId 直接写入任务注册表（refreshRunUI 同步到停止按钮），不再全局 tagStopBtn
 
       try {
         await DLD.sendMessageStream({
@@ -4166,10 +4738,11 @@
         }, {
           onHeaders: ({ conversationId, requestId }) => {
             convIdFromHeader = conversationId;
-            runId = requestId;
-            tagStopBtn(requestId);
+            // 并行模式：runId 记入该会话的任务条目（refreshRunUI 同步到停止按钮）
+            const task = RUNNING_TASKS.get(convKey);
+            if (task) { task.runId = requestId || null; refreshRunUI(); }
             roleTime.textContent = '· 流式中';
-            // 首条消息：服务端可能创建了新会话 → 在主账号桶插入并刷新左栏
+            // 首条消息：服务端创建了新会话 → 草稿 key 迁移为真实会话 id（不抢占当前视图/选中态）
             if (!convId && conversationId) {
               const title = text.slice(0, 24) + (text.length > 24 ? '…' : '');
               const newSess = {
@@ -4181,24 +4754,26 @@
                 time: '刚刚',
                 timestamp: Date.now()
               };
-              if (typeof SESSIONS_BY_ACCOUNT !== 'undefined') {
-                SESSIONS_BY_ACCOUNT.main = SESSIONS_BY_ACCOUNT.main || [];
-                SESSIONS_BY_ACCOUNT.main.unshift(newSess);
+              // 先迁移注册表与视图缓冲（draft-xxx → conversationId），再刷新左栏，徽章状态才正确
+              if (convKey !== conversationId) {
+                const v = CONV_VIEWS.get(convKey);
+                if (v) { CONV_VIEWS.delete(convKey); v.el.dataset.conv = conversationId; CONV_VIEWS.set(conversationId, v); }
+                if (task) { RUNNING_TASKS.delete(convKey); RUNNING_TASKS.set(conversationId, task); }
+                if (ACTIVE_CONV_KEY === convKey) ACTIVE_CONV_KEY = conversationId;
+                convKey = conversationId;
               }
-              if (typeof rerenderConvList === 'function') rerenderConvList();
-              // 选中新会话
-              setTimeout(() => {
-                 const items = convList.querySelectorAll('.conv-item');
-                 for (const it of items) {
-                   if (it.dataset.conv === conversationId) {
-                     document.querySelectorAll('.conv-item').forEach(x => x.classList.remove('active'));
-                     it.classList.add('active');
-                     break;
-                   }
-                 }
-               }, 50);
-              const chatTitle = document.querySelector('.chat-head .title');
-              if (chatTitle) chatTitle.textContent = title;
+              if (typeof SESSIONS_BY_ACCOUNT !== 'undefined') {
+                const key = CURRENT_ACCOUNT.id;
+                SESSIONS_BY_ACCOUNT[key] = SESSIONS_BY_ACCOUNT[key] || [];
+                SESSIONS_BY_ACCOUNT[key].unshift(newSess);
+              }
+              document.dispatchEvent(new CustomEvent('dld:conversations-updated', { detail: { skipSelect: true } }));
+              refreshConvItemRunning(convKey);
+              // 仅当用户仍停留在此会话时才更新标题，避免覆盖当前浏览会话的标题
+              if (ACTIVE_CONV_KEY === convKey) {
+                const chatTitle = document.querySelector('.chat-head .title');
+                if (chatTitle) chatTitle.textContent = title;
+              }
             }
           },
           onEvent: (eventName, payload) => {
@@ -4211,18 +4786,22 @@
             if (t === 'connected') { roleTime.textContent = '· 已连接'; return; }
             if (t === 'error') { showError(typeof payload === 'string' ? payload : (payload && payload.message) || '流式错误'); return; }
             if (t === 'agent_thought' || t === 'workflow_started' || t === 'node_started') {
-              // 思考过程：作为 status-line 追加
-              const msg = (payload && (payload.thought || payload.message || payload.title)) || eventName;
-              bubble.insertAdjacentHTML('beforeend',
-                `<div class="status-line"><span class="sl-ic">💭</span><span>${escapeHtml(String(msg).slice(0, 80))}</span></div>`);
-              scrollBottom();
+              // 分析过程：进度卡片展示；节点事件可直接命名当前阶段，思考文本进明细窗
+              showAnalyze();
+              if (payload && typeof payload === 'object') {
+                const nodeTitle = payload.title || (payload.data && payload.data.title) || payload.node_title || '';
+                if (nodeTitle && analyzeState) {
+                  analyzeState.customStage = true;
+                  analyzeState.stageEl.textContent = String(nodeTitle).slice(0, 30);
+                }
+                const thoughtTxt = [payload.thought, payload.observation ? String(payload.observation).slice(0, 200) : '']
+                  .filter(Boolean).join('\n');
+                if (thoughtTxt) updateAnalyze(thoughtTxt);
+              }
               return;
             }
             if (t === 'workflow_finished' || t === 'node_finished') {
-              const msg = (payload && (payload.title || payload.message)) || eventName;
-              bubble.insertAdjacentHTML('beforeend',
-                `<div class="status-line"><span class="sl-ic">✓</span><span>${escapeHtml(String(msg).slice(0, 80))}</span></div>`);
-              scrollBottom();
+              // 节点完成：静默收敛，等最终表格渲染
               return;
             }
             // 文本事件：把 answer / delta / text 字段作为增量
@@ -4239,9 +4818,23 @@
           },
           onDone: () => {
             roleTime.textContent = '· 已完成';
-            // 移除"正在连接"占位（如果从未收到文本）
+            // 移除"正在连接"占位与所有加载中交互
             const thinking = bubble.querySelector('.thinking-line[data-live]');
             if (thinking) thinking.remove();
+            removeTransient();
+            // 将流式纯文本替换为渲染后的 Markdown HTML（表格/图片/链接等）
+            if (accAnswer) {
+              ensureLiveText();
+              liveTextEl.style.whiteSpace = '';
+              liveTextEl.parentElement.style.whiteSpace = '';
+              // 报告类回复：自动生成 HTML 选品报告，中栏不铺全文，改为"报告已生成"卡片（点击打开右栏预览）
+              if (typeof isReportAnswer === 'function' && isReportAnswer(accAnswer) && typeof buildLastReport === 'function') {
+                buildLastReport(accAnswer);
+                liveTextEl.innerHTML = buildReportDoneCard(window.__lastReport);
+              } else {
+                liveTextEl.innerHTML = renderMarkdown(accAnswer);
+              }
+            }
             // 暴露记忆验证面板
             const memoryBadge = `<div class="status-line" style="margin-top:8px;color:#909399"><span class="sl-ic">🧠</span><span>本会话已记忆 <b>1</b> 轮 · Chatflow 记忆上限 100 轮</span></div>`;
             bubble.insertAdjacentHTML('beforeend', memoryBadge);
@@ -4338,9 +4931,28 @@
       const reader = r.body.getReader();
       const decoder = new TextDecoder('utf-8');
       let buf = '';
+      let streamDone = false;
+      let staleTimer = null;
+      // 工具调用（如 1688 选品）期间后端可能 10~30 秒无任何输出，需留足时间
+      const STALE_MS = 60000;
+      const finish = (payload) => {
+        if (streamDone) return;
+        streamDone = true;
+        if (staleTimer) clearTimeout(staleTimer);
+        if (callbacks.onDone) callbacks.onDone(payload);
+      };
+      const resetStale = () => {
+        if (staleTimer) clearTimeout(staleTimer);
+        staleTimer = setTimeout(() => {
+          try { reader.cancel(); } catch (e) {}
+          finish(null);
+        }, STALE_MS);
+      };
+      resetStale();
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
+        resetStale();
         buf += decoder.decode(value, { stream: true });
         // SSE: 以空行分隔事件，事件内 \n 分隔行
         let idx;
@@ -4356,12 +4968,21 @@
           if (!dataStr) continue;
           let payload;
           try { payload = JSON.parse(dataStr); } catch { payload = dataStr; }
+          // Dify 风格：事件名内嵌在 JSON 的 event 字段（SSE 层只有 ping 带 event: 行）
+          if (!eventName && payload && typeof payload === 'object' && payload.event) {
+            eventName = payload.event;
+          }
           if (callbacks.onEvent) callbacks.onEvent(eventName, payload);
-          if (eventName === 'done') { if (callbacks.onDone) callbacks.onDone(payload); return; }
-          if (eventName === 'error') { if (callbacks.onError) callbacks.onError(payload); throw new Error('SSE error'); }
+          const t = String(eventName || '').toLowerCase();
+          if (t === 'ping') continue;
+          if (t === 'done' || t === 'message_end' || t === 'agent_message_end' || t === 'close') {
+            finish(payload);
+            return;
+          }
+          if (t === 'error') { if (callbacks.onError) callbacks.onError(payload); throw new Error('SSE error'); }
         }
       }
-      if (callbacks.onDone) callbacks.onDone(null);
+      finish(null);
     }
 
     // ===== 业务接口 =====
@@ -4436,7 +5057,7 @@
         const acRole = document.getElementById('accountRole');
         if (acName) acName.textContent = (d.loginAccount || '主账号') + (d.mobilePhone ? '·' + d.mobilePhone.replace(/^(\d{3})\d{4}(\d{4})$/, '$1****$2') : '');
         if (acAvatar) acAvatar.textContent = '🐯';
-        if (acRole) acRole.textContent = d.isSlave ? '子' : '主';
+        if (acRole) { acRole.textContent = d.isSlave ? '子' : '主'; acRole.dataset.role = d.isSlave ? 'slave' : 'main'; }
       }
     } catch (e) {
       console.warn('[DLD] getMemberDetail 失败 → 保留 mock：', e.message);
@@ -4496,7 +5117,7 @@
           time: c.lastMessageAt ? formatRelativeTime(c.lastMessageAt) : '刚刚',
           timestamp: c.lastMessageAt ? new Date(c.lastMessageAt).getTime() : Date.now()
         }));
-        SESSIONS_BY_ACCOUNT.main = mapped;
+        SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] = mapped;
         document.dispatchEvent(new CustomEvent('dld:conversations-updated', { detail: { list: mapped } }));
       }
     } catch (e) {
@@ -4540,7 +5161,509 @@
   function escapeHtml(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
   }
+
+  // 轻量 Markdown → HTML 渲染（支持 think 折叠、表格、图片、链接、加粗、标题、引用、列表）
+  function renderMarkdown(raw) {
+    if (!raw) return '';
+    let text = String(raw);
+
+    // 1) 提取  内容 → 折叠区域
+    let thinkHtml = '';
+    const thinkRe = /<think>([\s\S]*?)<\/think>/g;
+    let m, parts = [];
+    let lastIdx = 0;
+    while ((m = thinkRe.exec(text)) !== null) {
+      if (m.index > lastIdx) parts.push({ type: 'text', content: text.slice(lastIdx, m.index) });
+      parts.push({ type: 'think', content: m[1] });
+      lastIdx = m.index + m[0].length;
+    }
+    if (lastIdx < text.length) parts.push({ type: 'text', content: text.slice(lastIdx) });
+    if (parts.length === 0) parts = [{ type: 'text', content: text }];
+
+    const htmlParts = parts.map(p => {
+      if (p.type === 'think') {
+        const inner = p.content.replace(/<!--[^>]*-->/g, '').trim();
+        if (!inner) return '';
+        return '<details class="md-think"><summary>💭 AI 思考过程</summary><div class="md-think-body">' + escapeHtml(inner).replace(/\n/g, '<br>') + '</div></details>';
+      }
+      return renderMarkdownBody(p.content);
+    });
+    return htmlParts.join('');
+  }
+
+  // 渲染非 think 的 Markdown 正文（表格 / 图片 / 链接 / 加粗 / 标题 / 引用 / 列表）
+  const MD_TABLE_VISIBLE_ROWS = 5; // 中栏表格超出该行数后折叠，底部显示"查看更多"
+
+  function renderMarkdownBody(src, opts) {
+    opts = opts || {};
+    let lines = src.replace(/\r\n/g, '\n').split('\n');
+    let out = [];
+    let i = 0;
+
+    while (i < lines.length) {
+      let line = lines[i];
+
+      // 空行
+      if (/^\s*$/.test(line)) { i++; continue; }
+
+      // 标题
+      let hm = line.match(/^(#{1,4})\s+(.*)$/);
+      if (hm) {
+        const lvl = hm[1].length;
+        out.push('<h' + (lvl + 2) + ' class="md-h' + lvl + '">' + inlineMd(hm[2]) + '</h' + (lvl + 2) + '>');
+        i++; continue;
+      }
+
+      // 引用
+      if (/^>\s?/.test(line)) {
+        let quote = [];
+        while (i < lines.length && /^>\s?/.test(lines[i])) {
+          quote.push(lines[i].replace(/^>\s?/, ''));
+          i++;
+        }
+        out.push('<blockquote class="md-quote">' + inlineMd(quote.join(' ')) + '</blockquote>');
+        continue;
+      }
+
+      // 表格
+      if (line.includes('|') && i + 1 < lines.length && /^\s*\|?[\s:-]+\|[\s:|-]+\|?\s*$/.test(lines[i + 1])) {
+        let tableRows = [];
+        // 表头
+        tableRows.push(parseTableRow(line));
+        i++; // 分隔行
+        i++;
+        // 数据行
+        while (i < lines.length && lines[i].includes('|') && !/^\s*$/.test(lines[i])) {
+          if (/^\s*\|?[\s:-]+\|[\s:|-]+\|?\s*$/.test(lines[i])) { i++; continue; }
+          tableRows.push(parseTableRow(lines[i]));
+          i++;
+        }
+        const mdHeaders = tableRows[0];
+        const mdDataRows = tableRows.slice(1);
+        // 数据行超过阈值：中栏只展示前 5 行，底部显示"查看更多"；完整数据点击后在右栏展示
+        const mdTotal = mdDataRows.length;
+        let mdShown = mdDataRows;
+        let moreBtn = '';
+        // 报告视图（fullTables）：完整展示所有行，不折叠、不注册详情
+        if (mdTotal > MD_TABLE_VISIBLE_ROWS && !opts.fullTables) {
+          mdShown = mdDataRows.slice(0, MD_TABLE_VISIBLE_ROWS);
+          window.__mdTableSeq = (window.__mdTableSeq || 0) + 1;
+          const tid = window.__mdTableSeq;
+          window.__mdTables = window.__mdTables || {};
+          window.__mdTables[tid] = { headers: mdHeaders, rows: mdDataRows, title: '对话表格详情' };
+          moreBtn = '<div class="md-more-btn" onclick="viewMdTableFull(' + tid + ')">查看更多 · 共 ' + mdTotal + ' 条数据</div>';
+        }
+        let thead = '<thead><tr>' + mdHeaders.map(c => '<th>' + c + '</th>').join('') + '</tr></thead>';
+        let tbody = '<tbody>' + mdShown.map(r => '<tr>' + r.map(mdCellHtml).join('') + '</tr>').join('') + '</tbody>';
+        out.push('<div class="md-table-wrap"><table class="md-table">' + thead + tbody + '</table>' + moreBtn + '</div>');
+        continue;
+      }
+
+      // 无序列表
+      if (/^[-*]\s+/.test(line)) {
+        let items = [];
+        while (i < lines.length && /^[-*]\s+/.test(lines[i])) {
+          items.push('<li>' + inlineMd(lines[i].replace(/^[-*]\s+/, '')) + '</li>');
+          i++;
+        }
+        out.push('<ul class="md-ul">' + items.join('') + '</ul>');
+        continue;
+      }
+
+      // 有序列表
+      if (/^\d+\.\s+/.test(line)) {
+        let items = [];
+        while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
+          items.push('<li>' + inlineMd(lines[i].replace(/^\d+\.\s+/, '')) + '</li>');
+          i++;
+        }
+        out.push('<ol class="md-ol">' + items.join('') + '</ol>');
+        continue;
+      }
+
+      // 普通段落（连续非空非格式行合并）
+      let para = [];
+      while (i < lines.length && !/^\s*$/.test(lines[i]) && !/^(#{1,4}\s|>\s?|[-*]\s|\d+\.\s)/.test(lines[i]) && !(lines[i].includes('|') && i + 1 < lines.length && /^\s*\|?[\s:-]+\|[\s:|-]+\|?\s*$/.test(lines[i + 1]))) {
+        para.push(lines[i]);
+        i++;
+      }
+      if (para.length) out.push('<p class="md-p">' + inlineMd(para.join('<br>')) + '</p>');
+    }
+    return out.join('');
+  }
+
+  // 解析表格行 → 单元格 HTML 数组
+  function parseTableRow(line) {
+    let s = line.trim();
+    if (s.startsWith('|')) s = s.slice(1);
+    if (s.endsWith('|')) s = s.slice(0, -1);
+    return s.split('|').map(c => inlineMd(c.trim()));
+  }
+
+  // 单元格 → td：含图片的视为"商品信息"单元格，包成图左文右结构
+  function mdCellHtml(c) {
+    const idx = String(c).indexOf('<img');
+    if (idx === -1) return '<td>' + c + '</td>';
+    const end = String(c).indexOf('>', idx);
+    const imgTag = end > idx ? String(c).slice(idx, end + 1) : '';
+    if (!imgTag || imgTag.indexOf('class="md-img"') === -1) return '<td>' + c + '</td>';
+    const rest = (String(c).slice(0, idx) + String(c).slice(end + 1)).trim();
+    return '<td><div class="md-cell-prod">' + imgTag + '<div class="prod-txt">' + rest + '</div></div></td>';
+  }
+
+  /* —— 中栏表格"查看更多"：点击后右栏展示该表格完整数据 —— */
+  function viewMdTableFull(tid) {
+    const t = (window.__mdTables || {})[tid];
+    const wrap = document.getElementById('mdTablePreview');
+    const tableEl = document.getElementById('mdPreviewTable');
+    if (!t || !wrap || !tableEl) return;
+    tableEl.innerHTML = '<thead><tr>' + t.headers.map(c => '<th>' + c + '</th>').join('') + '</tr></thead>'
+      + '<tbody>' + t.rows.map(r => '<tr>' + r.map(mdCellHtml).join('') + '</tr>').join('') + '</tbody>';
+    document.getElementById('mdPreviewTitle').textContent = '📋 ' + (t.title || '对话表格详情');
+    document.getElementById('mdPreviewMeta').innerHTML = '共 <strong>' + t.rows.length + '</strong> 条数据 · 已展示全部 · 数据来自对话回复';
+    document.getElementById('mdPreviewCsvName').textContent = '📊 ' + (t.title || '对话表格详情') + '.csv';
+    window.__mdPreviewTid = tid;
+    // 记住并替换顶部 Tab 名，关闭时还原
+    const tabEl = document.getElementById('previewTabName');
+    if (tabEl) {
+      if (!window.__mdPrevTabName) window.__mdPrevTabName = tabEl.textContent;
+      tabEl.textContent = '📋 表格详情 (' + t.rows.length + '条)';
+    }
+    wrap.style.display = '';
+    const rightBody = document.querySelector('.right-body');
+    // 与"选品报告"视图互斥：先退出报告模式
+    if (typeof closeReportView === 'function') closeReportView();
+    if (rightBody) { rightBody.classList.add('md-full-mode'); rightBody.scrollTop = 0; }
+    // 右栏若处于折叠状态则自动展开
+    const rightPanel = document.getElementById('rightPanel');
+    if (rightPanel && rightPanel.classList.contains('collapsed') && typeof setCollapsed === 'function') setCollapsed(false);
+  }
+  function closeMdTablePreview() {
+    const wrap = document.getElementById('mdTablePreview');
+    if (wrap) wrap.style.display = 'none';
+    const rightBody = document.querySelector('.right-body');
+    if (rightBody) rightBody.classList.remove('md-full-mode');
+    const tabEl = document.getElementById('previewTabName');
+    if (tabEl && window.__mdPrevTabName) { tabEl.textContent = window.__mdPrevTabName; window.__mdPrevTabName = null; }
+  }
+  function exportMdTableCsv() {
+    const t = (window.__mdTables || {})[window.__mdPreviewTid];
+    if (!t) return;
+    const strip = h => String(h).replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+    const rows = [t.headers].concat(t.rows).map(r => r.map(strip));
+    const csv = '\ufeff' + rows.map(r => r.map(c => '"' + c.replace(/"/g, '""') + '"').join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (t.title || '对话表格详情') + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(a.href);
+  }
+  (function bindMdPreview() {
+    const closeBtn = document.getElementById('mdPreviewClose');
+    if (closeBtn) closeBtn.addEventListener('click', closeMdTablePreview);
+    const expBtn = document.getElementById('mdPreviewExport');
+    if (expBtn) expBtn.addEventListener('click', exportMdTableCsv);
+  })();
+
+  /* —— HTML 选品报告：AI 回复完成后自动生成，右栏"选品报告"Tab 查看，可下载独立 HTML —— */
+  const REPORT_KEYWORDS = ['选品报告', '调研报告', '分析报告', '市场报告', '竞品报告', '研究报告', '选品建议'];
+  function isReportAnswer(text) {
+    if (!text || text.length < 300) return false;
+    const hasStructure = /(^|\n)#{1,4}\s/.test(text) || /(^|\n)\|.+\|/.test(text) || /(^|\n)[-*]\s/.test(text);
+    const hit = REPORT_KEYWORDS.some(k => text.indexOf(k) !== -1);
+    return hasStructure && hit;
+  }
+  /* —— 报告专用渲染器：Hero 头图 + 核心结论 + 章节卡片 + KPI 指标卡（右栏预览与导出 HTML 同构） —— */
+  function renderReportDoc(raw) {
+    let text = String(raw);
+    let heroTitle = '';
+    text = text.replace(/^#\s+(.+)$/m, (m, t) => { heroTitle = t; return ''; });
+    if (!heroTitle) {
+      const m = text.match(/^#{1,4}\s*(.+)$/m);
+      if (m) { heroTitle = m[1]; text = text.replace(m[0], ''); }
+    }
+    heroTitle = (heroTitle || '选品报告').replace(/\[(?:chart|search|tool|think|web)\]/gi, '').replace(/[`*>#]/g, '').trim().slice(0, 60) || '选品报告';
+    const lines = text.split('\n');
+    const sections = [];
+    const prelude = [];
+    let cur = null;
+    for (let i = 0; i < lines.length; i++) {
+      const m2 = lines[i].match(/^#{2}\s+(.+)$/);
+      if (m2) {
+        cur = { title: m2[1].replace(/`/g, '').trim(), lines: [] };
+        sections.push(cur);
+      } else if (cur) {
+        cur.lines.push(lines[i]);
+      } else {
+        prelude.push(lines[i]);
+      }
+    }
+    const timeStr = new Date().toLocaleString('zh-CN', { hour12: false });
+    let html = '<div class="rd-hero"><span class="rd-hero-badge">DIANLEIDA · AI 选品报告</span>'
+      + '<h1>' + inlineMd(heroTitle) + '</h1>'
+      + '<div class="rd-hero-sub">生成时间 ' + timeStr + ' · 基于实时市场数据自动生成</div></div>';
+    const toc = [];
+    const preHtml = enhanceReportBody(prelude.join('\n'));
+    if (preHtml.trim()) html += '<div class="rd-conclusion"><div class="rd-con-title">📌 核心结论</div>' + preHtml + '</div>';
+    sections.forEach((sec, i) => {
+      const sid = 'rdsec' + (i + 1);
+      toc.push({ id: sid, title: sec.title });
+      html += '<div class="rd-section" id="' + sid + '"><div class="rd-sec-head" data-title="' + escapeHtml(sec.title) + '">'
+        + '<span class="rd-sec-no">' + String(i + 1).padStart(2, '0') + '</span>'
+        + '<h2>' + inlineMd(sec.title) + '</h2></div>'
+        + '<div class="rd-sec-body">' + enhanceReportBody(sec.lines.join('\n')) + '</div></div>';
+    });
+    if (!sections.length && !preHtml.trim()) {
+      html += '<div class="rd-section"><div class="rd-sec-body">' + enhanceReportBody(text) + '</div></div>';
+    }
+    return { html: html, title: heroTitle, toc: toc, time: timeStr };
+  }
+  // 章节正文增强：2 列小表格（无图片、2~8 行）→ KPI 指标卡；其余走通用 Markdown 渲染（fullTables 不折叠）
+  function enhanceReportBody(md) {
+    const src = String(md || '');
+    if (!src.trim()) return '';
+    const lines = src.split('\n');
+    const kpiBlocks = [];
+    const out = [];
+    let i = 0;
+    while (i < lines.length) {
+      if (/^\s*\|.*\|\s*$/.test(lines[i])) {
+        let j = i;
+        const tl = [];
+        while (j < lines.length && /^\s*\|.*\|\s*$/.test(lines[j])) { tl.push(lines[j]); j++; }
+        const t = parseMdTableRows(tl);
+        const hasImg = tl.some(l => /!\[|<img/i.test(l));
+        // 首列平均字数过长的 2 列表（如长关键词清单）不适合 KPI 卡，保留绿头表格
+        const firstColAvg = t ? t.rows.reduce((s, r) => s + String(r[0]).length, 0) / t.rows.length : 0;
+        if (t && t.headers.length === 2 && t.rows.length >= 2 && t.rows.length <= 8 && !hasImg && firstColAvg <= 12) {
+          out.push('', '\u0000KPI' + kpiBlocks.length + '\u0000', '');
+          kpiBlocks.push(renderKpiGrid(t));
+        } else {
+          out.push(tl.join('\n'));
+        }
+        i = j; continue;
+      }
+      out.push(lines[i]); i++;
+    }
+    let body = renderMarkdownBody(out.join('\n'), { fullTables: true });
+    kpiBlocks.forEach((h, k) => {
+      const ph = '\u0000KPI' + k + '\u0000';
+      const reP = new RegExp('<p class="md-p">\\s*' + ph + '\\s*</p>');
+      body = reP.test(body) ? body.replace(reP, () => h) : body.replace(ph, () => h);
+    });
+    return body;
+  }
+  function parseMdTableRows(tl) {
+    if (tl.length < 3) return null;
+    const cells = l => l.trim().replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+    const headers = cells(tl[0]);
+    if (headers.length < 2) return null;
+    const rows = [];
+    for (let k = 1; k < tl.length; k++) {
+      if (/^\s*\|?[\s:|-]+\|?\s*$/.test(tl[k])) continue;
+      const cs = cells(tl[k]);
+      if (cs.length !== headers.length) return null;
+      rows.push(cs);
+    }
+    return rows.length ? { headers: headers, rows: rows } : null;
+  }
+  function renderKpiGrid(t) {
+    let html = '<div class="rd-kpi-cap">' + t.headers.map(h => inlineMd(h)).join('<span> · </span>') + '</div><div class="rd-kpi-grid">';
+    t.rows.forEach(r => {
+      html += '<div class="rd-kpi"><div class="k-label">' + inlineMd(r[0]) + '</div><div class="k-value">' + inlineMd(r[1]) + '</div></div>';
+    });
+    return html + '</div>';
+  }
+  function buildLastReport(answer) {
+    // 剥离思考块后取正文，走报告专用渲染
+    const plain = String(answer).replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/<think>[\s\S]*$/i, '').trim();
+    const doc = renderReportDoc(plain);
+    window.__lastReport = {
+      title: doc.title,
+      html: doc.html,
+      toc: doc.toc,
+      raw: plain,
+      time: doc.time
+    };
+    // "选品报告"Tab 加徽标提示有新报告
+    document.querySelectorAll('.right-tab .rt-name').forEach(el => {
+      if (el.textContent.indexOf('选品报告') !== -1 && el.dataset.badge !== '1') {
+        el.textContent = el.textContent.replace(/\s*●$/, '') + ' ●';
+        el.dataset.badge = '1';
+      }
+    });
+  }
+  // "报告已生成"卡片：报告类回复完成后中栏不铺全文，点击卡片打开右栏报告预览
+  function buildReportDoneCard(rp) {
+    const title = (rp && rp.title) || '选品报告';
+    const words = rp && rp.raw ? rp.raw.length : 0;
+    const time = (rp && rp.time) || '';
+    return '<div class="rd-done-card" onclick="openReportView()" role="button" title="点击在右侧预览完整报告">'
+      + '<div class="rdc-ic">📊</div>'
+      + '<div class="rdc-main">'
+      +   '<div class="rdc-title">报告已生成 · ' + escapeHtml(title) + '</div>'
+      +   '<div class="rdc-meta">生成时间 ' + escapeHtml(time) + ' · 正文约 <b>' + words + '</b> 字 · 已同步至右侧「选品报告」面板，可下载为独立 HTML</div>'
+      + '</div>'
+      + '<span class="rdc-btn">查看报告 →</span>'
+      + '</div>';
+  }
+  function openReportView() {
+    const wrap = document.getElementById('reportView');
+    const doc = document.getElementById('reportViewDoc');
+    const rightBody = document.querySelector('.right-body');
+    if (!wrap || !doc) return;
+    const rp = window.__lastReport;
+    if (rp) {
+      document.getElementById('reportViewTitle').textContent = rp.title;
+      document.getElementById('reportViewMeta').innerHTML =
+        '生成时间 ' + rp.time + ' · 正文约 <strong>' + rp.raw.length + '</strong> 字 · AI 自动生成，可下载为独立 HTML 文件';
+      doc.innerHTML = rp.html;
+      document.getElementById('reportDownloadBtn').style.display = '';
+      // 已读：清掉 Tab 徽标
+      document.querySelectorAll('.right-tab .rt-name').forEach(el => {
+        if (el.textContent.indexOf('选品报告') !== -1) {
+          el.textContent = el.textContent.replace(/\s*●$/, '');
+          el.dataset.badge = '';
+        }
+      });
+    } else {
+      document.getElementById('reportViewTitle').textContent = '选品报告';
+      document.getElementById('reportViewMeta').textContent = '';
+      doc.innerHTML = '<div class="report-empty"><div class="re-ic">📄</div><div class="re-t">暂无选品报告</div><div>在对话中让 AI 生成选品 / 调研报告后，<br>这里会自动展示 HTML 版报告，并支持下载。</div></div>';
+      document.getElementById('reportDownloadBtn').style.display = 'none';
+    }
+    // 与"表格详情"视图互斥：先退出表格模式
+    if (typeof closeMdTablePreview === 'function') closeMdTablePreview();
+    wrap.style.display = '';
+    if (rightBody) { rightBody.classList.remove('md-full-mode'); rightBody.classList.add('report-mode'); rightBody.scrollTop = 0; }
+    const rightPanel = document.getElementById('rightPanel');
+    if (rightPanel && rightPanel.classList.contains('collapsed') && typeof setCollapsed === 'function') setCollapsed(false);
+  }
+  function closeReportView() {
+    const wrap = document.getElementById('reportView');
+    const rightBody = document.querySelector('.right-body');
+    if (wrap) wrap.style.display = 'none';
+    if (rightBody) rightBody.classList.remove('report-mode');
+  }
+  // 独立 HTML 导出的自包含样式（店雷达绿主题，与右栏预览同构）
+  const REPORT_EXPORT_CSS = `
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #F8F9FA; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif; color: #1F2D1F; }
+    .report-doc { max-width: 900px; margin: 28px auto; background: #fff; border-radius: 14px; padding: 32px 40px 28px; box-shadow: 0 2px 18px rgba(0,135,60,.08); font-size: 14px; line-height: 1.9; }
+    .rd-hero { position: relative; overflow: hidden; border-radius: 12px; padding: 32px 32px 26px; margin-bottom: 20px; background: linear-gradient(135deg, #006C30 0%, #00873C 50%, #00B050 100%); color: #fff; }
+    .rd-hero::after { content: ''; position: absolute; right: -50px; top: -60px; width: 210px; height: 210px; border-radius: 50%; background: rgba(255,255,255,.10); }
+    .rd-hero::before { content: ''; position: absolute; right: 120px; bottom: -70px; width: 160px; height: 160px; border-radius: 50%; background: rgba(255,255,255,.07); }
+    .rd-hero-badge { position: relative; z-index: 1; display: inline-block; font-size: 11px; letter-spacing: 2px; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35); padding: 3px 12px; border-radius: 12px; margin-bottom: 12px; }
+    .rd-hero h1 { position: relative; z-index: 1; margin: 0 0 10px; font-size: 26px; line-height: 1.4; font-weight: 800; color: #fff; }
+    .rd-hero a { color: #fff; text-decoration: underline; }
+    .rd-hero-sub { position: relative; z-index: 1; font-size: 12.5px; color: rgba(255,255,255,.88); }
+    .rd-conclusion { background: linear-gradient(135deg, #F0F9F3, #E6F4EB); border-left: 6px solid #00873C; border-radius: 10px; padding: 16px 22px; margin-bottom: 20px; }
+    .rd-con-title { font-size: 15px; font-weight: 800; color: #00873C; margin-bottom: 8px; }
+    .rd-conclusion .md-p { margin: 6px 0; }
+    .rd-section { background: #fff; border: 1px solid #E5E7EB; border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(0,135,60,.05); page-break-inside: avoid; }
+    .rd-sec-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .rd-sec-no { flex: none; width: 32px; height: 32px; border-radius: 10px; background: linear-gradient(135deg, #00B050, #00873C); color: #fff; font-size: 14px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+    .rd-sec-head h2 { margin: 0; font-size: 18px; font-weight: 800; color: #0F3D22; line-height: 1.4; }
+    .rd-sec-body > :first-child { margin-top: 0; }
+    .rd-sec-body > :last-child { margin-bottom: 0; }
+    .rd-kpi-cap { font-size: 12px; color: #7B858E; margin: 2px 0 10px; }
+    .rd-kpi-cap span { color: #B9C2BF; }
+    .rd-kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin: 12px 0; }
+    .rd-kpi { background: #F7FBF8; border: 1px solid #E3EFE7; border-radius: 10px; padding: 13px 15px; }
+    .rd-kpi .k-label { font-size: 12px; color: #6E7F76; margin-bottom: 5px; }
+    .rd-kpi .k-value { font-size: 20px; font-weight: 800; color: #00873C; line-height: 1.3; word-break: break-all; }
+    .report-doc h3, .report-doc .md-h1 { font-size: 18px; font-weight: 800; color: #0F3D22; margin: 20px 0 12px; padding-left: 11px; border-left: 5px solid #00B050; line-height: 1.4; }
+    .report-doc h3:first-child, .report-doc .md-h1:first-child { margin-top: 0; }
+    .report-doc h4, .report-doc .md-h2 { font-size: 16px; font-weight: 700; color: #0F3D22; margin: 18px 0 10px; padding-left: 9px; border-left: 4px solid #7FD3A0; }
+    .report-doc h5, .report-doc h6, .report-doc .md-h3, .report-doc .md-h4 { font-size: 14.5px; font-weight: 700; color: #24352B; margin: 14px 0 8px; }
+    .report-doc p { margin: 8px 0; }
+    .report-doc strong { color: #00873C; }
+    .report-doc a { color: #00873C; text-decoration: none; }
+    .report-doc a:hover { text-decoration: underline; }
+    .report-doc ul, .report-doc ol { margin: 10px 0; padding-left: 24px; }
+    .report-doc li { margin: 6px 0; }
+    .report-doc blockquote { margin: 12px 0; padding: 12px 18px; background: #F0F7F2; border-left: 4px solid #00B050; border-radius: 0 8px 8px 0; color: #3D5247; }
+    .report-doc .md-ol { list-style: none; padding-left: 0; counter-reset: rstep; }
+    .report-doc .md-ol li { counter-increment: rstep; position: relative; padding: 11px 14px 11px 46px; margin: 8px 0; background: #FAFDFB; border: 1px solid #E6F1EA; border-radius: 10px; }
+    .report-doc .md-ol li::before { content: counter(rstep); position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, #00B050, #00873C); color: #fff; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .report-doc ul li::marker { color: #00B050; }
+    .report-doc .md-table-wrap { margin: 14px 0; border: 1px solid #E1EAE4; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,135,60,.05); }
+    .report-doc table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .report-doc .md-table th, .report-doc th { background: linear-gradient(135deg, #00873C, #00A34A); color: #fff; font-weight: 600; padding: 10px 13px; text-align: left; white-space: nowrap; border: none; }
+    .report-doc .md-table td, .report-doc td { padding: 9px 13px; border: none; border-bottom: 1px solid #EDF2EF; vertical-align: top; }
+    .report-doc .md-table tr:hover td { background: #F4FAF6; }
+    .report-doc img { max-width: 100%; border-radius: 6px; }
+    .report-doc .md-cell-prod { display: flex; align-items: center; gap: 9px; }
+    .report-doc .md-cell-prod img { width: 44px; height: 44px; max-width: 44px; max-height: 44px; object-fit: cover; flex: none; }
+    .report-doc code { background: #F0F7F2; color: #006C30; padding: 2px 6px; border-radius: 4px; font-size: 90%; }
+    .rd-toc { position: fixed; left: calc(50% - 668px); top: 110px; width: 196px; font-size: 12.5px; }
+    .rd-toc-title { font-weight: 800; color: #0F3D22; margin-bottom: 8px; padding-left: 6px; }
+    .rd-toc a { display: block; color: #5B6B62; text-decoration: none; padding: 5px 10px; border-radius: 7px; margin: 1px 0; line-height: 1.5; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rd-toc a:hover { background: #EAF6EF; color: #00873C; }
+    .rd-toolbar { position: fixed; right: 26px; bottom: 26px; }
+    .rd-toolbar button { cursor: pointer; border: none; border-radius: 22px; padding: 11px 20px; font-size: 13.5px; font-weight: 700; background: linear-gradient(135deg, #00B050, #00873C); color: #fff; box-shadow: 0 4px 14px rgba(0,135,60,.35); }
+    .rd-toolbar button:hover { filter: brightness(1.06); }
+    .report-footer { max-width: 900px; margin: 0 auto 34px; text-align: center; font-size: 12px; color: #909399; }
+    @media (max-width: 1366px) { .rd-toc { display: none; } }
+    @media print {
+      body { background: #fff; }
+      .rd-toc, .rd-toolbar { display: none; }
+      .report-doc { max-width: none; margin: 0; box-shadow: none; padding: 8px 2px; }
+      .rd-section { box-shadow: none; }
+    }
+  `;
+  function downloadReportHtml() {
+    const rp = window.__lastReport;
+    if (!rp) return;
+    const safeTitle = rp.title.replace(/[\\/:*?"<>|]/g, '_');
+    const toc = Array.isArray(rp.toc) && rp.toc.length
+      ? '<nav class="rd-toc"><div class="rd-toc-title">📑 目录</div>'
+        + rp.toc.map(t => '<a href="#' + t.id + '">' + escapeHtml(t.title) + '</a>').join('') + '</nav>\n'
+      : '';
+    const page = '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="UTF-8">\n'
+      + '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
+      + '<title>' + escapeHtml(rp.title) + '</title>\n'
+      + '<style>' + REPORT_EXPORT_CSS + '</style>\n</head>\n<body>\n'
+      + toc
+      + '<div class="report-doc">' + rp.html + '</div>\n'
+      + '<div class="rd-toolbar"><button onclick="window.print()">🖨 打印 / 存 PDF</button></div>\n'
+      + '<div class="report-footer">由店雷达 AI 生成 · ' + rp.time + '</div>\n'
+      + '</body>\n</html>';
+    const blob = new Blob(['\ufeff', page], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = safeTitle + '.html';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+  }
+  (function bindReportView() {
+    const dl = document.getElementById('reportDownloadBtn');
+    if (dl) dl.addEventListener('click', downloadReportHtml);
+  })();
+
+  // 行内 Markdown：图片 → 链接 → 加粗 → 行内代码
+  function inlineMd(s) {
+    if (!s) return '';
+    // 图片 ![alt](url)
+    s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (m, alt, url) =>
+      '<img class="md-img" src="' + escapeHtml(url) + '" alt="' + escapeHtml(alt) + '" loading="lazy" onerror="this.style.display=\'none\'">');
+    // 链接 [text](url)
+    s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m, txt, url) =>
+      '<a class="md-link" href="' + escapeHtml(url) + '" target="_blank" rel="noopener">' + inlineMd(txt) + '</a>');
+    // 加粗 **text**
+    s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    // 行内代码 `code`
+    s = s.replace(/`([^`]+)`/g, '<code class="md-code">$1</code>');
+    // <br> 保留
+    return s;
+  }
   function renderOffers(list, meta) {
+    // 若右栏正展示"对话表格详情"或"选品报告"，新商品数据到达时自动关闭该视图恢复商品表
+    const rb = document.querySelector('.right-body');
+    if (rb && rb.classList.contains('md-full-mode') && typeof closeMdTablePreview === 'function') closeMdTablePreview();
+    if (rb && rb.classList.contains('report-mode') && typeof closeReportView === 'function') closeReportView();
     const table = document.getElementById('previewTable');
     const titleEl = document.getElementById('previewTitle');
     const metaEl = document.getElementById('previewMeta');
@@ -4551,8 +5674,32 @@
       const now = new Date().toLocaleString('zh-CN', { hour12: false });
       metaEl.innerHTML = '执行时间 · ' + now + ' · 共 <strong>' + total + '</strong> 条 · 当前展示前 ' + list.length + ' 条';
     }
+    // —— 摘要卡片 / 选品摘要 / 顶部 Tab：全部由接口真实数据计算 ——
+    const priceOf = o => {
+      if (o.price != null) return Number(o.price);
+      if (o.priceLow != null) return Number(o.priceLow);
+      const m = String(o.priceRange || '').match(/[\d.]+/g);
+      return m ? Number(m[0]) : null;
+    };
+    const ordersOf = o => Number(o.bookedCount30d ?? o.bookedCount ?? o.recentOrders ?? 0);
+    const prices = list.map(priceOf).filter(v => v != null && isFinite(v));
+    const minP = prices.length ? Math.min.apply(null, prices) : 0;
+    const maxP = prices.length ? Math.max.apply(null, prices) : 0;
+    const topOrders = list.reduce((m, o) => Math.max(m, ordersOf(o)), 0);
+    const fmtN = n => Number(n || 0).toLocaleString('zh-CN');
+    const pills = document.querySelectorAll('.summary-row .summary-pill .num');
+    if (pills.length >= 4) {
+      pills[0].textContent = fmtN(total);
+      pills[1].textContent = '¥' + minP.toFixed(2);
+      pills[2].textContent = '¥' + maxP.toFixed(2);
+      pills[3].textContent = fmtN(topOrders);
+    }
+    const sumEl = document.getElementById('previewSummary');
+    if (sumEl) sumEl.innerHTML = '覆盖 <strong>' + list.length + '</strong> 款 1688 商品（后端共 ' + fmtN(total) + ' 条），批发价区间 <strong>¥' + minP.toFixed(1) + ' ~ ¥' + maxP.toFixed(1) + '</strong>，近 30 天订单 Top1 <strong>' + fmtN(topOrders) + ' 单</strong>，当前以商品库密集模式展示。';
+    const tabEl = document.getElementById('previewTabName');
+    if (tabEl) tabEl.textContent = '📊 1688 商品选品 (' + list.length + '款)';
     if (!list.length) {
-      table.querySelector('tbody').innerHTML = '<tr><td colspan="13" style="text-align:center;padding:40px;color:#909399">暂无商品数据</td></tr>';
+      table.querySelector('tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#909399">暂无商品数据</td></tr>';
       return;
     }
     table.querySelector('tbody').innerHTML = list.map((o, i) => {
@@ -4580,19 +5727,13 @@
         ? '<div class="img-cell"><img src="' + escapeHtml(thumb) + '" loading="lazy" onerror="this.outerHTML=\'📦\'"></div>'
         : '<div class="img-cell">' + (emoji ? emoji[0] : '📦') + '</div>';
       return `<tr class="product-main" data-offer-id="${escapeHtml(offerId)}" data-conv-id="${escapeHtml(o.convId || '')}">
-        <td>${i + 1}</td>
+        <td class="idx-cell">${i + 1}</td>
         <td><div class="product-info">${thumbHtml}<div class="product-title">${title}<br><span class="mini-tag">1688</span>${o.isFactory ? '<span class="mini-tag green">工厂</span>' : ''}${o.isPower ? '<span class="mini-tag blue">实力商家</span>' : ''}</div></div></td>
-        <td>${created || '—'}</td>
+        <td class="time-cell">${created || '—'}</td>
         <td class="price">${price}</td>
         <td class="ladder">${priceRange}</td>
-        <td>${booked30}</td>
-        <td>${saleCount}</td>
-        <td>${saleVol}</td>
-        <td>${renderSpark(o.salesTrend || o.bookedTrend7d || [])}</td>
-        <td>${total}</td>
-        <td>${totalCount}</td>
-        <td${repurchaseCls}>${repurchase}</td>
-        <td class="consign">${consign}</td>
+        <td>${fmtN(booked30)}</td>
+        <td>${fmtN(saleCount)}</td>
       </tr>`;
     }).join('');
   }
