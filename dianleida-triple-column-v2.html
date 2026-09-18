@@ -1416,6 +1416,46 @@
   }
   .tr-dot:hover .tr-tip { opacity: 1; transform: translateY(-50%) translateX(0); }
 
+  /* 删除会话确认弹窗（TRAE 风格）：红色感叹号图标 + 提示正文 + 取消/删除双按钮 */
+  .confirm-modal {
+    position: fixed; inset: 0; z-index: 120;
+    display: none; align-items: center; justify-content: center;
+    background: rgba(31, 35, 41, .38); padding: 20px;
+  }
+  .confirm-modal.open { display: flex; }
+  .confirm-card {
+    width: 380px; max-width: 100%;
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 16px 50px rgba(31, 35, 41, .22);
+    padding: 18px 20px 16px;
+    animation: confirmIn .16s ease;
+  }
+  @keyframes confirmIn { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: scale(1); } }
+  .cf-head { display: flex; align-items: center; gap: 10px; }
+  .cf-ic {
+    width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%;
+    background: #e5483f; color: #fff; font-size: 13px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .cf-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .cf-close {
+    margin-left: auto; width: 24px; height: 24px;
+    border: 0; background: transparent; color: var(--text-dim);
+    font-size: 16px; cursor: pointer; border-radius: 4px; line-height: 1;
+  }
+  .cf-close:hover { background: var(--bg); color: var(--text); }
+  .cf-text { margin: 12px 0 16px; font-size: 13px; line-height: 20px; color: var(--text-dim); }
+  .cf-actions { display: flex; justify-content: flex-end; gap: 10px; }
+  .cf-btn {
+    height: 30px; padding: 0 16px; border-radius: 6px;
+    font-size: 12px; font-weight: 500; cursor: pointer;
+    transition: background .12s ease, border-color .12s ease;
+  }
+  .cf-cancel { border: 1px solid var(--border-light); background: #fff; color: var(--text); }
+  .cf-cancel:hover { background: var(--bg); }
+  .cf-danger { border: 1px solid #e5483f; background: #e5483f; color: #fff; }
+  .cf-danger:hover { background: #d43c33; border-color: #d43c33; }
+
   .attach-chip .ac-info {
     flex: 1; min-width: 0;
     display: flex; flex-direction: column; gap: 2px;
@@ -2723,6 +2763,22 @@
   </div>
 </div>
 
+<!-- 删除会话确认弹窗（TRAE 风格） -->
+<div class="confirm-modal" id="deleteConfirm" role="dialog" aria-modal="true" aria-labelledby="deleteTitle">
+  <div class="confirm-card">
+    <div class="cf-head">
+      <span class="cf-ic">!</span>
+      <span class="cf-title" id="deleteTitle">确认删除</span>
+      <button class="cf-close" id="deleteClose" type="button" aria-label="关闭">×</button>
+    </div>
+    <p class="cf-text">删除后，这个会话及其所有内容将从本地或云端移除，且无法恢复。</p>
+    <div class="cf-actions">
+      <button class="cf-btn cf-cancel" id="deleteCancel" type="button">取消</button>
+      <button class="cf-btn cf-danger" id="deleteOk" type="button">删除</button>
+    </div>
+  </div>
+</div>
+
 <script>
   // 积分中心演示交互：两个独立弹窗（积分中心 / 积分明细）
   const walletModal = document.getElementById('walletModal');
@@ -3097,6 +3153,28 @@
       convMenu.classList.remove('open');
       convMenuTarget = null;
     }
+    // 删除会话确认弹窗（TRAE 风格）：替代原生 confirm；确认后执行传入的删除回调
+    const deleteModal = document.getElementById('deleteConfirm');
+    let deletePending = null;
+    function openDeleteConfirm(onConfirm) {
+      deletePending = onConfirm;
+      deleteModal.classList.add('open');
+    }
+    function closeDeleteConfirm() {
+      deleteModal.classList.remove('open');
+      deletePending = null;
+    }
+    document.getElementById('deleteCancel').addEventListener('click', closeDeleteConfirm);
+    document.getElementById('deleteClose').addEventListener('click', closeDeleteConfirm);
+    document.getElementById('deleteOk').addEventListener('click', () => {
+      const fn = deletePending;
+      closeDeleteConfirm();
+      if (fn) fn();
+    });
+    deleteModal.addEventListener('click', e => { if (e.target === deleteModal) closeDeleteConfirm(); });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && deleteModal.classList.contains('open')) closeDeleteConfirm();
+    });
     convMenu.querySelectorAll('.cm-item').forEach(item => {
       item.addEventListener('click', () => {
         if (!convMenuTarget) return;
@@ -3112,18 +3190,19 @@
         } else if (action === 'rename') {
           startRenameConv(target);
         } else if (action === 'delete') {
-          if (!confirm('确定删除该对话吗？')) return;
-          // 运行中会话被删除：停止其任务并清理视图缓冲
-          if (RUNNING_TASKS.has(id)) stopTask(id);
-          CONV_VIEWS.delete(id);
-          const idx = list.indexOf(target);
-          if (idx >= 0) list.splice(idx, 1);
-          rerenderConvList();
-          if (list.length === 0) {
-            showEmptyConversation();
-            document.dispatchEvent(new CustomEvent('dld:right-empty', { detail: { empty: true } }));
-          }
-          else selectConvItem(convList.querySelector('.conv-item'));
+          openDeleteConfirm(() => {
+            // 运行中会话被删除：停止其任务并清理视图缓冲
+            if (RUNNING_TASKS.has(id)) stopTask(id);
+            CONV_VIEWS.delete(id);
+            const idx = list.indexOf(target);
+            if (idx >= 0) list.splice(idx, 1);
+            rerenderConvList();
+            if (list.length === 0) {
+              showEmptyConversation();
+              document.dispatchEvent(new CustomEvent('dld:right-empty', { detail: { empty: true } }));
+            }
+            else selectConvItem(convList.querySelector('.conv-item'));
+          });
         } else if (action === 'share') {
           const url = location.href.split('#')[0] + '#conv=' + id;
           try {
