@@ -3201,10 +3201,12 @@
       if (m.role === 'user') {
         return `<div class="msg user"><div class="avatar">我</div><div class="msg-body"><div class="msg-role">我 <span class="time">${time}</span></div><div class="msg-bubble"><p>${escapeHtml(m.content)}</p></div></div></div>`;
       }
-      // AI 消息：走 Markdown 渲染（think 折叠 / 表格 / 图片 / 链接），与流式完成后一致
-      const html = (typeof renderMarkdown === 'function')
-        ? renderMarkdown(m.content)
-        : escapeHtml(m.content).replace(/\n/g, '<br>');
+      // AI 消息：与流式完成后一致（表格型只渲染表格+查看更多→右栏预览，不铺分析文字；其余走 Markdown 渲染）
+      const html = (typeof hasMdTable === 'function' && typeof renderTablesOnly === 'function' && hasMdTable(m.content))
+        ? renderTablesOnly(m.content)
+        : ((typeof renderMarkdown === 'function')
+          ? renderMarkdown(m.content)
+          : escapeHtml(m.content).replace(/\n/g, '<br>'));
       return `<div class="msg ai"><div class="avatar">AI</div><div class="msg-body"><div class="msg-role">${CURRENT_ACCOUNT.agent || '店雷达 AI'} <span class="time">${time} · 已完成</span></div><div class="msg-bubble">${html}</div></div></div>`;
     }
     function escapeHtml(s) {
@@ -4831,6 +4833,9 @@
               if (typeof isReportAnswer === 'function' && isReportAnswer(accAnswer) && typeof buildLastReport === 'function') {
                 buildLastReport(accAnswer);
                 liveTextEl.innerHTML = buildReportDoneCard(window.__lastReport);
+              } else if (typeof hasMdTable === 'function' && hasMdTable(accAnswer)) {
+                // 表格型回复（未生成报告）：中栏只渲染表格（默认折叠部分数据），点击"查看更多"在右栏预览完整表格，不显示分析文字
+                liveTextEl.innerHTML = renderTablesOnly(accAnswer);
               } else {
                 liveTextEl.innerHTML = renderMarkdown(accAnswer);
               }
@@ -5359,6 +5364,64 @@
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(a.href);
   }
+  /* —— 表格型回复：未生成报告时中栏只渲染表格（部分数据 + 查看更多→右栏完整预览），不显示分析文字 —— */
+  // 去除 <think> 块（含未闭合的尾部 think），返回剩余正文
+  function stripThinkBlocks(text) {
+    return String(text || '').replace(/<think>[\s\S]*?<\/think>/g, '').replace(/<think>[\s\S]*$/g, '');
+  }
+  // 提取 Markdown 表格块 → [{ title, lines: [表头行, 数据行...] }]；表格名取其前最近的 Markdown 标题
+  function extractMdTableBlocks(src) {
+    const lines = String(src || '').replace(/\r\n/g, '\n').split('\n');
+    const isSep = l => /^\s*\|?[\s:-]+\|[\s:|-]+\|?\s*$/.test(l);
+    const blocks = [];
+    let lastHeading = '';
+    let i = 0;
+    while (i < lines.length) {
+      const line = lines[i];
+      const hm = line.match(/^(#{1,4})\s+(.*)$/);
+      if (hm) { lastHeading = hm[2].trim(); i++; continue; }
+      if (line.includes('|') && i + 1 < lines.length && isSep(lines[i + 1])) {
+        const rows = [line];
+        i += 2; // 表头 + 分隔行
+        while (i < lines.length && lines[i].includes('|') && !/^\s*$/.test(lines[i])) {
+          if (isSep(lines[i])) { i++; continue; }
+          rows.push(lines[i]);
+          i++;
+        }
+        blocks.push({ title: lastHeading, lines: rows });
+        lastHeading = ''; // 一张表只领一次标题
+        continue;
+      }
+      i++;
+    }
+    return blocks;
+  }
+  // 是否包含 Markdown 表格（表格型回复判定）
+  function hasMdTable(src) {
+    return extractMdTableBlocks(stripThinkBlocks(src)).length > 0;
+  }
+  // 表格型回复渲染：每张表注册到 window.__mdTables 供右栏全量预览；默认最多展示 5 行，底部按钮打开右栏预览
+  function renderTablesOnly(src) {
+    const blocks = extractMdTableBlocks(stripThinkBlocks(src));
+    window.__mdTableSeq = window.__mdTableSeq || 0;
+    window.__mdTables = window.__mdTables || {};
+    return blocks.map(b => {
+      const tableRows = b.lines.map(parseTableRow);
+      const headers = tableRows[0];
+      const dataRows = tableRows.slice(1);
+      const total = dataRows.length;
+      window.__mdTableSeq += 1;
+      const tid = window.__mdTableSeq;
+      window.__mdTables[tid] = { headers, rows: dataRows, title: b.title || '对话表格详情' };
+      const shown = total > MD_TABLE_VISIBLE_ROWS ? dataRows.slice(0, MD_TABLE_VISIBLE_ROWS) : dataRows;
+      const thead = '<thead><tr>' + headers.map(c => '<th>' + c + '</th>').join('') + '</tr></thead>';
+      const tbody = '<tbody>' + shown.map(r => '<tr>' + r.map(mdCellHtml).join('') + '</tr>').join('') + '</tbody>';
+      const btn = total ? '<div class="md-more-btn" onclick="viewMdTableFull(' + tid + ')">'
+        + (total > MD_TABLE_VISIBLE_ROWS ? ('查看更多 · 共 ' + total + ' 条数据') : ('查看完整表格 · ' + total + ' 条数据')) + '</div>' : '';
+      return '<div class="md-table-wrap"><table class="md-table">' + thead + tbody + '</table>' + btn + '</div>';
+    }).join('');
+  }
+
   (function bindMdPreview() {
     const closeBtn = document.getElementById('mdPreviewClose');
     if (closeBtn) closeBtn.addEventListener('click', closeMdTablePreview);
