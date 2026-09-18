@@ -457,7 +457,6 @@
   }
   .col-left-toggle .cl-tip i { font-style: normal; color: #9CA3AF; font-size: 11px; }
   .col-left-toggle:hover .cl-tip { display: inline-flex; }
-  .chat-head .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); flex-shrink: 0; }
   .chat-head .title { font-size: 14px; font-weight: 500; color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .chat-head .agent-tag {
     background: var(--brand-soft); color: var(--brand-dark);
@@ -1378,21 +1377,31 @@
     display: inline-flex; align-items: center; justify-content: center;
   }
 
-  /* 轮次锚点导航：中栏左缘圆点列（固定不随滚动），每轮用户提问对应一个点
+  /* 轮次锚点导航（迷你地图）：中栏左缘细轨道线 + 圆点列（固定不随滚动），
+     每轮用户提问对应一个点，点按该轮在内容中的真实比例位置摆放（点越靠下=轮次越深），
+     疏密如实反映轮次分布，彻底避免均摊间距与消息位置脱节的问题；
      滚动联动高亮当前轮；悬停弹出该轮提问摘要（深色气泡）；点击平滑跳转到该轮 */
   .turn-rail {
     position: absolute; left: 6px; top: 64px; bottom: 130px;
     width: 16px; z-index: 25;
-    display: none; flex-direction: column; justify-content: space-between; align-items: center;
+    display: none;
   }
-  .turn-rail.show { display: flex; }
+  .turn-rail.show { display: block; }
+  .turn-rail::before {
+    content: ''; position: absolute; top: 2px; bottom: 2px; left: 50%;
+    width: 2px; transform: translateX(-50%);
+    background: #EDEFF2; border-radius: 1px;
+  }
   .tr-dot {
-    position: relative; width: 8px; height: 8px; padding: 0; flex-shrink: 0;
+    position: absolute; top: 0; left: 50%; transform: translate(-50%, 0);
+    width: 8px; height: 8px; padding: 0;
     border: none; border-radius: 50%; background: #D3D6DB; cursor: pointer;
     transition: background .12s ease, transform .12s ease;
   }
-  .tr-dot:hover { background: #9AA2AD; }
-  .tr-dot.on { background: #10ad53; transform: scale(1.3); }
+  /* 扩大命中区，8px 圆点不难点 */
+  .tr-dot::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; }
+  .tr-dot:hover { background: #9AA2AD; transform: translate(-50%, 0) scale(1.2); }
+  .tr-dot.on { background: #10ad53; transform: translate(-50%, 0) scale(1.3); }
   .tr-tip {
     position: absolute; left: 18px; top: 50%;
     transform: translateY(-50%) translateX(-4px);
@@ -2245,7 +2254,6 @@
   <section class="col-mid">
     <div class="chat-card">
       <div class="chat-head">
-        <span class="dot"></span>
         <span class="title">搜索美国亚马逊 20 款近 30 天新品</span>
         <div class="right">
           <button class="stop-btn" id="stopBtn" title="停止当前生成">■ 停止生成</button>
@@ -4589,12 +4597,14 @@
     jumpLatestBtn.addEventListener('click', () => jumpStreamEl.scrollTo({ top: jumpStreamEl.scrollHeight, behavior: 'smooth' }));
     jumpStreamEl.addEventListener('scroll', () => { updateJumpLatest(); syncTurnRail(); }, { passive: true });
   }
-  // 轮次锚点导航：扫描当前会话的 .msg.user 生成左缘圆点列（含悬停摘要气泡）
+  // 轮次锚点导航（迷你地图）：扫描当前会话的 .msg.user 生成左缘圆点列（含悬停摘要气泡）
+  // 圆点按该轮提问在内容中的真实比例位置摆放（而非均摊间距），疏密如实反映轮次分布
   // 滚动联动：视口 40% 高度处所在的提问轮次高亮；点击圆点平滑跳转到对应提问
   // 渲染路径多样（switchToView / showSession 直接 innerHTML / 发送 appendChild），统一用 MutationObserver 监听重建
   // 注意：rebuildTurnRail 会被 scrollBottom 后的初始化调用，trDots 必须在此之前完成声明（避免 TDZ）
   let trDots = [];
   let trTimer = null;
+  let trResizeTimer = null;
   function streamMsgTop(st, el) {
     return el.getBoundingClientRect().top - st.getBoundingClientRect().top + st.scrollTop;
   }
@@ -4623,7 +4633,28 @@
       });
     });
     rail.classList.toggle('show', trDots.length > 1);
+    layoutTurnRailDots();
     syncTurnRail();
+  }
+  // 迷你地图布局：点 top = 该轮在内容中的比例位置 × 轨道可用高度；
+  // 相邻点过密时强制最小间距防止重叠（先正向推开，溢出再反向回推）
+  function layoutTurnRailDots() {
+    const rail = document.getElementById('turnRail');
+    const st = document.getElementById('stream');
+    if (!rail || !st || !trDots.length) return;
+    const total = st.scrollHeight;
+    const railH = rail.clientHeight;
+    if (total <= 0 || railH <= 0) return;
+    const DOT = 8, MIN_GAP = 12;
+    const maxTop = railH - DOT;
+    const tops = trDots.map(d => Math.min(Math.max(streamMsgTop(st, d.target) / total, 0), 1) * maxTop);
+    let prev = -Infinity;
+    for (let i = 0; i < tops.length; i++) { tops[i] = Math.max(tops[i], prev + MIN_GAP); prev = tops[i]; }
+    if (tops[tops.length - 1] > maxTop) {
+      tops[tops.length - 1] = maxTop;
+      for (let i = tops.length - 2; i >= 0; i--) tops[i] = Math.max(Math.min(tops[i], tops[i + 1] - MIN_GAP), 0);
+    }
+    trDots.forEach((d, i) => { d.el.style.top = Math.round(tops[i]) + 'px'; });
   }
   function syncTurnRail() {
     const st = document.getElementById('stream');
@@ -4639,6 +4670,11 @@
   });
   const trStreamEl = document.getElementById('stream');
   if (trStreamEl) trObserver.observe(trStreamEl, { childList: true, subtree: true });
+  // 窗口尺寸变化会改变轨道高度与内容换行，防抖重算点的真实比例位置
+  window.addEventListener('resize', () => {
+    clearTimeout(trResizeTimer);
+    trResizeTimer = setTimeout(layoutTurnRailDots, 150);
+  });
   // 初始进入：定位到最新消息
   scrollBottom();
   rebuildTurnRail();
