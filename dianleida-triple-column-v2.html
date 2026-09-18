@@ -2849,10 +2849,10 @@
   const accountRole = document.getElementById('accountRole');
 
   const ACCOUNTS = [
-    { id: 'main-001', name: '主账号·店雷达AI', role: 'main', roleLabel: '主', avatar: '🏬', phone: '176****6666', shop: '店雷达AI·总店', lastActive: '刚刚' },
-    { id: 'sub-001', name: '小李', role: 'sub', roleLabel: '子', avatar: '👤', phone: '138****2517', shop: '店雷达AI·华东', lastActive: '5 分钟前' },
-    { id: 'sub-002', name: '小张', role: 'sub', roleLabel: '子', avatar: '👤', phone: '159****8043', shop: '店雷达AI·华南', lastActive: '1 小时前' },
-    { id: 'sub-003', name: '小王', role: 'sub', roleLabel: '子', avatar: '👤', phone: '187****3296', shop: '店雷达AI·华西', lastActive: '昨天 18:22' }
+    { id: 'main-001', name: '主账号', role: 'main', roleLabel: '主', avatar: '🏬', phone: '176****6666', shop: '总店', lastActive: '刚刚' },
+    { id: 'sub-001', name: '小李', role: 'sub', roleLabel: '子', avatar: '👤', phone: '138****2517', shop: '华东', lastActive: '5 分钟前' },
+    { id: 'sub-002', name: '小张', role: 'sub', roleLabel: '子', avatar: '👤', phone: '159****8043', shop: '华南', lastActive: '1 小时前' },
+    { id: 'sub-003', name: '小王', role: 'sub', roleLabel: '子', avatar: '👤', phone: '187****3296', shop: '华西', lastActive: '昨天 18:22' }
   ];
   const NOW = Date.now();
   function tsFromNow(minAgo) { return new Date(NOW - minAgo * 60 * 1000).toISOString(); }
