@@ -413,16 +413,6 @@
   .conv-menu .cm-sep {
     height:1px; background: var(--border-light); margin:4px 4px;
   }
-  /* 重命名输入态 */
-  .conv-title-input {
-    width: 100%;
-    border:1px solid var(--brand);
-    border-radius: 3px;
-    padding: 1px 4px;
-    font: inherit; color: var(--text);
-    outline: none;
-    background:#fff;
-  }
   /* 会话切换淡入 */
   @keyframes convFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
   .conv-fade-in { animation: convFadeIn .25s ease; }
@@ -1455,6 +1445,18 @@
   .cf-cancel:hover { background: var(--bg); }
   .cf-danger { border: 1px solid #e5483f; background: #e5483f; color: #fff; }
   .cf-danger:hover { background: #d43c33; border-color: #d43c33; }
+  /* 重命名弹窗（TRAE 风格）：复用 confirm 遮罩/卡片，输入框 + 取消/黑色确认 */
+  .rn-input {
+    width: 100%; height: 34px;
+    border: 1px solid var(--border-light); border-radius: 6px;
+    padding: 0 10px; margin: 14px 0 16px;
+    font-size: 13px; color: var(--text);
+    outline: none; background: #fff;
+    transition: border-color .12s ease, box-shadow .12s ease;
+  }
+  .rn-input:focus { border-color: var(--text); box-shadow: 0 0 0 2px rgba(31, 35, 41, .06); }
+  .cf-primary { border: 1px solid #1f2329; background: #1f2329; color: #fff; }
+  .cf-primary:hover { background: #383d45; border-color: #383d45; }
 
   .attach-chip .ac-info {
     flex: 1; min-width: 0;
@@ -2748,10 +2750,6 @@
     <span class="cm-ic">📌</span>
     <span class="cm-label" id="convMenuPinLabel">置顶任务</span>
   </div>
-  <div class="cm-item" data-menu="share">
-    <span class="cm-ic">🔗</span>
-    <span>分享</span>
-  </div>
   <div class="cm-item" data-menu="rename">
     <span class="cm-ic">✎</span>
     <span>重命名</span>
@@ -2775,6 +2773,21 @@
     <div class="cf-actions">
       <button class="cf-btn cf-cancel" id="deleteCancel" type="button">取消</button>
       <button class="cf-btn cf-danger" id="deleteOk" type="button">删除</button>
+    </div>
+  </div>
+</div>
+
+<!-- 重命名弹窗（TRAE 风格）：输入框 + 取消/确认 -->
+<div class="confirm-modal" id="renameModal" role="dialog" aria-modal="true" aria-labelledby="renameTitle">
+  <div class="confirm-card">
+    <div class="cf-head">
+      <span class="cf-title" id="renameTitle">重命名</span>
+      <button class="cf-close" id="renameClose" type="button" aria-label="关闭">×</button>
+    </div>
+    <input class="rn-input" id="renameInput" type="text" maxlength="50" placeholder="请输入新的任务名称">
+    <div class="cf-actions">
+      <button class="cf-btn cf-cancel" id="renameCancel" type="button">取消</button>
+      <button class="cf-btn cf-primary" id="renameOk" type="button">确认</button>
     </div>
   </div>
 </div>
@@ -3175,6 +3188,46 @@
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && deleteModal.classList.contains('open')) closeDeleteConfirm();
     });
+    // 重命名弹窗（TRAE 风格）：打开时填入当前标题并全选；Enter 确认 / Esc 取消
+    const renameModal = document.getElementById('renameModal');
+    const renameInput = document.getElementById('renameInput');
+    let renameTarget = null;
+    function openRenameConv(target) {
+      renameTarget = target;
+      renameInput.value = target.title;
+      renameModal.classList.add('open');
+      renameInput.focus(); renameInput.select();
+    }
+    function closeRenameModal() {
+      renameModal.classList.remove('open');
+      renameTarget = null;
+    }
+    function commitRename() {
+      const target = renameTarget;
+      if (!target) { closeRenameModal(); return; }
+      const v = renameInput.value.trim();
+      if (v && v !== target.title) {
+        target.title = v;
+        rerenderConvList();
+        // 若正处该会话视图，同步中栏标题
+        if (ACTIVE_CONV_KEY === target.id) {
+          const title = document.querySelector('.chat-head .title');
+          if (title) title.textContent = v;
+        }
+      }
+      closeRenameModal();
+    }
+    document.getElementById('renameCancel').addEventListener('click', closeRenameModal);
+    document.getElementById('renameClose').addEventListener('click', closeRenameModal);
+    document.getElementById('renameOk').addEventListener('click', commitRename);
+    renameInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') commitRename();
+      else if (e.key === 'Escape') closeRenameModal();
+    });
+    renameModal.addEventListener('click', e => { if (e.target === renameModal) closeRenameModal(); });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && renameModal.classList.contains('open')) closeRenameModal();
+    });
     convMenu.querySelectorAll('.cm-item').forEach(item => {
       item.addEventListener('click', () => {
         if (!convMenuTarget) return;
@@ -3188,7 +3241,7 @@
           target.pinned = !target.pinned;
           rerenderConvList();
         } else if (action === 'rename') {
-          startRenameConv(target);
+          openRenameConv(target);
         } else if (action === 'delete') {
           openDeleteConfirm(() => {
             // 运行中会话被删除：停止其任务并清理视图缓冲
@@ -3203,14 +3256,6 @@
             }
             else selectConvItem(convList.querySelector('.conv-item'));
           });
-        } else if (action === 'share') {
-          const url = location.href.split('#')[0] + '#conv=' + id;
-          try {
-            navigator.clipboard?.writeText(url);
-            flashToast('分享链接已复制：' + url);
-          } catch (e) {
-            prompt('请复制分享链接', url);
-          }
         }
       });
     });
@@ -3219,27 +3264,6 @@
     });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeConvMenu(); });
 
-    function startRenameConv(target) {
-      const el = convList.querySelector(`.conv-item[data-conv="${target.id}"]`);
-      if (!el) return;
-      const titleEl = el.querySelector('.conv-title');
-      const oldTitle = target.title;
-      titleEl.innerHTML = `<input class="conv-title-input" type="text" maxlength="50">`;
-      const input = titleEl.querySelector('input');
-      input.value = target.title;
-      input.focus(); input.select();
-      const commit = () => {
-        const v = input.value.trim() || oldTitle;
-        target.title = v;
-        rerenderConvList();
-      };
-      const cancel = () => { rerenderConvList(); };
-      input.addEventListener('blur', commit);
-      input.addEventListener('keydown', e => {
-        if (e.key === 'Enter') input.blur();
-        else if (e.key === 'Escape') { input.removeEventListener('blur', commit); cancel(); }
-      });
-    }
     function selectConvItem(el) {
       if (!el) return;
       // 选中历史会话后右栏恢复内容视图
