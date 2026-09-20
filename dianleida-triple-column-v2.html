@@ -1872,6 +1872,41 @@
   #previewTable .product-info { min-width: 210px; max-width: 290px; gap: 10px; }
   #previewTable .product-title { color: #2b3540; font-size: 12px; font-weight: 500; line-height: 1.45; }
   #previewTable .mini-tag { margin: 2px 4px 0 0; padding: 1px 5px; border-radius: 3px; font-size: 10px; }
+  /* ===== 预览表格：横向滚动 + 表头吸附加固 + 分页条 ===== */
+  .excel-wrap { overscroll-behavior: contain; }
+  /* 卡片表 border-spacing 8px 会在表头与首行间露缝，吸附滚动时用白色阴影补缝 */
+  #previewTable thead th { box-shadow: 0 8px 0 0 #fff; }
+  .table-pagination {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    margin-top: 8px; padding: 7px 12px;
+    background: #fff; border: 1px solid var(--border-light); border-radius: var(--r);
+    font-size: 12px; color: #6f7a85;
+  }
+  .table-pagination .pg-nav { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .table-pagination .pg-btn {
+    border: 1px solid #e3e8ee; background: #fff; color: #4a5560;
+    border-radius: 6px; padding: 3px 9px; font-size: 12px; line-height: 1.5; cursor: pointer;
+  }
+  .table-pagination .pg-btn:hover:not(:disabled) { border-color: var(--brand); color: var(--brand-dark); }
+  .table-pagination .pg-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .table-pagination .pg-btn.active { background: var(--brand-soft); border-color: var(--brand); color: var(--brand-dark); font-weight: 700; }
+  .table-pagination .pg-ellipsis { color: #a8b0b8; padding: 0 2px; }
+  .table-pagination select {
+    border: 1px solid #e3e8ee; border-radius: 6px; padding: 2px 6px;
+    font-size: 12px; color: #4a5560; background: #fff; cursor: pointer;
+  }
+  .table-pagination .pg-size { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .table-pagination .spacer { margin-left: auto; }
+  /* ===== 勾选列 + 勾选导出/导出全部 ===== */
+  #previewTable th.chk-cell, #previewTable td.chk-cell { text-align: center; min-width: 34px; width: 34px; padding-left: 12px; padding-right: 2px; }
+  #previewTable input.row-chk, #previewTable thead input#pgCheckAll {
+    width: 15px; height: 15px; min-width: 15px; min-height: 15px; margin: 0;
+    accent-color: var(--brand); cursor: pointer; vertical-align: middle; display: inline-block;
+  }
+  .table-pagination .pg-btn.pg-primary { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+  .table-pagination .pg-btn.pg-primary:hover:not(:disabled) { background: var(--brand-dark); color: #fff; }
+  /* 全屏容器：把表格 + 分页条一起全屏（分页条内含导出按钮，全屏时也要可见） */
+  .excel-block:fullscreen { background: #f6f8f7; padding: 14px; overflow: auto; }
 
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 3px; }
@@ -2009,28 +2044,67 @@
   .status-line .tdots span:nth-child(2) { animation-delay: .2s; }
   .status-line .tdots span:nth-child(3) { animation-delay: .4s; }
 
-  /* 表格生成中的骨架屏 */
+  /* 流式过程状态条：连接/检索/接收全程可感知（静默时轮播阶段提示 + 秒级计时） */
+  .live-status {
+    display: flex; align-items: center; gap: 8px;
+    margin: 8px 0 2px; padding: 7px 11px;
+    border: 1px solid #d9efe2; border-radius: 8px;
+    background: linear-gradient(180deg, #f6fcf8, #eff9f3);
+    animation: fadeInUp .3s ease;
+  }
+  .live-status .ls-ic {
+    width: 15px; height: 15px; flex: none; border-radius: 50%;
+    border: 2px solid #bfe4cd; border-top-color: #00a83e;
+    animation: spin .8s linear infinite;
+  }
+  .live-status .ls-txt { font-size: 12.5px; color: #256b42; transition: opacity .2s; }
+  .live-status .ls-time {
+    margin-left: auto; flex: none; font-size: 11px; color: #6f9883;
+    background: #e8f5ed; border-radius: 9px; padding: 1px 7px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* 表格生成中：带真实进度的骨架卡（标题 + 已接收/预期计数 + 进度条 + 呼吸式占位行） */
   .table-skeleton {
-    margin: 8px 0 4px; padding: 10px 12px;
+    margin: 8px 0 4px; padding: 12px 14px;
     border: 1px solid var(--border-light); border-radius: var(--r);
-    background: #fafbfc;
+    background: linear-gradient(180deg, #fbfcfd, #f6f8f9);
     animation: fadeInUp .35s ease;
   }
-  .table-skeleton .sk-row {
-    height: 10px; border-radius: 3px; margin: 8px 0;
-    background: linear-gradient(90deg, #eef0f2 25%, #e2e6ea 37%, #eef0f2 63%);
-    background-size: 400% 100%;
-    animation: skShimmer 1.3s ease infinite;
+  .table-skeleton .sk-head { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .table-skeleton .sk-ic {
+    width: 24px; height: 24px; flex: none; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; background: #e8f6ee;
+    animation: azPulse 2s ease infinite;
   }
-  .table-skeleton .sk-row.w60 { width: 60%; }
-  .table-skeleton .sk-row.w80 { width: 80%; }
-  .table-skeleton .sk-label {
-    display: flex; align-items: center; font-size: 12px; color: var(--text-dim); margin-top: 6px;
+  .table-skeleton .sk-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .table-skeleton .sk-count {
+    font-size: 11px; color: #0a8f3c; background: #e8f6ee;
+    border-radius: 9px; padding: 1px 8px; white-space: nowrap;
+    font-variant-numeric: tabular-nums;
   }
-  @keyframes skShimmer {
-    0% { background-position: 100% 50%; }
-    100% { background-position: 0 50%; }
+  .table-skeleton .sk-eta { margin-left: auto; flex: none; font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .table-skeleton .sk-bar { height: 4px; border-radius: 2px; background: #e7ecef; overflow: hidden; margin-bottom: 6px; }
+  .table-skeleton .sk-bar i {
+    display: block; height: 100%; width: 0; border-radius: 2px;
+    background: linear-gradient(90deg, #00d455, #00a83e);
+    transition: width .45s ease;
   }
+  .table-skeleton .sk-bar.indeterminate i { width: 34%; animation: skSlide 1.5s ease-in-out infinite; }
+  @keyframes skSlide { from { transform: translateX(-110%); } to { transform: translateX(410%); } }
+  .table-skeleton .sk-rows .sk-row {
+    height: 9px; border-radius: 3px; margin: 10px 0;
+    background: #e9edf1;
+    animation: skBreath 1.8s ease infinite;
+  }
+  .table-skeleton .sk-rows .sk-row:nth-child(1) { width: 82%; }
+  .table-skeleton .sk-rows .sk-row:nth-child(2) { width: 95%; animation-delay: .2s; }
+  .table-skeleton .sk-rows .sk-row:nth-child(3) { width: 64%; animation-delay: .4s; }
+  .table-skeleton .sk-rows .sk-row:nth-child(4) { width: 88%; animation-delay: .6s; }
+  @keyframes skBreath { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+  /* 最终表格淡入，替代骨架屏的生硬跳变（仅聊天气泡内，不影响报告渲染） */
+  .msg-bubble .md-table-wrap { animation: fadeInUp .3s ease; }
 
   /* 分析进度卡：阶段步骤条 + 秒级计时 + 可展开推理明细 */
   .analyze-card {
@@ -2527,17 +2601,19 @@
           <div class="summary-pill"><span class="num">—</span><span class="lbl">Top1 近30天订单</span></div>
         </div>
 
+        <div class="excel-block" id="excelBlock">
         <div class="excel-wrap">
         <div class="excel-toolbar">
           <span class="name">📊 1688 商品选品结果.xlsx</span>
           <span class="spacer"></span>
           <span class="ic fullscreen-btn" title="全屏查看">⛶</span>
-          <span class="ic export-btn" title="导出 Excel">⤓</span>
+          <span class="ic export-btn" title="导出 Excel（全部）">⤓</span>
         </div>
 
         <table class="preview-table" id="previewTable">
           <thead>
             <tr>
+              <th class="chk-cell" title="全选/取消本页"><input type="checkbox" id="pgCheckAll"></th>
               <th style="width:52px">序号</th>
               <th>商品信息</th>
               <th>上架时间</th>
@@ -2549,6 +2625,22 @@
           </thead>
           <tbody></tbody>
         </table>
+      </div>
+
+      <!-- 分页条：随 renderOfferPage 显示/隐藏（放 excel-wrap 外，垂直滚动表格时保持固定） -->
+      <div class="table-pagination" id="tablePagination" style="display:none">
+        <span class="pg-total" id="pgTotal"></span>
+        <span class="pg-nav" id="pgNav"></span>
+        <span class="spacer"></span>
+        <button type="button" class="pg-btn" id="pgExportSel" title="仅导出勾选的商品" disabled>导出勾选 (<span id="pgSelCount">0</span>)</button>
+        <button type="button" class="pg-btn pg-primary" id="pgExportAll" title="导出全部商品">导出全部</button>
+        <span class="pg-size">每页
+          <select id="pgSize" title="每页条数">
+            <option value="50" selected>50 条</option>
+            <option value="100">100 条</option>
+          </select>
+        </span>
+      </div>
       </div>
 
       <div class="preview-h">选品摘要</div>
@@ -4092,6 +4184,15 @@
         th.dataset.direction = direction;
         const indicator = th.querySelector('.sort-indicator');
         if (indicator) indicator.textContent = direction === 'asc' ? '↑' : '↓';
+        // 商品表分页后 DOM 内只有当前页 → 改为数据级排序：排全量数组后回第 1 页重渲染
+        if (table.id === 'previewTable' && window.__offerPager && window.__offerPager.full.length) {
+          const dir = direction === 'asc' ? 1 : -1;
+          window.__offerPager.full.sort((a, b) => (offerSortValue(a, key) - offerSortValue(b, key)) * dir);
+          window.__offerPager.page = 1;
+          renderOfferPage();
+          table.dispatchEvent(new CustomEvent('preview:sorted'));
+          return;
+        }
         const groups = Array.from(tbody.querySelectorAll('tr.product-main')).map(main => {
           const detail = main.nextElementSibling?.classList.contains('product-detail') ? main.nextElementSibling : null;
           return { main, detail, value: parseCellNumber(main.cells[colIndex]?.textContent) };
@@ -4105,25 +4206,51 @@
       });
     });
   }
-  async function exportPreviewXlsx() {
-    const table = document.querySelector('.preview-table');
+  async function exportPreviewXlsx(mode) {
+    const table = document.getElementById('previewTable');
     if (!table || !table.rows.length) return;
-    const rows = [], imgCells = [];
-    Array.from(table.rows).forEach((row, ri) => rows.push(Array.from(row.cells).map((cell, ci) => {
-      // 商品信息列：<img> 提出来嵌真图，移除图片容器后取剩余文字（product-title），保证商品名完整导出
-      const imgBox = cell.querySelector('.img-cell');
-      if (imgBox) {
-        const img = imgBox.querySelector('img');
-        if (img && img.src && ri > 0) imgCells.push({ row: ri - 1, col: ci, url: img.src });
-        const clone = cell.cloneNode(true);
-        clone.querySelectorAll('.img-cell').forEach(el => el.remove());
-        clone.querySelectorAll('br').forEach(br => br.replaceWith(' '));
-        return clone.textContent.trim().replace(/\s+/g, ' ');
-      }
-      return cell.textContent.trim();
-    })));
-    // 首行为表头；商品表每组含主行+详情行，原样导出
-    await exportTableToXlsx(rows[0], rows.slice(1), '1688商品选品结果-' + ((window.__dldOffers || []).length || 20) + '款.xlsx', '1688商品选品结果', imgCells);
+    // mode='selected'：仅导出勾选行（跨页勾选以 offerRowKey 为准）；否则导出全部
+    const pager = window.__offerPager;
+    let exportList = null;
+    if (mode === 'selected') {
+      const sel = pager && pager.selected;
+      const full = (pager && pager.full) || [];
+      exportList = sel && sel.size ? full.filter(o => sel.has(offerRowKey(o))) : [];
+      if (!exportList.length) return;
+    }
+    // 分页模式下 DOM 只有当前页 → 导出前临时渲染目标集合，导完恢复分页视图
+    const tbody = table.querySelector('tbody');
+    const tempRender = !!((exportList || (pager && pager.full && pager.full.length)) && typeof offerRowHtml === 'function'
+      && (exportList || (pager.full.length > pager.size)));
+    if (tempRender) tbody.innerHTML = (exportList || pager.full).map((o, i) => offerRowHtml(o, i)).join('');
+    try {
+      const rows = [], imgCells = [];
+      Array.from(table.rows).forEach((row, ri) => {
+        // 勾选列（表头全选框 / 行勾选框）不参与导出：过滤后 ci 仍与导出列一一对应
+        const cells = Array.from(row.cells).filter(cell => !cell.querySelector('input[type="checkbox"]'));
+        rows.push(cells.map((cell, ci) => {
+          // 商品信息列：<img> 提出来嵌真图，移除图片容器后取剩余文字（product-title），保证商品名完整导出
+          const imgBox = cell.querySelector('.img-cell');
+          if (imgBox) {
+            const img = imgBox.querySelector('img');
+            if (img && img.src && ri > 0) imgCells.push({ row: ri - 1, col: ci, url: img.src });
+            const clone = cell.cloneNode(true);
+            clone.querySelectorAll('.img-cell').forEach(el => el.remove());
+            clone.querySelectorAll('br').forEach(br => br.replaceWith(' '));
+            return clone.textContent.trim().replace(/\s+/g, ' ');
+          }
+          return cell.textContent.trim();
+        }));
+      });
+      const allCount = (pager && pager.full && pager.full.length) || (window.__dldOffers || []).length || 20;
+      const fname = exportList
+        ? '1688商品选品结果-勾选' + exportList.length + '款.xlsx'
+        : '1688商品选品结果-' + allCount + '款.xlsx';
+      // 首行为表头；商品表每组含主行+详情行，原样导出
+      await exportTableToXlsx(rows[0], rows.slice(1), fname, '1688商品选品结果', imgCells);
+    } finally {
+      if (tempRender) renderOfferPage();
+    }
   }
   bindPreviewTableTools();
   document.querySelector('.export-btn')?.addEventListener('click', async e => {
@@ -4601,6 +4728,11 @@
       const tbody = table.querySelector('tbody');
       if (tbody) tbody.innerHTML = '';
     }
+    // 重置商品表分页状态：清空全量数据与跨页勾选、回到第 1 页并隐藏分页条（保留用户所选每页条数）
+    if (window.__offerPager) { window.__offerPager.full = []; window.__offerPager.page = 1; window.__offerPager.selected.clear(); }
+    updateSelectionUI(); // 同步导出勾选按钮回到禁用态、全选框复位
+    const pgBar = document.getElementById('tablePagination');
+    if (pgBar) pgBar.style.display = 'none';
     const titleEl = document.getElementById('previewTitle');
     const metaEl = document.getElementById('previewMeta');
     const summaryEl = document.getElementById('previewSummary');
@@ -4925,6 +5057,53 @@
     const bubble   = ai.querySelector('.msg-bubble');
     const roleTime = ai.querySelector('.time');
 
+    // ── 流式状态条：全程可感知的进度反馈（解决长时间静默期"不知道什么进度"） ──
+    let runEnded = false;
+    let statusEl = null, statusTxtEl = null, statusTimeEl = null;
+    let statusTimer = null, statusStart = 0, lastActivity = 0, hintIdx = 0, idleTicks = 0;
+    // 流式运行期可变状态（提升到外层，供状态条与异步闭包共享）
+    let accAnswer = '';
+    let liveTextEl = null;
+    let analyzeEl = null;   // 分析进度卡片（阶段+计时+可展开推理明细）
+    let skeletonEl = null;  // 表格生成骨架屏
+    const IDLE_HINTS = [
+      '正在检索 1688 商品库…',
+      '正在筛选与对比候选商品…',
+      '正在汇总分析结果…',
+      '数据量较大，仍在努力处理中，请稍候…'
+    ];
+    const ensureLiveStatus = (initTxt) => {
+      if (statusEl || analyzeEl || runEnded) return;
+      const thinking = bubble.querySelector('.thinking-line[data-live]');
+      if (thinking) thinking.remove();
+      statusEl = document.createElement('div');
+      statusEl.className = 'live-status';
+      statusEl.innerHTML = '<span class="ls-ic"></span><span class="ls-txt"></span><span class="ls-time">0s</span>';
+      statusTxtEl = statusEl.querySelector('.ls-txt');
+      statusTimeEl = statusEl.querySelector('.ls-time');
+      statusTxtEl.textContent = initTxt || '正在接收回复…';
+      statusStart = Date.now(); lastActivity = Date.now(); hintIdx = 0; idleTicks = 0;
+      bubble.appendChild(statusEl);
+      statusTimer = setInterval(() => {
+        if (!statusEl) return;
+        statusTimeEl.textContent = Math.round((Date.now() - statusStart) / 1000) + 's';
+        if (Date.now() - lastActivity > 3500) {
+          // 静默期：每 4 秒轮播一条阶段提示，让用户知道后台在推进
+          idleTicks++;
+          if (idleTicks % 4 === 1) statusTxtEl.textContent = IDLE_HINTS[(hintIdx++) % IDLE_HINTS.length];
+        } else {
+          idleTicks = 0;
+          statusTxtEl.textContent = '正在接收回复…';
+        }
+      }, 1000);
+      scrollBottom();
+    };
+    const bumpActivity = () => { lastActivity = Date.now(); };
+    const removeLiveStatus = () => {
+      if (statusTimer) { clearInterval(statusTimer); statusTimer = null; }
+      if (statusEl) { statusEl.remove(); statusEl = null; statusTxtEl = null; statusTimeEl = null; }
+    };
+
     (async () => {
       // 会话独立滚动：该会话视图为当前显示视图时智能跟随（底部附近才自动滚，上滑不打断）；后台任务不干扰当前会话视图
       const scrollBottom = () => {
@@ -4936,8 +5115,10 @@
         refreshConvItemRunning(convKey);
       };
       const showError = (msg) => {
+        runEnded = true;
         roleTime.textContent = '· 失败';
-        // 清理加载中交互（分析进度卡/骨架屏），避免失败后仍在转圈
+        // 清理加载中交互（分析进度卡/骨架屏/流式状态条），避免失败后仍在转圈
+        removeLiveStatus();
         bubble.querySelectorAll('.analyze-card, .table-skeleton').forEach(el => el.remove());
         bubble.insertAdjacentHTML('beforeend', `<div class="ai-summary" style="border-left:3px solid #d6493a;padding:8px 12px;background:#fef0ef;color:#d6493a;border-radius:4px;margin-top:8px"><b>请求失败：</b>${escapeHtml(msg)}</div>`);
       };
@@ -4945,6 +5126,8 @@
       // ── 立即显示 "思考中" 动画 ──
       bubble.insertAdjacentHTML('beforeend',
         `<div class="thinking-line" data-live>正在连接 AI<span class="tdots"><span></span><span></span><span></span></span></div>`);
+      // 兜底：3 秒内仍未建立进度反馈（部分后端无 connected 事件）→ 主动显示流式状态条
+      setTimeout(() => { ensureLiveStatus('已连接，正在理解需求…'); }, 3000);
 
       // 目标会话（convKey）的 convId；草稿为空 → 服务端创建新会话并通过 X-AI-Conversation-Id 回传
       const activeSess = (SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] || []).find(s => s.id === convKey);
@@ -4952,11 +5135,7 @@
       const appCode = (typeof window.__dldApps !== 'undefined' && window.__dldApps[0] && window.__dldApps[0].appCode) || '1';
       const clientRequestId = 'dld-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
 
-      // 累积已收到的 AI 文本（用于 message 事件增量拼接）
-      let accAnswer = '';
-      let liveTextEl = null;
-      let analyzeEl = null;   // 分析进度卡片（阶段+计时+可展开推理明细）
-      let skeletonEl = null;  // 表格生成骨架屏
+      // 累积已收到的 AI 文本等状态已提升到外层（accAnswer / liveTextEl / analyzeEl / skeletonEl）
       // 剥离 <think>…</think> 与未闭合的 <think>…，只保留可见正文
       const visibleAnswer = (s) => {
         let t = s.replace(/<think>[\s\S]*?<\/think>/g, '');
@@ -4993,6 +5172,7 @@
       };
       const showAnalyze = () => {
         if (analyzeEl) return;
+        removeLiveStatus();  // 思考进度卡信息更全，接管状态条
         const thinking = bubble.querySelector('.thinking-line[data-live]');
         if (thinking) thinking.remove();
         analyzeEl = document.createElement('div');
@@ -5058,6 +5238,7 @@
       const appendDelta = (delta) => {
         if (!delta) return;
         accAnswer += delta;
+        bumpActivity();  // 有数据到达 → 状态条切回"正在接收回复"
         // 分析阶段（think 未闭合）：推理内容实时进进度卡片（阶段+计时+明细）
         if (inThink(accAnswer)) {
           showAnalyze();
@@ -5069,18 +5250,46 @@
         if (!vis.trim()) { scrollBottom(); return; }
         removeTransient();
         ensureLiveText();
-        // 表格开始 → 正文截断到表格前，改用骨架屏告知"正在生成表格"
+        // 表格开始 → 正文截断到表格前，改用骨架屏告知"正在生成表格"（含真实进度：已接收/预期条数）
         const tableIdx = vis.search(/^[ \t]*\|/m);
         if (tableIdx >= 0) {
-          liveTextEl.textContent = vis.slice(0, tableIdx);
+          const before = vis.slice(0, tableIdx);
+          if (liveTextEl.textContent !== before) liveTextEl.textContent = before;  // 内容未变不重写，避免闪烁
+          removeLiveStatus();  // 骨架卡自带进度信息，状态条退场
+          // 预期条数：从正文"共 N 件/条/个/款"提取；已接收：统计已到达的表格数据行（去掉表头+分隔行）
+          const totalMatches = before.match(/共\s*[\d,]+\s*(?:件|条|个|款)/g);
+          const expected = totalMatches ? parseInt(totalMatches[totalMatches.length - 1].replace(/[^\d]/g, ''), 10) || 0 : 0;
+          const got = Math.max(0, ((vis.slice(tableIdx).match(/^[ \t]*\|.+/gm) || []).length) - 2);
           if (!skeletonEl) {
             skeletonEl = document.createElement('div');
             skeletonEl.className = 'table-skeleton';
-            skeletonEl.innerHTML = '<div class="sk-row w80"></div><div class="sk-row"></div><div class="sk-row w60"></div><div class="sk-row"></div><div class="sk-label">📋 正在生成选品表格<span class="tdots"><span></span><span></span><span></span></span></div>';
+            skeletonEl.innerHTML =
+              '<div class="sk-head">' +
+                '<span class="sk-ic">📋</span>' +
+                '<span class="sk-title">正在生成选品表格</span>' +
+                '<span class="sk-count"></span>' +
+                '<span class="sk-eta"></span>' +
+              '</div>' +
+              '<div class="sk-bar"><i></i></div>' +
+              '<div class="sk-rows"><div class="sk-row"></div><div class="sk-row"></div><div class="sk-row"></div><div class="sk-row"></div></div>';
             bubble.appendChild(skeletonEl);
           }
+          const cntEl = skeletonEl.querySelector('.sk-count');
+          const barEl = skeletonEl.querySelector('.sk-bar');
+          const etaEl = skeletonEl.querySelector('.sk-eta');
+          if (expected > 0) {
+            const pct = Math.min(98, Math.round(got / expected * 100));
+            cntEl.textContent = '已接收 ' + Math.min(got, expected) + '/' + expected + ' 条';
+            barEl.classList.remove('indeterminate');
+            barEl.firstElementChild.style.width = Math.max(4, pct) + '%';
+            etaEl.textContent = pct >= 98 ? '即将完成…' : '已完成约 ' + pct + '%';
+          } else {
+            cntEl.textContent = got > 0 ? '已接收 ' + got + ' 条' : '等待表格数据…';
+            barEl.classList.add('indeterminate');
+            etaEl.textContent = '';
+          }
         } else {
-          liveTextEl.textContent = vis;
+          if (liveTextEl.textContent !== vis) liveTextEl.textContent = vis;  // 内容未变不重写，避免闪烁
         }
         scrollBottom();
       };
@@ -5143,7 +5352,7 @@
             // - workflow_started / workflow_finished / node_started / node_finished（Coze）
             // - connected / done / error
             const t = String(eventName || '').toLowerCase();
-            if (t === 'connected') { roleTime.textContent = '· 已连接'; return; }
+            if (t === 'connected') { roleTime.textContent = '· 已连接'; ensureLiveStatus('已连接，正在理解需求…'); return; }
             if (t === 'error') { showError(typeof payload === 'string' ? payload : (payload && payload.message) || '流式错误'); return; }
             if (t === 'agent_thought' || t === 'workflow_started' || t === 'node_started') {
               // 分析过程：进度卡片展示；节点事件可直接命名当前阶段，思考文本进明细窗
@@ -5177,10 +5386,12 @@
             if (delta) appendDelta(delta);
           },
           onDone: () => {
+            runEnded = true;
             roleTime.textContent = '· 已完成';
-            // 移除"正在连接"占位与所有加载中交互
+            // 移除"正在连接"占位与所有加载中交互（含流式状态条）
             const thinking = bubble.querySelector('.thinking-line[data-live]');
             if (thinking) thinking.remove();
+            removeLiveStatus();
             removeTransient();
             // 将流式纯文本替换为渲染后的 Markdown HTML（表格/图片/链接等）
             if (accAnswer) {
@@ -6461,14 +6672,16 @@
     }
     const table = document.getElementById('previewTable');
     const titleEl = document.getElementById('previewTitle');
-    const metaEl = document.getElementById('previewMeta');
     if (!table) return;
     const total = (meta && meta.totalCount) || list.length || 0;
     if (titleEl) titleEl.textContent = '1688 商品选品结果（共 ' + total + ' 款）';
-    if (metaEl) {
-      const now = new Date().toLocaleString('zh-CN', { hour12: false });
-      metaEl.innerHTML = '执行时间 · ' + now + ' · 共 <strong>' + total + '</strong> 条 · 当前展示前 ' + list.length + ' 条';
-    }
+    // 分页状态：仅保存全量数据与元信息，实际渲染交给 renderOfferPage（meta 文案随当前页更新）
+    const pager = window.__offerPager;
+    pager.full = list.slice();
+    pager.selected.clear(); // 新一轮数据到达，旧勾选不再有效
+    pager.page = 1;
+    pager.totalCount = total;
+    pager.metaTime = new Date().toLocaleString('zh-CN', { hour12: false });
     // —— 摘要卡片 / 选品摘要 / 顶部 Tab：全部由接口真实数据计算 ——
     const priceOf = o => {
       if (o.price != null) return Number(o.price);
@@ -6481,7 +6694,6 @@
     const minP = prices.length ? Math.min.apply(null, prices) : 0;
     const maxP = prices.length ? Math.max.apply(null, prices) : 0;
     const topOrders = list.reduce((m, o) => Math.max(m, ordersOf(o)), 0);
-    const fmtN = n => Number(n || 0).toLocaleString('zh-CN');
     const pills = document.querySelectorAll('.summary-row .summary-pill .num');
     if (pills.length >= 4) {
       pills[0].textContent = fmtN(total);
@@ -6495,7 +6707,7 @@
     const tabEl = previewTab ? previewTab.querySelector('.rt-name') : null;
     if (tabEl) tabEl.textContent = '📊 1688 商品选品 (' + list.length + '款)';
     if (!list.length) {
-      table.querySelector('tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#909399">暂无商品数据</td></tr>';
+      renderOfferPage(); // 空数据：由分页渲染清空 tbody 并隐藏分页条
       return;
     }
     // 有真实商品数据才显示商品预览视图并解除右栏空态（panel-empty 下 right-body 整体隐藏），setRightEmpty 会顺带自动展开面板
@@ -6503,41 +6715,187 @@
     const productPreviewEl = document.getElementById('productPreview');
     if (productPreviewEl) productPreviewEl.style.display = '';
     if (typeof setRightEmpty === 'function') setRightEmpty(false);
-    table.querySelector('tbody').innerHTML = list.map((o, i) => {
-      const title = escapeHtml(o.title || o.offerTitle || o.name || ('商品 #' + (o.offerId || o.id || i + 1)));
-      const offerId = o.offerId || o.id || '';
-      const rmb = v => '<span class="rmb">¥</span>' + Number(v).toFixed(2);
-      const price = (o.price != null) ? rmb(o.price) : '¥--';
-      const startQty = o.startQuantity || o.beginStartQuantity || 1;
-      const fmtLadder = s => escapeHtml(s).replace(/(¥[\d.]+)/g, '<b>$1</b>');
-      const priceRange = (o.priceLow != null && o.priceHigh != null)
-        ? ('≥' + escapeHtml(String(startQty)) + '件 <b>' + rmb(o.priceLow) + '</b>')
-        : (o.priceRange ? fmtLadder(o.priceRange) : '—');
-      const created = (o.offerCreateTime || o.beginOfferCreateTime || '').toString().slice(0, 16).replace('T', ' ');
-      const booked30 = o.bookedCount30d ?? o.bookedCount ?? o.recentOrders ?? 0;
-      const saleCount = o.saleCount30d ?? o.saleCount ?? 0;
-      const saleVol = (o.saleVolume30d != null) ? ('¥' + Number(o.saleVolume30d).toFixed(2) + '万+') : (o.saleVolume || '—');
-      const total = o.totalBookedCount ?? o.totalOrders ?? 0;
-      const totalCount = o.totalSaleCount ?? 0;
-      const repurchase = (o.repurchaseRate != null) ? (Number(o.repurchaseRate).toFixed(1) + '%') : (o.repurchase || '—');
-      const repurchaseCls = (repurchase === '—') ? '' : ' class="ratio-up"';
-      const consign = (o.consignPrice != null) ? rmb(o.consignPrice) : (o.consignPrice || '—');
-      const thumb = o.imageUrl || o.picUrl || o.image || '';
-      const emoji = title.match(/[👟👜👗👕🎒📱💄💍🧸🪑🍵🪞⌚💎🛍🎩🥻]/);
-      const thumbHtml = thumb
-        ? '<div class="img-cell"><img src="' + escapeHtml(thumb) + '" loading="lazy" onerror="this.outerHTML=\'📦\'"></div>'
-        : '<div class="img-cell">' + (emoji ? emoji[0] : '📦') + '</div>';
-      return `<tr class="product-main" data-offer-id="${escapeHtml(offerId)}" data-conv-id="${escapeHtml(o.convId || '')}">
-        <td class="idx-cell">${i + 1}</td>
-        <td><div class="product-info">${thumbHtml}<div class="product-title">${title}<br><span class="mini-tag">1688</span>${o.isFactory ? '<span class="mini-tag green">工厂</span>' : ''}${o.isPower ? '<span class="mini-tag blue">实力商家</span>' : ''}</div></div></td>
-        <td class="time-cell">${created || '—'}</td>
-        <td class="price">${price}</td>
-        <td class="ladder">${priceRange}</td>
-        <td>${fmtN(booked30)}</td>
-        <td>${fmtN(saleCount)}</td>
-      </tr>`;
-    }).join('');
+    renderOfferPage(); // 按当前页切片渲染 + 更新分页条与 meta 文案
   }
+
+  /* ==================== 商品表分页（每页 50/100）+ 勾选导出 + 行模板 ==================== */
+  window.__offerPager = { full: [], page: 1, size: 50, totalCount: 0, metaTime: '', selected: new Set() };
+  const fmtN = n => Number(n || 0).toLocaleString('zh-CN');
+  // 行唯一键：优先 offerId/id，兜底链接与标题（供跨页勾选、勾选导出使用）
+  function offerRowKey(o) {
+    return String(o.offerId || o.id || o.offerUrl || o.url || o.title || o.offerTitle || o.name || '');
+  }
+  // 数据级排序取值：与列展示口径一致（价格取 price/priceLow/priceRange，订单/件数取 30 天口径）
+  function offerSortValue(o, key) {
+    if (key === 'price') {
+      if (o.price != null) return Number(o.price) || 0;
+      if (o.priceLow != null) return Number(o.priceLow) || 0;
+      const m = String(o.priceRange || '').match(/[\d.]+/);
+      return m ? Number(m[0]) : 0;
+    }
+    if (key === 'sales') return Number(o.bookedCount30d ?? o.bookedCount ?? o.recentOrders ?? 0) || 0;
+    if (key === 'count') return Number(o.saleCount30d ?? o.saleCount ?? 0) || 0;
+    return 0;
+  }
+  // 单行 HTML（i 为全量序号，从 0 起；行模板与原 renderOffers 完全一致，供分页/排序/导出共用）
+  function offerRowHtml(o, i) {
+    const title = escapeHtml(o.title || o.offerTitle || o.name || ('商品 #' + (o.offerId || o.id || i + 1)));
+    const offerId = o.offerId || o.id || '';
+    const rmb = v => '<span class="rmb">¥</span>' + Number(v).toFixed(2);
+    const price = (o.price != null) ? rmb(o.price) : '¥--';
+    const startQty = o.startQuantity || o.beginStartQuantity || 1;
+    const fmtLadder = s => escapeHtml(s).replace(/(¥[\d.]+)/g, '<b>$1</b>');
+    const priceRange = (o.priceLow != null && o.priceHigh != null)
+      ? ('≥' + escapeHtml(String(startQty)) + '件 <b>' + rmb(o.priceLow) + '</b>')
+      : (o.priceRange ? fmtLadder(o.priceRange) : '—');
+    const created = (o.offerCreateTime || o.beginOfferCreateTime || '').toString().slice(0, 16).replace('T', ' ');
+    const booked30 = o.bookedCount30d ?? o.bookedCount ?? o.recentOrders ?? 0;
+    const saleCount = o.saleCount30d ?? o.saleCount ?? 0;
+    const thumb = o.imageUrl || o.picUrl || o.image || '';
+    const emoji = title.match(/[👟👜👗👕🎒📱💄💍🧸🪑🍵🪞⌚💎🛍🎩🥻]/);
+    const thumbHtml = thumb
+      ? '<div class="img-cell"><img src="' + escapeHtml(thumb) + '" loading="lazy" onerror="this.outerHTML=\'📦\'"></div>'
+      : '<div class="img-cell">' + (emoji ? emoji[0] : '📦') + '</div>';
+    const chkId = escapeHtml(offerRowKey(o));
+    const chked = (window.__offerPager && window.__offerPager.selected && window.__offerPager.selected.has(offerRowKey(o))) ? ' checked' : '';
+    return `<tr class="product-main" data-offer-id="${escapeHtml(offerId)}" data-conv-id="${escapeHtml(o.convId || '')}">
+      <td class="chk-cell"><input type="checkbox" class="row-chk" data-chk-id="${chkId}" title="勾选后可导出"${chked}></td>
+      <td class="idx-cell">${i + 1}</td>
+      <td><div class="product-info">${thumbHtml}<div class="product-title">${title}<br><span class="mini-tag">1688</span>${o.isFactory ? '<span class="mini-tag green">工厂</span>' : ''}${o.isPower ? '<span class="mini-tag blue">实力商家</span>' : ''}</div></div></td>
+      <td class="time-cell">${created || '—'}</td>
+      <td class="price">${price}</td>
+      <td class="ladder">${priceRange}</td>
+      <td>${fmtN(booked30)}</td>
+      <td>${fmtN(saleCount)}</td>
+    </tr>`;
+  }
+  // 窗口化页码：1 … cur-1 cur cur+1 … 末页，避免页数多时按钮铺满
+  function pagerPageButtons(cur, total) {
+    if (total <= 1) return '';
+    const wanted = new Set([1, total, cur - 1, cur, cur + 1]);
+    const pages = Array.from(wanted).filter(p => p >= 1 && p <= total).sort((a, b) => a - b);
+    let html = '', prev = 0;
+    pages.forEach(p => {
+      if (p - prev > 1) html += '<span class="pg-ellipsis">…</span>';
+      html += '<button type="button" class="pg-btn pg-num' + (p === cur ? ' active' : '') + '" data-page="' + p + '">' + p + '</button>';
+      prev = p;
+    });
+    return html;
+  }
+  // 按当前页切片渲染 tbody，并同步分页条、meta 文案；空数据时清空并隐藏分页条
+  function renderOfferPage() {
+    const pager = window.__offerPager;
+    const table = document.getElementById('previewTable');
+    if (!pager || !table) return;
+    const tbody = table.querySelector('tbody');
+    const bar = document.getElementById('tablePagination');
+    const full = pager.full || [];
+    const totalRows = full.length;
+    const totalPages = Math.max(1, Math.ceil(totalRows / pager.size));
+    pager.page = Math.min(Math.max(1, pager.page), totalPages);
+    const start = (pager.page - 1) * pager.size;
+    const pageRows = full.slice(start, start + pager.size);
+    if (bar) bar.style.display = totalRows ? '' : 'none';
+    if (!totalRows) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#909399">暂无商品数据</td></tr>';
+      updateSelectionUI();
+      return;
+    }
+    tbody.innerHTML = pageRows.map((o, i) => offerRowHtml(o, start + i)).join('');
+    const end = start + pageRows.length;
+    const totalEl = bar ? bar.querySelector('#pgTotal') : null;
+    if (totalEl) totalEl.textContent = '共 ' + fmtN(totalRows) + ' 条 · 本页 ' + fmtN(start + 1) + '-' + fmtN(end) + ' 条';
+    const navEl = bar ? bar.querySelector('#pgNav') : null;
+    if (navEl) {
+      navEl.innerHTML =
+        '<button type="button" class="pg-btn pg-step" data-step="-1"' + (pager.page <= 1 ? ' disabled' : '') + '>‹ 上一页</button>' +
+        pagerPageButtons(pager.page, totalPages) +
+        '<button type="button" class="pg-btn pg-step" data-step="1"' + (pager.page >= totalPages ? ' disabled' : '') + '>下一页 ›</button>';
+    }
+    const metaEl = document.getElementById('previewMeta');
+    if (metaEl && pager.metaTime) {
+      metaEl.innerHTML = '执行时间 · ' + pager.metaTime + ' · 共 <strong>' + fmtN(pager.totalCount || totalRows) + '</strong> 条 · 当前展示 ' + fmtN(start + 1) + '–' + fmtN(end) + ' 条';
+    }
+    updateSelectionUI();
+  }
+  // 同步勾选 UI：导出按钮可用态与计数、全选框全选/半选状态（跨页勾选以 selected 集合为准）
+  function updateSelectionUI() {
+    const pager = window.__offerPager;
+    if (!pager) return;
+    const countEl = document.getElementById('pgSelCount');
+    if (countEl) countEl.textContent = pager.selected.size;
+    const selBtn = document.getElementById('pgExportSel');
+    if (selBtn) selBtn.disabled = !pager.selected.size;
+    const checkAll = document.getElementById('pgCheckAll');
+    const pageCbs = document.querySelectorAll('#previewTable tbody input.row-chk');
+    if (!checkAll) return;
+    const ids = Array.from(pageCbs).map(cb => cb.dataset.chkId).filter(Boolean);
+    const picked = ids.filter(id => pager.selected.has(id)).length;
+    checkAll.checked = ids.length > 0 && picked === ids.length;
+    checkAll.indeterminate = picked > 0 && picked < ids.length;
+  }
+  // 分页条事件：上一页/下一页/页码（事件委托）+ 每页条数切换（50/100，切完回第 1 页）
+  (function bindOfferPager() {
+    const bar = document.getElementById('tablePagination');
+    if (!bar) return;
+    bar.addEventListener('click', e => {
+      const pager = window.__offerPager;
+      if (!pager) return;
+      const stepBtn = e.target.closest('.pg-step');
+      if (stepBtn) {
+        if (!stepBtn.disabled) { pager.page += Number(stepBtn.dataset.step) || 0; renderOfferPage(); }
+        return;
+      }
+      const numBtn = e.target.closest('.pg-num');
+      if (numBtn) { pager.page = Number(numBtn.dataset.page) || 1; renderOfferPage(); }
+    });
+    const sizeSel = bar.querySelector('#pgSize');
+    if (sizeSel) sizeSel.addEventListener('change', () => {
+      const pager = window.__offerPager;
+      if (!pager) return;
+      pager.size = Number(sizeSel.value) || 50;
+      pager.page = 1;
+      renderOfferPage();
+    });
+    // 全选/取消本页：表头勾选框为静态元素，绑定一次即可（写入跨页勾选集合 selected）
+    const checkAll = document.getElementById('pgCheckAll');
+    if (checkAll) checkAll.addEventListener('change', () => {
+      const pager = window.__offerPager;
+      if (!pager) return;
+      const on = checkAll.checked;
+      document.querySelectorAll('#previewTable tbody input.row-chk').forEach(cb => {
+        cb.checked = on;
+        const key = cb.dataset.chkId;
+        if (!key) return;
+        if (on) pager.selected.add(key); else pager.selected.delete(key);
+      });
+      updateSelectionUI();
+    });
+    // 行勾选：change 委托在 tbody 上，翻页/排序重渲染后绑定依然生效
+    const pgTbody = document.querySelector('#previewTable tbody');
+    if (pgTbody) pgTbody.addEventListener('change', e => {
+      const cb = e.target.closest('input.row-chk');
+      if (!cb) return;
+      const pager = window.__offerPager;
+      if (!pager) return;
+      const key = cb.dataset.chkId;
+      if (cb.checked) pager.selected.add(key); else pager.selected.delete(key);
+      updateSelectionUI();
+    });
+    // 导出勾选 / 导出全部（exporting 防重入，与工具栏导出按钮一致）
+    const exportSel = bar.querySelector('#pgExportSel');
+    if (exportSel) exportSel.addEventListener('click', () => {
+      if (exportSel.disabled || exportSel.dataset.exporting) return;
+      exportSel.dataset.exporting = '1';
+      exportPreviewXlsx('selected').finally(() => { delete exportSel.dataset.exporting; });
+    });
+    const exportAll = bar.querySelector('#pgExportAll');
+    if (exportAll) exportAll.addEventListener('click', () => {
+      if (exportAll.dataset.exporting) return;
+      exportAll.dataset.exporting = '1';
+      exportPreviewXlsx().finally(() => { delete exportAll.dataset.exporting; });
+    });
+  })();
 
   /* 简单 7 日销售趋势 sparkline（无数据给占位） */
   function renderSpark(arr) {
