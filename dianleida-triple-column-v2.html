@@ -2427,19 +2427,19 @@
     </div>
 
     <div class="right-body">
-      <h2 class="preview-h1" id="previewTitle">1688 商品选品结果</h2>
-      <div class="preview-meta" id="previewMeta">
-        暂无商品预览数据
-      </div>
+      <!-- 商品预览视图：默认隐藏，仅在接口返回真实商品数据后由 renderOffers 展示（不再提供静态占位骨架） -->
+      <div id="productPreview" style="display:none">
+        <h2 class="preview-h1" id="previewTitle"></h2>
+        <div class="preview-meta" id="previewMeta"></div>
 
-      <div class="summary-row">
-        <div class="summary-pill"><span class="num">—</span><span class="lbl">命中商品</span></div>
-        <div class="summary-pill"><span class="num">—</span><span class="lbl">最低批发价</span></div>
-        <div class="summary-pill"><span class="num">—</span><span class="lbl">最高批发价</span></div>
-        <div class="summary-pill"><span class="num">—</span><span class="lbl">Top1 近30天订单</span></div>
-      </div>
+        <div class="summary-row">
+          <div class="summary-pill"><span class="num">—</span><span class="lbl">命中商品</span></div>
+          <div class="summary-pill"><span class="num">—</span><span class="lbl">最低批发价</span></div>
+          <div class="summary-pill"><span class="num">—</span><span class="lbl">最高批发价</span></div>
+          <div class="summary-pill"><span class="num">—</span><span class="lbl">Top1 近30天订单</span></div>
+        </div>
 
-      <div class="excel-wrap">
+        <div class="excel-wrap">
         <div class="excel-toolbar">
           <span class="name">📊 1688 商品选品结果.csv</span>
           <span class="spacer"></span>
@@ -2464,7 +2464,8 @@
       </div>
 
       <div class="preview-h">选品摘要</div>
-      <p class="preview-p" id="previewSummary">发起选品查询后，这里将展示真实商品摘要。</p>
+      <p class="preview-p" id="previewSummary"></p>
+      </div>
 
       <!-- 对话表格完整数据视图（点击中栏表格"查看更多"时展示） -->
       <div class="md-preview-wrap" id="mdTablePreview" style="display:none">
@@ -4484,13 +4485,29 @@
     previewOpenedThisSession = true;
     // 空态（panel-empty）下 right-body 整体隐藏，直接展开只会露出静态骨架；
     // 有真实内容要展示时先解除空态，setRightEmpty 内部会顺带自动展开面板
-    if (rightPanel.classList.contains('panel-empty')) setRightEmpty(false);
+    if (rightPanel.classList.contains('panel-empty')) {
+      // 没有真实内容（商品数据 / 报告）时保持空态视图，仅展开面板宽度，避免露出占位骨架或空白 body
+      if (!window.__hasRealOffers && !window.__lastReport) { setCollapsed(false); return; }
+      setRightEmpty(false);
+    }
     else setCollapsed(false);
   }
   // 无内容空态：面板切换为空态视图，且自动收起为窄条；恢复内容时若收起由空态引起则自动展开
   function resetRightPreview() {
-    if (typeof closeMdTablePreview === 'function') closeMdTablePreview();
-    if (typeof closeReportView === 'function') closeReportView();
+    // 先清内容标记再关视图：静态占位骨架已移除，商品视图默认隐藏，等待 renderOffers 真实数据
+    window.__hasRealOffers = false;
+    window.__lastReport = null;
+    window.__mdPreviewTid = null;
+    const productPreviewEl = document.getElementById('productPreview');
+    if (productPreviewEl) productPreviewEl.style.display = 'none';
+    if (typeof closeMdTablePreview === 'function') {
+      window.__rightRestoring = true;
+      try { closeMdTablePreview(); } finally { window.__rightRestoring = false; }
+    }
+    if (typeof closeReportView === 'function') {
+      window.__rightRestoring = true;
+      try { closeReportView(); } finally { window.__rightRestoring = false; }
+    }
     document.querySelectorAll('.right-tab[data-preview-tab], .right-tab[data-report-tab], .right-tab[data-detail-tab]').forEach(tab => tab.remove());
     document.querySelectorAll('.right-tab').forEach(tab => tab.classList.remove('active'));
     const table = document.getElementById('previewTable');
@@ -4501,12 +4518,10 @@
     const titleEl = document.getElementById('previewTitle');
     const metaEl = document.getElementById('previewMeta');
     const summaryEl = document.getElementById('previewSummary');
-    if (titleEl) titleEl.textContent = '1688 商品选品结果';
-    if (metaEl) metaEl.textContent = '暂无商品预览数据';
-    if (summaryEl) summaryEl.textContent = '发起选品查询后，这里将展示真实商品摘要。';
+    if (titleEl) titleEl.textContent = '';
+    if (metaEl) metaEl.textContent = '';
+    if (summaryEl) summaryEl.textContent = '';
     document.querySelectorAll('.summary-row .summary-pill .num').forEach(num => { num.textContent = '—'; });
-    window.__lastReport = null;
-    window.__mdPreviewTid = null;
   }
   function setRightEmpty(empty) {
     // 首次进入期间忽略历史会话发出的“恢复预览”事件，保持右侧真正为空且收起
@@ -5608,8 +5623,11 @@
     if (typeof setRightEmpty === 'function') setRightEmpty(false);
     if (typeof openPreviewPanel === 'function') openPreviewPanel();
     const rightBody = document.querySelector('.right-body');
-    // 与"选品报告"视图互斥：先退出报告模式
-    if (typeof closeReportView === 'function') closeReportView();
+    // 与"选品报告"视图互斥：先退出报告模式（程序化切换，跳过空态回退）
+    if (typeof closeReportView === 'function') {
+      window.__rightRestoring = true;
+      try { closeReportView(); } finally { window.__rightRestoring = false; }
+    }
     if (rightBody) { rightBody.classList.add('md-full-mode'); rightBody.scrollTop = 0; }
     // 右栏若处于折叠状态则自动展开
     const rightPanel = document.getElementById('rightPanel');
@@ -5617,11 +5635,24 @@
   }
   function closeMdTablePreview() {
     const wrap = document.getElementById('mdTablePreview');
+    const wasVisible = !!(wrap && wrap.style.display !== 'none');
     if (wrap) wrap.style.display = 'none';
     const rightBody = document.querySelector('.right-body');
     if (rightBody) rightBody.classList.remove('md-full-mode');
     const tabEl = document.getElementById('previewTabName');
     if (tabEl && window.__mdPrevTabName) { tabEl.textContent = window.__mdPrevTabName; window.__mdPrevTabName = null; }
+    // 静态占位骨架已移除：用户真正关闭可见的详情视图后，若无真实商品数据则回到空态收起（不再露出占位骨架）
+    if (wasVisible) restoreRightAfterViewClose();
+  }
+  // 用户主动关闭"表格详情/选品报告"后的回退：有真实商品数据则保持商品视图，否则回到空态并收起。
+  // 程序化关闭（resetRightPreview / 互斥切换 / renderOffers）会先置 __rightRestoring = true 跳过回退。
+  function restoreRightAfterViewClose() {
+    if (window.__rightRestoring) return;
+    if (window.__hasRealOffers) return;
+    window.__rightRestoring = true;
+    try {
+      if (typeof setRightEmpty === 'function') setRightEmpty(true);
+    } finally { window.__rightRestoring = false; }
   }
   function exportMdTableCsv() {
     const t = (window.__mdTables || {})[window.__mdPreviewTid];
@@ -5880,8 +5911,11 @@
       if (emptyEl) emptyEl.style.display = '';
       if (statusbar) statusbar.style.display = 'none';
     }
-    // 与"表格详情"视图互斥：先退出表格模式
-    if (typeof closeMdTablePreview === 'function') closeMdTablePreview();
+    // 与"表格详情"视图互斥：先退出表格模式（程序化切换，跳过空态回退）
+    if (typeof closeMdTablePreview === 'function') {
+      window.__rightRestoring = true;
+      try { closeMdTablePreview(); } finally { window.__rightRestoring = false; }
+    }
     wrap.style.display = '';
     if (typeof openPreviewPanel === 'function') openPreviewPanel();
     if (rightBody) { rightBody.classList.remove('md-full-mode'); rightBody.classList.add('report-mode'); rightBody.scrollTop = 0; }
@@ -5889,8 +5923,11 @@
   function closeReportView() {
     const wrap = document.getElementById('reportView');
     const rightBody = document.querySelector('.right-body');
+    const wasVisible = !!(wrap && wrap.style.display !== 'none');
     if (wrap) wrap.style.display = 'none';
     if (rightBody) rightBody.classList.remove('report-mode');
+    // 静态占位骨架已移除：用户真正关闭可见的报告视图后，若无真实商品数据则回到空态收起
+    if (wasVisible) restoreRightAfterViewClose();
   }
   // 独立 HTML 导出的自包含样式（店雷达绿主题，与右栏预览同构）
   const REPORT_EXPORT_CSS = `
@@ -6057,10 +6094,16 @@
       if (typeof resetRightPreview === 'function') resetRightPreview();
       return;
     }
-    // 若右栏正展示"对话表格详情"或"选品报告"，新商品数据到达时自动关闭该视图恢复商品表
+    // 若右栏正展示"对话表格详情"或"选品报告"，新商品数据到达时自动关闭该视图恢复商品表（程序化切换，跳过空态回退）
     const rb = document.querySelector('.right-body');
-    if (rb && rb.classList.contains('md-full-mode') && typeof closeMdTablePreview === 'function') closeMdTablePreview();
-    if (rb && rb.classList.contains('report-mode') && typeof closeReportView === 'function') closeReportView();
+    if (rb && rb.classList.contains('md-full-mode') && typeof closeMdTablePreview === 'function') {
+      window.__rightRestoring = true;
+      try { closeMdTablePreview(); } finally { window.__rightRestoring = false; }
+    }
+    if (rb && rb.classList.contains('report-mode') && typeof closeReportView === 'function') {
+      window.__rightRestoring = true;
+      try { closeReportView(); } finally { window.__rightRestoring = false; }
+    }
     const table = document.getElementById('previewTable');
     const titleEl = document.getElementById('previewTitle');
     const metaEl = document.getElementById('previewMeta');
@@ -6100,7 +6143,10 @@
       table.querySelector('tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#909399">暂无商品数据</td></tr>';
       return;
     }
-    // 有真实商品数据才解除右栏空态（panel-empty 下 right-body 整体隐藏），setRightEmpty 会顺带自动展开面板
+    // 有真实商品数据才显示商品预览视图并解除右栏空态（panel-empty 下 right-body 整体隐藏），setRightEmpty 会顺带自动展开面板
+    window.__hasRealOffers = true;
+    const productPreviewEl = document.getElementById('productPreview');
+    if (productPreviewEl) productPreviewEl.style.display = '';
     if (typeof setRightEmpty === 'function') setRightEmpty(false);
     table.querySelector('tbody').innerHTML = list.map((o, i) => {
       const title = escapeHtml(o.title || o.offerTitle || o.name || ('商品 #' + (o.offerId || o.id || i + 1)));
