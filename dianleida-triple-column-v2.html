@@ -2144,8 +2144,25 @@
   }
   .md-preview-toolbar .md-preview-close:hover { background: #e4e7ea; color: #303943; }
   .md-preview-meta { font-size: 11px; color: #7b858e; margin-bottom: 8px; }
-  .md-full-table th { white-space: nowrap; }
-  .md-full-table td { white-space: normal; min-width: 90px; }
+  /* 对话表格详情视图：表格自适应宽度，超出换行而不是横向滚动 */
+  .md-full-table { table-layout: fixed; width: 100%; }
+  .md-full-table th { white-space: normal; word-break: break-all; }
+  .md-full-table td { white-space: normal; word-break: break-word; min-width: 0; }
+  .md-full-table th:first-child, .md-full-table td:first-child { width: 24%; }
+  .md-full-table .md-cell-prod { min-width: 0; max-width: none; }
+  .md-full-table .md-cell-prod .prod-txt { word-break: break-word; }
+  /* 对话表格详情视图：醒目的导出操作按钮 */
+  .md-export-bar { height: auto; padding: 7px 10px; }
+  .md-export-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 6px 14px; border: none; border-radius: 6px;
+    background: var(--brand); color: #fff;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: background .15s;
+  }
+  .md-export-btn:hover { background: var(--brand-dark); }
+  .md-export-btn:active { transform: translateY(1px); }
+  .md-export-name { font-size: 11px; color: #8a949d; font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%; }
   /* 表格详情模式下，隐藏右栏 1688 商品区块，只显示对话表格完整视图 */
   .right-body.md-full-mode > *:not(#mdTablePreview) { display: none; }
   /* —— "报告已生成"卡片：报告类回复完成后中栏展示，点击打开右栏预览 —— */
@@ -2475,12 +2492,12 @@
         </div>
         <div class="md-preview-meta" id="mdPreviewMeta"></div>
         <div class="excel-wrap" style="margin:0">
-          <div class="excel-toolbar">
-            <span class="name" id="mdPreviewCsvName">📊 对话表格详情.csv</span>
+          <div class="excel-toolbar md-export-bar">
+            <button class="md-export-btn" id="mdPreviewExport" type="button" title="导出当前表格为 CSV 文件">⤓ 导出 Excel</button>
+            <span class="md-export-name" id="mdPreviewCsvName">📊 对话表格详情.csv</span>
             <span class="spacer"></span>
-            <span class="ic" id="mdPreviewExport" title="导出 Excel">⤓</span>
           </div>
-          <div style="overflow-x:auto">
+          <div style="overflow:hidden">
             <table class="preview-table md-full-table" id="mdPreviewTable"></table>
           </div>
         </div>
