@@ -4053,27 +4053,33 @@
       });
     });
   }
-  function exportPreviewXlsx() {
+  async function exportPreviewXlsx() {
     const table = document.querySelector('.preview-table');
     if (!table || !table.rows.length) return;
-    const rows = Array.from(table.rows).map(row => Array.from(row.cells).map(cell => {
-      // 商品信息列：移除图片容器后取剩余文字（product-title），保证商品名完整导出
-      if (cell.querySelector('.img-cell')) {
+    const rows = [], imgCells = [];
+    Array.from(table.rows).forEach((row, ri) => rows.push(Array.from(row.cells).map((cell, ci) => {
+      // 商品信息列：<img> 提出来嵌真图，移除图片容器后取剩余文字（product-title），保证商品名完整导出
+      const imgBox = cell.querySelector('.img-cell');
+      if (imgBox) {
+        const img = imgBox.querySelector('img');
+        if (img && img.src && ri > 0) imgCells.push({ row: ri - 1, col: ci, url: img.src });
         const clone = cell.cloneNode(true);
         clone.querySelectorAll('.img-cell').forEach(el => el.remove());
         clone.querySelectorAll('br').forEach(br => br.replaceWith(' '));
         return clone.textContent.trim().replace(/\s+/g, ' ');
       }
       return cell.textContent.trim();
-    }));
+    })));
     // 首行为表头；商品表每组含主行+详情行，原样导出
-    exportTableToXlsx(rows[0], rows.slice(1), '1688商品选品结果-' + ((window.__dldOffers || []).length || 20) + '款.xlsx', '1688商品选品结果');
+    await exportTableToXlsx(rows[0], rows.slice(1), '1688商品选品结果-' + ((window.__dldOffers || []).length || 20) + '款.xlsx', '1688商品选品结果', imgCells);
   }
   bindPreviewTableTools();
-  document.querySelector('.export-btn')?.addEventListener('click', e => {
-    e.currentTarget.classList.add('exporting');
-    exportPreviewXlsx();
-    setTimeout(() => e.currentTarget.classList.remove('exporting'), 700);
+  document.querySelector('.export-btn')?.addEventListener('click', async e => {
+    const btn = e.currentTarget;
+    if (btn.classList.contains('exporting')) return;
+    btn.classList.add('exporting');
+    try { await exportPreviewXlsx(); } catch (err) { console.error('导出失败', err); }
+    btn.classList.remove('exporting');
   });
   document.querySelector('.fullscreen-btn')?.addEventListener('click', () => {
     const wrap = document.querySelector('.excel-wrap');
@@ -5765,22 +5771,89 @@
     const text = xlsxXmlEscape(v).replace(/\n/g, '&#10;');
     return '<c r="' + xlsxColLetter(c) + r + '" s="' + style + '" t="inlineStr"><is><t xml:space="preserve">' + text + '</t></is></c>';
   }
-  // 工作表：冻结首行 + 表头筛选 + 自适应列宽
-  function buildSheetXml(headers, rows) {
+  // 工作表：冻结首行 + 表头筛选 + 自适应列宽；imgRows 含图行加高，anchoredCols 含图列保底宽，hasDrawing 时挂 drawing
+  function buildSheetXml(headers, rows, imgRows, anchoredCols, hasDrawing) {
     const widths = [];
     for (let c = 0; c < headers.length; c++) widths.push(xlsxColWidth([headers[c]].concat(rows.map(r => r[c]))));
+    (anchoredCols || []).forEach(c => { widths[c] = Math.max(widths[c] || 8, 12); });
     const cols = '<cols>' + widths.map((w, i) => '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1"/>').join('') + '</cols>';
     const headRow = '<row r="1" ht="26" customHeight="1">' + headers.map((h, c) => xlsxCellXml(1, c, h, 1)).join('') + '</row>';
-    const bodyRows = rows.map((r, ri) => '<row r="' + (ri + 2) + '">' + headers.map((h, c) => xlsxCellXml(ri + 2, c, r[c], ri % 2 ? 3 : 2)).join('') + '</row>').join('');
+    const bodyRows = rows.map((r, ri) => '<row r="' + (ri + 2) + '"' + (imgRows && imgRows.has(ri + 2) ? ' ht="50" customHeight="1"' : '') + '>'
+      + headers.map((h, c) => xlsxCellXml(ri + 2, c, r[c], ri % 2 ? 3 : 2)).join('') + '</row>').join('');
     const lastCell = xlsxColLetter(headers.length - 1) + (rows.length + 1);
     return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
-      + '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+      + '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
       + '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'
       + '<sheetFormatPr defaultRowHeight="20"/>'
       + cols
       + '<sheetData>' + headRow + bodyRows + '</sheetData>'
       + '<autoFilter ref="A1:' + lastCell + '"/>'
+      + (hasDrawing ? '<drawing r:id="rIdDrw1"/>' : '')
       + '</worksheet>';
+  }
+  // 识别图片格式并读取像素尺寸：Excel 仅可靠支持 jpeg/png，其余（webp/avif 等）返回 null 走降级
+  function xlsxImgInfo(u8) {
+    if (u8.length > 24 && u8[0] === 0x89 && u8[1] === 0x50 && u8[2] === 0x4E && u8[3] === 0x47) {
+      const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+      return { ext: 'png', w: dv.getUint32(16), h: dv.getUint32(20) };
+    }
+    if (u8.length > 9 && u8[0] === 0xFF && u8[1] === 0xD8) {
+      let off = 2;
+      while (off + 9 < u8.length) {
+        if (u8[off] !== 0xFF) { off++; continue; }
+        const marker = u8[off + 1];
+        if (marker >= 0xC0 && marker <= 0xCF && marker !== 0xC4 && marker !== 0xC8 && marker !== 0xCC) {
+          return { ext: 'jpg', w: (u8[off + 7] << 8) | u8[off + 8], h: (u8[off + 5] << 8) | u8[off + 6] };
+        }
+        off += 2 + ((u8[off + 2] << 8) | u8[off + 3]);
+      }
+    }
+    return null;
+  }
+  // 拉取单张图片字节：CORS/超时/非 jpg/png 一律返回 null，由调用方降级为 URL 文字
+  async function xlsxFetchImg(url) {
+    try {
+      const abs = new URL(url, location.href).href.replace(/^http:/, 'https:');
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 8000);
+      const res = await fetch(abs, { mode: 'cors', credentials: 'omit', signal: ctrl.signal });
+      clearTimeout(timer);
+      if (!res.ok) return null;
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      const info = xlsxImgInfo(bytes);
+      return info ? { bytes, ext: info.ext, w: info.w, h: info.h } : null;
+    } catch (e) { return null; }
+  }
+  // 绘图层：每张图 oneCellAnchor 锚定所在单元格，等比缩放适配 84x60px 盒子（1px = 9525 EMU）
+  function buildDrawingXml(images) {
+    const EMU = 9525, BOXW = 84, BOXH = 60;
+    const pics = images.map((im, i) => {
+      const scale = Math.min(BOXW / im.w, BOXH / im.h, 1);
+      const cx = Math.max(1, Math.round(im.w * scale)) * EMU, cy = Math.max(1, Math.round(im.h * scale)) * EMU;
+      return '<xdr:oneCellAnchor>'
+        + '<xdr:from><xdr:col>' + im.col + '</xdr:col><xdr:colOff>47625</xdr:colOff><xdr:row>' + (im.row + 1) + '</xdr:row><xdr:rowOff>76200</xdr:rowOff></xdr:from>'
+        + '<xdr:ext cx="' + cx + '" cy="' + cy + '"/>'
+        + '<xdr:pic><xdr:nvPicPr><xdr:cNvPr id="' + (i + 2) + '" name="图片 ' + (i + 1) + '"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr>'
+        + '<xdr:blipFill><a:blip r:embed="rId' + im.relId + '"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>'
+        + '<xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr>'
+        + '</xdr:pic><xdr:clientData/></xdr:oneCellAnchor>';
+    }).join('');
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      + '<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+      + pics + '</xdr:wsDr>';
+  }
+  function buildDrawingRelsXml(images) {
+    const rels = images.map((im, i) =>
+      '<Relationship Id="rId' + (i + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image' + (i + 1) + '.' + im.ext + '"/>'
+    ).join('');
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + rels + '</Relationships>';
+  }
+  function buildSheetRelsXml() {
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+      + '<Relationship Id="rIdDrw1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/>'
+      + '</Relationships>';
   }
   // 样式表：0默认 / 1橙底白字粗体表头(居中) / 2白底数据行 / 3淡橙斑马纹行（细橙边框 + 自动换行）
   function buildStylesXml() {
@@ -5812,17 +5885,32 @@
       + '<cellStyles count="1"><cellStyle name="常规" xfId="0" builtinId="0"/></cellStyles>'
       + '</styleSheet>';
   }
-  // 组装并下载 .xlsx：headers/rows 均为已清洗的纯文本二维数组
-  function exportTableToXlsx(headers, rows, filename, sheetTitle) {
+  // 组装并下载 .xlsx：headers/rows 为纯文本二维数组；imgCells [{row,col,url}]（row 为 0 基数据行）嵌真图，拉取失败自动降级为 URL 文字
+  async function exportTableToXlsx(headers, rows, filename, sheetTitle, imgCells) {
     let name = String(sheetTitle || '数据').replace(/[\\\/\?\*\[\]:]/g, ' ').trim() || '数据';
+    // 并发拉取图片（上限 200 张，防止卡死）；失败项回填 URL 文字
+    const imgs = (imgCells || []).slice(0, 200);
+    const fetched = await Promise.all(imgs.map(ic => xlsxFetchImg(ic.url)));
+    const okImgs = [];
+    fetched.forEach((r, i) => { if (r) okImgs.push(Object.assign({ row: imgs[i].row, col: imgs[i].col, relId: okImgs.length + 1 }, r)); });
+    if (okImgs.length < imgs.length) {
+      const failMap = {};
+      imgs.forEach((ic, i) => { if (!fetched[i]) (failMap[ic.row] = failMap[ic.row] || {})[ic.col] = ic.url; });
+      rows = rows.map((r, ri) => failMap[ri] ? r.map((v, c) => failMap[ri][c] ? (v ? v + '\n' + failMap[ri][c] : failMap[ri][c]) : v) : r);
+    }
+    const hasImg = okImgs.length > 0;
+    const ctDefaults = '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+      + '<Default Extension="xml" ContentType="application/xml"/>'
+      + (hasImg && okImgs.some(im => im.ext === 'jpg') ? '<Default Extension="jpg" ContentType="image/jpeg"/>' : '')
+      + (hasImg && okImgs.some(im => im.ext === 'png') ? '<Default Extension="png" ContentType="image/png"/>' : '');
     const files = [
       { name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
-        + '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
-        + '<Default Extension="xml" ContentType="application/xml"/>'
+        + ctDefaults
         + '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
         + '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
         + '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
+        + (hasImg ? '<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>' : '')
         + '</Types>' },
       { name: '_rels/.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
         + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
@@ -5837,8 +5925,17 @@
         + '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
         + '</Relationships>' },
       { name: 'xl/styles.xml', data: buildStylesXml() },
-      { name: 'xl/worksheets/sheet1.xml', data: buildSheetXml(headers, rows) }
+      { name: 'xl/worksheets/sheet1.xml', data: buildSheetXml(headers, rows,
+          hasImg ? new Set(okImgs.map(im => im.row + 2)) : null,
+          hasImg ? Array.from(new Set(okImgs.map(im => im.col))) : null,
+          hasImg) }
     ];
+    if (hasImg) {
+      okImgs.forEach((im, i) => files.push({ name: 'xl/media/image' + (i + 1) + '.' + im.ext, data: im.bytes }));
+      files.push({ name: 'xl/drawings/drawing1.xml', data: buildDrawingXml(okImgs) });
+      files.push({ name: 'xl/drawings/_rels/drawing1.xml.rels', data: buildDrawingRelsXml(okImgs) });
+      files.push({ name: 'xl/worksheets/_rels/sheet1.xml.rels', data: buildSheetRelsXml() });
+    }
     const blob = new Blob([buildXlsxZip(files)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -5846,21 +5943,23 @@
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 3000);
   }
-  // 富文本单元格 → 纯文本：保留文字；含图片时把图片 URL 换行附在文字后（可点击查看）
-  function xlsxCellText(html) {
+  // 富文本单元格 → {text, img}：文字照常提取；图片 URL 单独返回供嵌入主图（不再混入文字，拉取失败才回填）
+  function xlsxCellParts(html) {
     const s = String(html == null ? '' : html);
     const srcMatch = s.match(/<img[^>]*\ssrc="([^"]*)"/i);
     const text = s.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '')
       .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
       .replace(/\s+/g, ' ').trim();
-    if (srcMatch && srcMatch[1]) return text ? text + '\n' + srcMatch[1] : srcMatch[1];
-    return text;
+    return { text, img: srcMatch && srcMatch[1] ? srcMatch[1] : '' };
   }
-  // 对话表格详情 → 导出 xlsx
-  function exportMdTableXlsx() {
+  // 对话表格详情 → 导出 xlsx（含嵌入图片）
+  async function exportMdTableXlsx() {
     const t = (window.__mdTables || {})[window.__mdPreviewTid];
     if (!t) return;
-    exportTableToXlsx(t.headers.map(xlsxCellText), t.rows.map(r => r.map(xlsxCellText)), (t.title || '对话表格详情') + '.xlsx', t.title || '对话表格详情');
+    const parts = t.rows.map(r => r.map(xlsxCellParts));
+    const imgCells = [];
+    parts.forEach((r, ri) => r.forEach((p, ci) => { if (p.img) imgCells.push({ row: ri, col: ci, url: p.img }); }));
+    await exportTableToXlsx(t.headers.map(h => xlsxCellParts(h).text), parts.map(r => r.map(p => p.text)), (t.title || '对话表格详情') + '.xlsx', t.title || '对话表格详情', imgCells);
   }
   /* —— 表格型回复：未生成报告时中栏只渲染表格（部分数据 + 查看更多→右栏完整预览），不显示分析文字 —— */
   // 去除 <think> 块（含未闭合的尾部 think），返回剩余正文
@@ -5924,7 +6023,15 @@
     const closeBtn = document.getElementById('mdPreviewClose');
     if (closeBtn) closeBtn.addEventListener('click', closeMdTablePreview);
     const expBtn = document.getElementById('mdPreviewExport');
-    if (expBtn) expBtn.addEventListener('click', exportMdTableXlsx);
+    if (expBtn) expBtn.addEventListener('click', async () => {
+      if (expBtn.disabled) return;
+      const label = expBtn.textContent;
+      expBtn.disabled = true;
+      expBtn.textContent = '导出中…';
+      try { await exportMdTableXlsx(); } catch (err) { console.error('导出失败', err); }
+      expBtn.disabled = false;
+      expBtn.textContent = label;
+    });
   })();
 
   /* —— HTML 选品报告：AI 回复完成后自动生成，右栏"选品报告"Tab 查看，可下载独立 HTML —— */
