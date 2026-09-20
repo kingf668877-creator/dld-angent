@@ -10,8 +10,11 @@
   /* trae 风格三栏比例：左 15% / 中 flex-1 / 右 40%（默认宽度；折叠/悬浮状态由后文 collapsed 规则覆盖） */
   @media (min-width: 1280px) {
     .work { max-width: 100vw; }
-    .work .col-left  { width: 15vw; min-width: 200px; }
-    .work .col-right { width: 40vw; min-width: 380px; max-width: 640px; }
+    /* 仅提供默认比例宽度；拖拽分隔条后由 JS 写入内联 px 宽度自由覆盖。
+       注意：此处不可加 min/max-width（独立属性会钳制内联 width，导致拖拽调宽失效），
+       宽度上下限由 JS（setLeftWidth/setRightWidth + 拖拽约束）统一管理。 */
+    .work .col-left  { width: 15vw; }
+    .work .col-right { width: 40vw; }
   }
 </style>
 <style>
@@ -1596,6 +1599,8 @@
     margin-left: 0;
     border-color: var(--border);
   }
+  /* 拖拽分隔条时关闭宽度过渡，保证拖动跟手（视频同款自由调宽） */
+  .col-right-resizer.dragging + .col-right { transition: none; }
   .col-right.collapsed .right-tabs,
   .col-right.collapsed .right-body {
     opacity: 0;
@@ -2174,21 +2179,67 @@
   /* 报告模式下，隐藏右栏其他区块，只显示 HTML 报告视图 */
   .right-body.report-mode > *:not(#reportView) { display: none; }
 
-  /* —— HTML 选品报告视图 —— */
-  .report-view { padding-bottom: 20px; }
-  .report-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  /* —— HTML 选品报告视图（iframe 分屏预览，视频同款） —— */
+  .right-body.report-mode { display: flex; flex-direction: column; overflow: hidden; }
+  .report-view {
+    display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0;
+    padding-bottom: 0;
+  }
+  /* 顶部：文件名标签栏（仿桌面文件预览） */
+  .rp-filetab {
+    flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px;
+    background: var(--bg); border: 1px solid var(--border-light);
+    border-radius: 9px; padding: 7px 8px 7px 12px;
+  }
+  .rp-filetab .rp-ft-ic { flex: none; font-size: 14px; }
+  .rp-filetab .rp-ft-name {
+    flex: 1; min-width: 0; font-size: 12.5px; font-weight: 600; color: #303943;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .rp-filetab .rp-ft-close {
+    flex: none; width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #909399; cursor: pointer; font-size: 15px; background: transparent;
+  }
+  .rp-filetab .rp-ft-close:hover { background: #e4e7ea; color: #303943; }
+  .report-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
   .report-toolbar .rp-title { flex: 1; font-size: 15px; font-weight: 700; color: #303943; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .report-toolbar .rp-btn {
     flex: none; display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px;
     font-size: 11px; color: #00873C; background: #EAF6EF; border: 1px solid #BFE3CD; border-radius: 14px; cursor: pointer;
   }
   .report-toolbar .rp-btn:hover { background: #D8F0E1; color: #006C30; }
-  .report-meta { font-size: 11px; color: #7b858e; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border-light); }
-  /* 报告文档（店雷达绿主题，与导出 HTML 同构） */
-  .report-doc {
-    background: #F8F9FA; border: 1px solid var(--border-light); border-radius: 10px;
-    padding: 10px; font-size: 12.5px; line-height: 1.75; color: #1F2D1F;
+  .report-meta { font-size: 11px; color: #7b858e; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border-light); }
+  /* 报告文档：iframe 分屏（独立文档渲染，样式与导出 HTML 完全同构） */
+  .report-frame-wrap {
+    position: relative; flex: 1 1 auto; min-height: 300px;
+    border: 1px solid var(--border-light); border-radius: 10px;
+    overflow: hidden; background: #fff;
   }
+  .report-frame-wrap #reportFrame {
+    width: 100%; height: 100%; border: 0; display: block; background: #fff;
+  }
+  .report-frame-wrap .report-empty { position: absolute; inset: 0; background: #fff; }
+  /* 底部：迷你工具条（缩放 / 刷新 / 下载 / 全屏，视频同款） */
+  .report-statusbar {
+    flex: none; display: flex; align-items: center; gap: 4px;
+    padding: 5px 10px; margin-top: -1px;
+    background: var(--bg); border: 1px solid var(--border-light); border-radius: 10px;
+  }
+  .report-statusbar .rs-btn {
+    cursor: pointer; border: none; background: transparent; color: #5B6B62;
+    font-size: 14px; line-height: 1; padding: 6px 9px; border-radius: 7px; font-family: inherit;
+  }
+  .report-statusbar .rs-btn:hover { background: #E4F1E9; color: #006C30; }
+  .rs-zoom { display: flex; align-items: center; gap: 2px; }
+  .rs-num {
+    min-width: 48px; text-align: center; font-size: 12px; font-weight: 700; color: #303943;
+    background: transparent; border: none; cursor: pointer; padding: 6px 4px; border-radius: 7px; font-family: inherit;
+  }
+  .rs-num:hover { background: #E4F1E9; color: #006C30; }
+  .rs-spacer { flex: 1; }
+  /* 报告全屏预览 */
+  #reportView:fullscreen { background: var(--card); padding: 14px 18px 10px; }
   .rd-hero {
     position: relative; overflow: hidden; border-radius: 10px; padding: 18px 16px 15px; margin-bottom: 12px;
     background: linear-gradient(135deg, #006C30 0%, #00873C 50%, #00B050 100%); color: #fff;
@@ -2434,16 +2485,35 @@
         </div>
       </div>
 
-      <!-- HTML 选品报告视图（AI 回复完成后自动生成，点击"选品报告"Tab 查看） -->
+      <!-- HTML 选品报告视图（AI 回复完成后自动生成，点击"选品报告"Tab 查看；iframe 分屏预览） -->
       <div class="report-view" id="reportView" style="display:none">
         <div class="report-toolbar">
-          <div class="rp-title" id="reportViewTitle">选品报告</div>
-          <div class="rp-actions">
-            <span class="rp-btn" id="reportDownloadBtn" title="下载独立 HTML 文件">⤓ 下载 HTML</span>
+          <div class="rp-filetab">
+            <span class="rp-ft-ic">📄</span>
+            <span class="rp-ft-name" id="reportViewTitle">选品报告</span>
+            <span class="rp-ft-close" id="reportViewClose" title="关闭报告预览" role="button" aria-label="关闭报告预览">×</span>
           </div>
         </div>
         <div class="report-meta" id="reportViewMeta"></div>
-        <div class="report-doc" id="reportViewDoc"></div>
+        <div class="report-frame-wrap" id="reportFrameWrap">
+          <iframe id="reportFrame" title="选品报告预览" sandbox="allow-same-origin allow-popups allow-modals allow-downloads"></iframe>
+          <div class="report-empty" id="reportViewEmpty" style="display:none">
+            <div class="re-ic">📄</div>
+            <div class="re-t">暂无选品报告</div>
+            <div>在对话中让 AI 生成选品 / 调研报告后，<br>这里会自动展示 HTML 版报告，并支持下载。</div>
+          </div>
+        </div>
+        <div class="report-statusbar" id="reportStatusbar">
+          <span class="rs-zoom">
+            <button class="rs-btn" id="reportZoomOut" title="缩小" type="button">−</button>
+            <button class="rs-num" id="reportZoomReset" title="重置为 100%" type="button">100%</button>
+            <button class="rs-btn" id="reportZoomIn" title="放大" type="button">＋</button>
+          </span>
+          <span class="rs-spacer"></span>
+          <button class="rs-btn" id="reportRefreshBtn" title="刷新预览" type="button">⟳</button>
+          <button class="rs-btn" id="reportDownloadBtn" title="下载独立 HTML 文件" type="button">⤓</button>
+          <button class="rs-btn" id="reportFullscreenBtn" title="全屏预览" type="button">⛶</button>
+        </div>
       </div>
     </div>
   </aside>
@@ -4317,8 +4387,8 @@
     try { localStorage.setItem(LEFT_WIDTH_KEY, String(w)); } catch (e) {}
   }
   function setRightWidth(px) {
-    const min = 320, max = 640;
-    const w = Math.max(min, Math.min(max, Math.round(px)));
+    const min = 320;
+    const w = Math.max(min, Math.round(px));
     colRight.style.width = w + 'px';
     colRight.style.marginLeft = '0';
     try { localStorage.setItem(RIGHT_WIDTH_KEY, String(w)); } catch (e) {}
@@ -4382,7 +4452,11 @@
   bindHorizontalDrag(
     colRightResizer,
     () => colRight.getBoundingClientRect().width,
-    setRightWidth,
+    px => {
+      // 拖拽时若右栏处于折叠态，自动展开（视频同款：拖分隔条直接拉出面板）
+      if (colRight.classList.contains('collapsed') && typeof setCollapsed === 'function') setCollapsed(false);
+      setRightWidth(px);
+    },
     () => {
       const left = colLeft.getBoundingClientRect().width;
       const winAvail = getViewportAvailable() - left;
@@ -5767,16 +5841,25 @@
   }
   function openReportView() {
     const wrap = document.getElementById('reportView');
-    const doc = document.getElementById('reportViewDoc');
+    const frame = document.getElementById('reportFrame');
+    const frameWrap = document.getElementById('reportFrameWrap');
+    const emptyEl = document.getElementById('reportViewEmpty');
+    const statusbar = document.getElementById('reportStatusbar');
     const rightBody = document.querySelector('.right-body');
-    if (!wrap || !doc) return;
+    if (!wrap) return;
     const rp = window.__lastReport;
     if (rp) {
       document.getElementById('reportViewTitle').textContent = rp.title;
       document.getElementById('reportViewMeta').innerHTML =
         '生成时间 ' + rp.time + ' · 正文约 <strong>' + rp.raw.length + '</strong> 字 · AI 自动生成，可下载为独立 HTML 文件';
-      doc.innerHTML = rp.html;
-      document.getElementById('reportDownloadBtn').style.display = '';
+      // iframe 分屏预览：独立完整文档渲染（与下载导出完全同构），缩放复位 100%
+      window.__reportZoom = 1;
+      if (frame) frame.srcdoc = buildStandaloneReportHtml(rp, { printBtn: false });
+      if (frameWrap) frameWrap.style.display = '';
+      if (emptyEl) emptyEl.style.display = 'none';
+      if (statusbar) statusbar.style.display = '';
+      const zNum = document.getElementById('reportZoomReset');
+      if (zNum) zNum.textContent = '100%';
       // 已读：清掉 Tab 徽标
       document.querySelectorAll('.right-tab .rt-name').forEach(el => {
         if (el.textContent.indexOf('选品报告') !== -1) {
@@ -5787,8 +5870,10 @@
     } else {
       document.getElementById('reportViewTitle').textContent = '选品报告';
       document.getElementById('reportViewMeta').textContent = '';
-      doc.innerHTML = '<div class="report-empty"><div class="re-ic">📄</div><div class="re-t">暂无选品报告</div><div>在对话中让 AI 生成选品 / 调研报告后，<br>这里会自动展示 HTML 版报告，并支持下载。</div></div>';
-      document.getElementById('reportDownloadBtn').style.display = 'none';
+      if (frame) frame.srcdoc = '';
+      if (frameWrap) frameWrap.style.display = 'none';
+      if (emptyEl) emptyEl.style.display = '';
+      if (statusbar) statusbar.style.display = 'none';
     }
     // 与"表格详情"视图互斥：先退出表格模式
     if (typeof closeMdTablePreview === 'function') closeMdTablePreview();
@@ -5869,23 +5954,31 @@
       .rd-section { box-shadow: none; }
     }
   `;
-  function downloadReportHtml() {
-    const rp = window.__lastReport;
-    if (!rp) return;
-    const safeTitle = rp.title.replace(/[\\/:*?"<>|]/g, '_');
+  // 组装独立完整报告 HTML（下载导出与右侧 iframe 分屏预览共用，保证所见即所得）
+  function buildStandaloneReportHtml(rp, opts) {
+    opts = opts || {};
     const toc = Array.isArray(rp.toc) && rp.toc.length
       ? '<nav class="rd-toc"><div class="rd-toc-title">📑 目录</div>'
         + rp.toc.map(t => '<a href="#' + t.id + '">' + escapeHtml(t.title) + '</a>').join('') + '</nav>\n'
       : '';
-    const page = '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="UTF-8">\n'
+    const printBtn = opts.printBtn === false
+      ? ''
+      : '<div class="rd-toolbar"><button onclick="window.print()">🖨 打印 / 存 PDF</button></div>\n';
+    return '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="UTF-8">\n'
       + '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
       + '<title>' + escapeHtml(rp.title) + '</title>\n'
       + '<style>' + REPORT_EXPORT_CSS + '</style>\n</head>\n<body>\n'
       + toc
       + '<div class="report-doc">' + rp.html + '</div>\n'
-      + '<div class="rd-toolbar"><button onclick="window.print()">🖨 打印 / 存 PDF</button></div>\n'
+      + printBtn
       + '<div class="report-footer">由店雷达 AI 生成 · ' + rp.time + '</div>\n'
       + '</body>\n</html>';
+  }
+  function downloadReportHtml() {
+    const rp = window.__lastReport;
+    if (!rp) return;
+    const safeTitle = rp.title.replace(/[\\/:*?"<>|]/g, '_');
+    const page = buildStandaloneReportHtml(rp);
     const blob = new Blob(['\ufeff', page], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -5894,9 +5987,47 @@
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 3000);
   }
+  // 报告缩放：作用于 iframe 文档 body（zoom，范围 50%–200%）
+  function applyReportZoom() {
+    const z = window.__reportZoom || 1;
+    const f = document.getElementById('reportFrame');
+    try {
+      const b = f && f.contentDocument && f.contentDocument.body;
+      if (b) b.style.zoom = z;
+    } catch (e) {}
+    const num = document.getElementById('reportZoomReset');
+    if (num) num.textContent = Math.round(z * 100) + '%';
+  }
+  // 刷新预览：按最新报告数据重建 srcdoc
+  function refreshReportPreview() {
+    const rp = window.__lastReport;
+    const f = document.getElementById('reportFrame');
+    if (!f) return;
+    if (rp) f.srcdoc = buildStandaloneReportHtml(rp, { printBtn: false });
+  }
   (function bindReportView() {
     const dl = document.getElementById('reportDownloadBtn');
     if (dl) dl.addEventListener('click', downloadReportHtml);
+    const closeBtn = document.getElementById('reportViewClose');
+    if (closeBtn) closeBtn.addEventListener('click', closeReportView);
+    const frame = document.getElementById('reportFrame');
+    if (frame) frame.addEventListener('load', applyReportZoom);
+    function clampZoom(z) { return Math.max(0.5, Math.min(2, Math.round(z * 10) / 10)); }
+    const zin = document.getElementById('reportZoomIn');
+    const zout = document.getElementById('reportZoomOut');
+    const zreset = document.getElementById('reportZoomReset');
+    if (zin) zin.addEventListener('click', () => { window.__reportZoom = clampZoom((window.__reportZoom || 1) + 0.1); applyReportZoom(); });
+    if (zout) zout.addEventListener('click', () => { window.__reportZoom = clampZoom((window.__reportZoom || 1) - 0.1); applyReportZoom(); });
+    if (zreset) zreset.addEventListener('click', () => { window.__reportZoom = 1; applyReportZoom(); });
+    const refreshBtn = document.getElementById('reportRefreshBtn');
+    if (refreshBtn) refreshBtn.addEventListener('click', refreshReportPreview);
+    const fsBtn = document.getElementById('reportFullscreenBtn');
+    if (fsBtn) fsBtn.addEventListener('click', () => {
+      const wrap = document.getElementById('reportView');
+      if (!wrap) return;
+      if (document.fullscreenElement) { document.exitFullscreen(); return; }
+      if (wrap.requestFullscreen) wrap.requestFullscreen().catch(() => {});
+    });
   })();
 
   // 行内 Markdown：图片 → 链接 → 加粗 → 行内代码
