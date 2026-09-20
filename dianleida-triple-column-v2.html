@@ -3349,18 +3349,13 @@
       sessions.unshift({ id: key, title: '新建对话', tag: '草稿', time: '刚刚', timestamp: Date.now(), draft: true });
       const view = { el: makeConvView(key), loaded: false, scrollPos: null };
       CONV_VIEWS.set(key, view);
-      view.el.innerHTML = `
-        <div class="empty-state"><div class="empty-inner"><div class="empty-mark">AI</div><div class="empty-title">开始一次新的选品分析</div><div class="empty-desc">输入需求后，AI 将为你搜索和分析商品。</div><div class="empty-prompts"><button data-q="帮我筛选 1688 近 30 天销量增长快的收纳盒">1688 增长款</button><button data-q="查找 OZON 热销麻将包并对比 1688 货源">OZON 同款对比</button><button data-q="帮我找适合 TikTok Shop 的宠物用品">TikTok 潜力品</button></div></div></div>`;
+      renderOpening(view.el);
       switchToView(view.el);
       rerenderConvList();
       const title = document.querySelector('.chat-head .title');
       if (title) title.textContent = '新建对话';
       const tag = document.querySelector('.chat-head .agent-tag');
       if (tag) tag.textContent = '店雷达 AI';
-      view.el.querySelectorAll('.empty-prompts button').forEach(btn => btn.addEventListener('click', () => {
-        input.value = btn.dataset.q;
-        send();
-      }));
       refreshRunUI();
     }
     const list = SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] || [];
@@ -3772,6 +3767,39 @@
   // 历史会话统一由真实会话接口加载；不再使用本地预置消息
   const stream = document.getElementById('stream');
   const chatTitle = document.querySelector('.chat-head .title');
+  // 服务端智能体开场配置；没有返回时不展示前端预置快捷问题
+  let AGENT_OPENING = { title: '开始一次新的选品分析', desc: '输入需求后，AI 将为你搜索和分析商品。', prompts: [] };
+  function escapeOpeningText(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+  }
+  function parseAgentOpening(agent) {
+    const source = agent && typeof agent === 'object' ? agent : {};
+    const config = source.config || source.parameters || source.settings || {};
+    const pick = (...keys) => {
+      for (const key of keys) {
+        const value = source[key] ?? config[key];
+        if (typeof value === 'string' && value.trim()) return value.trim();
+      }
+      return '';
+    };
+    const title = pick('welcomeTitle', 'openingTitle', 'greetingTitle');
+    const desc = pick('welcomeMessage', 'greeting', 'opening', 'welcome', 'openingMessage', 'description');
+    const rawPrompts = source.quickQuestions || source.promptSuggestions || source.exampleQuestions || config.quickQuestions || config.promptSuggestions || [];
+    const prompts = Array.isArray(rawPrompts) ? rawPrompts.map(item => typeof item === 'string' ? item : item && (item.label || item.text || item.question)).filter(Boolean).slice(0, 4) : [];
+    return { title: title || AGENT_OPENING.title, desc: desc || (title ? '' : AGENT_OPENING.desc), prompts };
+  }
+  function renderOpening(viewEl) {
+    if (!viewEl) return;
+    const prompts = AGENT_OPENING.prompts.map(q => `<button data-q="${escapeOpeningText(q)}">${escapeOpeningText(q)}</button>`).join('');
+    viewEl.innerHTML = `<div class="empty-state"><div class="empty-inner"><div class="empty-mark">AI</div><div class="empty-title">${escapeOpeningText(AGENT_OPENING.title)}</div>${AGENT_OPENING.desc ? `<div class="empty-desc">${escapeOpeningText(AGENT_OPENING.desc)}</div>` : ''}${prompts ? `<div class="empty-prompts">${prompts}</div>` : ''}</div></div>`;
+    viewEl.querySelectorAll('.empty-prompts button').forEach(btn => btn.addEventListener('click', () => { input.value = btn.dataset.q; send(); }));
+  }
+  function refreshOpeningViews() {
+    document.querySelectorAll('.empty-state').forEach(state => {
+      const viewEl = state.closest('.conv-view') || state.parentElement;
+      if (viewEl && !viewEl.querySelector('.msg')) renderOpening(viewEl);
+    });
+  }
   // 右侧 tab
   function bindRightTab(t) {
     if (!t || t.dataset.bound === '1') return;
@@ -4624,12 +4652,8 @@
     ACTIVE_CONV_KEY = key;
     const view = { el: makeConvView(key), loaded: false, scrollPos: null };
     CONV_VIEWS.set(key, view);
-    view.el.innerHTML = `<div class="empty-state"><div class="empty-inner"><div class="empty-mark">AI</div><div class="empty-title">开始一次新的选品分析</div><div class="empty-desc">先用假数据演示完整交互，后续可直接替换为 Dify / MCP 真实返回。</div><div class="empty-prompts"><button data-q="帮我筛选 1688 近 30 天销量增长快的收纳盒">1688 增长款</button><button data-q="查找 OZON 热销麻将包并对比 1688 货源">OZON 同款对比</button><button data-q="帮我找适合 TikTok Shop 的宠物用品">TikTok 潜力品</button></div></div></div>`;
+    renderOpening(view.el);
     switchToView(view.el);
-    view.el.querySelectorAll('.empty-prompts button').forEach(btn => btn.addEventListener('click', () => {
-      input.value = btn.dataset.q;
-      send();
-    }));
     refreshRunUI();
     input.focus();
   }
@@ -5303,6 +5327,8 @@
       if (Array.isArray(list) && list.length) {
         window.__dldApps = list;
         const first = list[0];
+        AGENT_OPENING = parseAgentOpening(first);
+        refreshOpeningViews();
         // 首次进入保持新对话标题，不用智能体名称伪装成已打开的会话
         const chatTitle = document.querySelector('.chat-head .title');
         if (chatTitle) chatTitle.textContent = '新建对话';
