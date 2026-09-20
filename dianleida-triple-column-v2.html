@@ -2312,7 +2312,8 @@
       </div>
 
       <div class="chat-body" id="stream">
-        <div class="empty-state"><div class="empty-inner"><div class="empty-mark">AI</div><div class="empty-title">开始一次新的选品分析</div><div class="empty-desc">输入需求后，AI 将为你搜索和分析商品。</div><div class="empty-prompts"><button data-q="帮我筛选 1688 近 30 天销量增长快的收纳盒">1688 增长款</button><button data-q="查找 OZON 热销麻将包并对比 1688 货源">OZON 同款对比</button><button data-q="帮我找适合 TikTok Shop 的宠物用品">TikTok 潜力品</button></div></div></div>
+        <!-- 首帧兜底骨架：不含任何预置快捷问题；JS 初始化后由 renderOpening 按服务端配置重绘 -->
+        <div class="empty-state"><div class="empty-inner"><div class="empty-mark">AI</div><div class="empty-title">开始一次新的选品分析</div><div class="empty-desc">输入需求后，AI 将为你搜索和分析商品。</div></div></div>
 
         <!-- 首次进入保持新对话空态，不预置历史消息、商品或扣费结果 -->
       </div>
@@ -2892,6 +2893,43 @@
     DLD.stopRun(task.runId).catch(e => console.warn('[DLD] stopRun 失败：', e.message));
   }
 
+  /* ============ 服务端智能体开场配置 ============
+   * 注意：声明必须位于 loadAccountSessions 定义之前——顶层 loadAccountSessions() 调用
+   * 会经 showEmptyConversation() 触发 renderOpening() 读取 AGENT_OPENING，
+   * 若声明放在后面会因 let 暂时性死区抛 ReferenceError 中断整个初始化脚本 */
+  let AGENT_OPENING = { title: '开始一次新的选品分析', desc: '输入需求后，AI 将为你搜索和分析商品。', prompts: [] };
+  function escapeOpeningText(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+  }
+  function parseAgentOpening(agent) {
+    const source = agent && typeof agent === 'object' ? agent : {};
+    const config = source.config || source.parameters || source.settings || {};
+    const pick = (...keys) => {
+      for (const key of keys) {
+        const value = source[key] ?? config[key];
+        if (typeof value === 'string' && value.trim()) return value.trim();
+      }
+      return '';
+    };
+    const title = pick('welcomeTitle', 'openingTitle', 'greetingTitle');
+    const desc = pick('welcomeMessage', 'greeting', 'opening', 'welcome', 'openingMessage', 'description');
+    const rawPrompts = source.quickQuestions || source.promptSuggestions || source.exampleQuestions || config.quickQuestions || config.promptSuggestions || [];
+    const prompts = Array.isArray(rawPrompts) ? rawPrompts.map(item => typeof item === 'string' ? item : item && (item.label || item.text || item.question)).filter(Boolean).slice(0, 4) : [];
+    return { title: title || AGENT_OPENING.title, desc: desc || (title ? '' : AGENT_OPENING.desc), prompts };
+  }
+  function renderOpening(viewEl) {
+    if (!viewEl) return;
+    const prompts = AGENT_OPENING.prompts.map(q => `<button data-q="${escapeOpeningText(q)}">${escapeOpeningText(q)}</button>`).join('');
+    viewEl.innerHTML = `<div class="empty-state"><div class="empty-inner"><div class="empty-mark">AI</div><div class="empty-title">${escapeOpeningText(AGENT_OPENING.title)}</div>${AGENT_OPENING.desc ? `<div class="empty-desc">${escapeOpeningText(AGENT_OPENING.desc)}</div>` : ''}${prompts ? `<div class="empty-prompts">${prompts}</div>` : ''}</div></div>`;
+    viewEl.querySelectorAll('.empty-prompts button').forEach(btn => btn.addEventListener('click', () => { input.value = btn.dataset.q; send(); }));
+  }
+  function refreshOpeningViews() {
+    document.querySelectorAll('.empty-state').forEach(state => {
+      const viewEl = state.closest('.conv-view') || state.parentElement;
+      if (viewEl && !viewEl.querySelector('.msg')) renderOpening(viewEl);
+    });
+  }
+
   function loadAccountSessions() {
     const convList = document.getElementById('convList');
     if (!convList) return;
@@ -3173,7 +3211,10 @@
         loadRealMessages(target, view);
         return;
       }
-      renderConvMockMessages(target, view);
+      // 无 convId 的异常兜底：渲染开场白空态，不再使用本地模拟历史消息
+      renderOpening(view.el);
+      view.loaded = true;
+      switchToView(view.el);
     }
 
     /* 把 DLD 返回的消息历史渲染到该会话的视图容器（并行模式：写入各自容器，互不影响） */
@@ -3270,72 +3311,6 @@
       return window.escapeHtml ? window.escapeHtml(s) : String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
     }
 
-    /* 兼容无真实 convId 的历史会话；主账号不再预置此类会话 */
-    function renderConvMockMessages(target, view) {
-      if (!view) return;
-      if (view.loaded) { switchToView(view.el); return; }
-      const viewEl = view.el;
-      viewEl.classList.remove('conv-fade-in'); void viewEl.offsetWidth;
-      viewEl.innerHTML = `
-        <div class="msg user"><div class="avatar">我</div><div class="msg-body"><div class="msg-role">${CURRENT_ACCOUNT.name} <span class="time">· ${target.time}</span></div><div class="msg-bubble"><p>${target.snippet}</p></div></div></div>
-        <div class="msg ai"><div class="avatar">AI</div><div class="msg-body"><div class="msg-role">${target.agent} <span class="time">· 已完成</span></div>
-          <div class="task-card">
-            <div class="task-head"><span class="task-ic">⬢</span><span class="task-title">任务规划</span><span class="task-arrow">⌃</span></div>
-            <div class="task-body">
-              <div class="task-block-title">需求理解</div>
-              <div class="task-block-sub">${target.snippet || '历史对话结果已生成'}</div>
-              <div class="task-block-title">${target.title}</div>
-              <ul class="task-block-list">
-                <li>查询近 30 天销量、价格、评分、销量趋势等数据，筛选 20 款有市场潜力的商品并总结。</li>
-              </ul>
-            </div>
-          </div>
-          <div class="task-card">
-            <div class="task-head"><span class="task-ic">≡</span><span class="task-title">任务执行</span><span class="task-arrow">⌃</span></div>
-            <div class="task-body">
-              <div class="task-step done"><span class="node">✓</span><span class="step-name">搜索有机会商品</span></div>
-              <div class="product-list">
-                <div class="pl-title">商品列表</div>
-                <div class="pl-grid">
-                  <div class="pl-card"><div class="pl-thumb">📦</div><div class="pl-name">${target.snippet || '历史结果'}</div></div>
-                  <div class="pl-card"><div class="pl-thumb">📦</div><div class="pl-name">命中商品 · Top1 ${Math.floor(2000 + Math.random() * 3000)} 件</div></div>
-                  <div class="pl-card"><div class="pl-thumb">📦</div><div class="pl-name">命中商品 · Top2 ${Math.floor(1000 + Math.random() * 2000)} 件</div></div>
-                  <div class="pl-card"><div class="pl-thumb">📦</div><div class="pl-name">命中商品 · Top3 ${Math.floor(800 + Math.random() * 1500)} 件</div></div>
-                  <div class="pl-card"><div class="pl-thumb">📦</div><div class="pl-name">命中商品 · Top4 ${Math.floor(500 + Math.random() * 1200)} 件</div></div>
-                  <div class="pl-footer">
-                    共 20 商品，<a href="#" class="detail-link" data-detail-trigger="products">查看详情 ›</a>
-                  </div>
-                </div>
-              </div>
-              <div class="status-line-list">
-                <div class="status-line"><span class="sl-tick">✓</span><span>任务【${target.title}】执行完成</span></div>
-              </div>
-            </div>
-          </div>
-          <div class="msg-bubble" style="background:transparent;padding:0;margin-top:8px"><button class="regen-btn">↻ 重新生成</button></div>
-          <div class="next-suggest">
-            <div class="ns-head">💡 你可能还想问 <span class="ai-tag">AI</span></div>
-            <div class="ns-list">
-              <div class="ns-item" data-q="继续查 30 天销量 TOP100"><span class="ns-ic">🔍</span><span class="ns-text">继续查 30 天销量 TOP100</span><span class="ns-arrow">›</span></div>
-              <div class="ns-item" data-q="对比 OZON 同款货源价格"><span class="ns-ic">🌍</span><span class="ns-text">对比 OZON 同款货源价格</span><span class="ns-arrow">›</span></div>
-              <div class="ns-item" data-q="把这 20 款加入我的监控"><span class="ns-ic">📦</span><span class="ns-text">把这 20 款加入我的监控</span><span class="ns-arrow">›</span></div>
-            </div>
-          </div>
-          <div class="cost-bar">
-            <div class="cb-info"><div class="cb-title">本次对话消耗</div></div>
-            <div class="cb-total"><div class="cb-num">-${Math.floor(8 + Math.random() * 18)}</div><div class="cb-unit">积分</div></div>
-          </div>
-        </div></div>`;
-      viewEl.classList.add('conv-fade-in');
-      view.loaded = true;
-      bindRegenerate(viewEl);
-      bindDetailLinks(viewEl);
-      bindSuggestionClicks(viewEl);
-      viewEl.querySelectorAll('.task-head').forEach(h => {
-        h.addEventListener('click', () => h.parentElement.classList.toggle('collapsed'));
-      });
-      switchToView(viewEl);
-    }
     function showEmptyConversation() {
       // 并行模式：新建"草稿"视图容器，不阻断其他会话的运行中任务
       CONV_VIEWS.forEach((v, k) => { if (k.indexOf('draft-') === 0 && !RUNNING_TASKS.has(k) && !v.el.querySelector('.msg')) CONV_VIEWS.delete(k); });
@@ -3767,39 +3742,7 @@
   // 历史会话统一由真实会话接口加载；不再使用本地预置消息
   const stream = document.getElementById('stream');
   const chatTitle = document.querySelector('.chat-head .title');
-  // 服务端智能体开场配置；没有返回时不展示前端预置快捷问题
-  let AGENT_OPENING = { title: '开始一次新的选品分析', desc: '输入需求后，AI 将为你搜索和分析商品。', prompts: [] };
-  function escapeOpeningText(value) {
-    return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
-  }
-  function parseAgentOpening(agent) {
-    const source = agent && typeof agent === 'object' ? agent : {};
-    const config = source.config || source.parameters || source.settings || {};
-    const pick = (...keys) => {
-      for (const key of keys) {
-        const value = source[key] ?? config[key];
-        if (typeof value === 'string' && value.trim()) return value.trim();
-      }
-      return '';
-    };
-    const title = pick('welcomeTitle', 'openingTitle', 'greetingTitle');
-    const desc = pick('welcomeMessage', 'greeting', 'opening', 'welcome', 'openingMessage', 'description');
-    const rawPrompts = source.quickQuestions || source.promptSuggestions || source.exampleQuestions || config.quickQuestions || config.promptSuggestions || [];
-    const prompts = Array.isArray(rawPrompts) ? rawPrompts.map(item => typeof item === 'string' ? item : item && (item.label || item.text || item.question)).filter(Boolean).slice(0, 4) : [];
-    return { title: title || AGENT_OPENING.title, desc: desc || (title ? '' : AGENT_OPENING.desc), prompts };
-  }
-  function renderOpening(viewEl) {
-    if (!viewEl) return;
-    const prompts = AGENT_OPENING.prompts.map(q => `<button data-q="${escapeOpeningText(q)}">${escapeOpeningText(q)}</button>`).join('');
-    viewEl.innerHTML = `<div class="empty-state"><div class="empty-inner"><div class="empty-mark">AI</div><div class="empty-title">${escapeOpeningText(AGENT_OPENING.title)}</div>${AGENT_OPENING.desc ? `<div class="empty-desc">${escapeOpeningText(AGENT_OPENING.desc)}</div>` : ''}${prompts ? `<div class="empty-prompts">${prompts}</div>` : ''}</div></div>`;
-    viewEl.querySelectorAll('.empty-prompts button').forEach(btn => btn.addEventListener('click', () => { input.value = btn.dataset.q; send(); }));
-  }
-  function refreshOpeningViews() {
-    document.querySelectorAll('.empty-state').forEach(state => {
-      const viewEl = state.closest('.conv-view') || state.parentElement;
-      if (viewEl && !viewEl.querySelector('.msg')) renderOpening(viewEl);
-    });
-  }
+  // AGENT_OPENING 及开场白渲染函数已前移至 loadAccountSessions 定义之前（避免 let 暂时性死区）
   // 右侧 tab
   function bindRightTab(t) {
     if (!t || t.dataset.bound === '1') return;
@@ -4645,16 +4588,26 @@
 
   function showEmptyConversation() {
     document.querySelectorAll('.conv-item').forEach(x => x.classList.remove('active'));
-    chatTitle.textContent = '新建对话';
+    const titleEl = document.querySelector('.chat-head .title');
+    if (titleEl) titleEl.textContent = '新建对话';
+    const tagEl = document.querySelector('.chat-head .agent-tag');
+    if (tagEl) tagEl.textContent = '店雷达 AI';
     // 并行模式：新建"草稿"视图容器，其他会话运行中的任务不受影响
     CONV_VIEWS.forEach((v, k) => { if (k.indexOf('draft-') === 0 && !RUNNING_TASKS.has(k) && !v.el.querySelector('.msg')) CONV_VIEWS.delete(k); });
     const key = 'draft-' + (++DRAFT_SEQ);
     ACTIVE_CONV_KEY = key;
+    // 左侧同步显示当前草稿（与 loadAccountSessions 初始化路径行为一致），经事件触发闭包内列表重渲染
+    const sessions = SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] || (SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] = []);
+    for (let i = sessions.length - 1; i >= 0; i--) {
+      if (sessions[i].draft) sessions.splice(i, 1);
+    }
+    sessions.unshift({ id: key, title: '新建对话', tag: '草稿', time: '刚刚', timestamp: Date.now(), draft: true });
     const view = { el: makeConvView(key), loaded: false, scrollPos: null };
     CONV_VIEWS.set(key, view);
     renderOpening(view.el);
     switchToView(view.el);
     refreshRunUI();
+    document.dispatchEvent(new CustomEvent('dld:conversations-updated', { detail: { skipSelect: true } }));
     input.focus();
   }
   newConversationBtn.addEventListener('click', () => {
@@ -4699,7 +4652,8 @@
         localList.unshift({ id: conversationId, convId: conversationId, appCode: remote.appCode, title: officialTitle, tag: (remote.appCode || 'chat').slice(0, 8), time: remote.lastMessageAt ? formatRelativeTime(remote.lastMessageAt) : '刚刚', timestamp: remote.lastMessageAt ? new Date(remote.lastMessageAt).getTime() : Date.now() });
       }
       SESSIONS_BY_ACCOUNT[key] = localList.filter(item => !item.draft || item.id === conversationId);
-      rerenderConvList();
+      // rerenderConvList 是 loadAccountSessions 闭包内函数，顶层不可直接调用；经事件触发其内部监听器刷新列表
+      document.dispatchEvent(new CustomEvent('dld:conversations-updated', { detail: { skipSelect: true } }));
       if (ACTIVE_CONV_KEY === conversationId) {
         const titleEl = document.querySelector('.chat-head .title');
         if (titleEl) titleEl.textContent = officialTitle;
