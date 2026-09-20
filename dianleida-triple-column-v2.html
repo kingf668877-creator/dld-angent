@@ -2265,7 +2265,25 @@
   /* 右栏：对话表格完整数据视图 */
   .md-preview-wrap { margin-bottom: 14px; }
   .md-preview-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-  .md-preview-toolbar .md-preview-title { font-size: 13px; font-weight: 700; color: #303943; flex: 1; }
+  /* 多 Tab 标签条：同轮对话多个表格并行打开，点击切换查看互不覆盖 */
+  .md-preview-tabs { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; overflow-x: auto; padding: 2px; scrollbar-width: thin; }
+  .md-tab {
+    display: inline-flex; align-items: center; gap: 5px; flex: none; max-width: 220px;
+    padding: 4px 7px 4px 10px; border-radius: 14px; cursor: pointer; user-select: none;
+    font-size: 12px; font-weight: 600; color: #5a6570; background: #f1f3f5; border: 1px solid transparent;
+    transition: background .15s, color .15s, box-shadow .15s;
+  }
+  .md-tab:hover { background: #e8ebee; color: #303943; }
+  .md-tab.active { background: linear-gradient(135deg, #FF8A1E, #FF6A00); color: #fff; box-shadow: 0 2px 6px rgba(255,106,0,.25); }
+  .md-tab-t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .md-tab-x {
+    width: 15px; height: 15px; border-radius: 50%; flex: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 11px; line-height: 1; background: rgba(0,0,0,.08); color: inherit; opacity: .75;
+  }
+  .md-tab-x:hover { background: #d93025; color: #fff; opacity: 1; }
+  .md-tab.active .md-tab-x { background: rgba(255,255,255,.22); }
+  .md-tab.active .md-tab-x:hover { background: rgba(255,255,255,.4); }
   .md-preview-toolbar .md-preview-close {
     width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
     color: #909399; cursor: pointer; font-size: 15px; background: #f1f3f5; flex: none;
@@ -2299,7 +2317,6 @@
   .md-export-btn:active { transform: translateY(1px); box-shadow: none; }
   .md-export-name { font-size: 11px; color: #b06a2c; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%; }
   /* 对话表格详情视图：1688 橙色主题表格（橙底表头白字 + 斑马纹 + 圆角卡片） */
-  .md-preview-toolbar .md-preview-title { border-left: 3px solid #FF6A00; padding-left: 8px; }
   .md-table-clip { border-radius: 10px; }
   .md-full-table th {
     background: linear-gradient(180deg, #FF8A1E, #FF6A00); color: #fff;
@@ -2662,8 +2679,8 @@
       <!-- 对话表格完整数据视图（点击中栏表格"查看更多"时展示） -->
       <div class="md-preview-wrap" id="mdTablePreview" style="display:none">
         <div class="md-preview-toolbar">
-          <span class="md-preview-title" id="mdPreviewTitle">📋 对话表格详情</span>
-          <span class="md-preview-close" id="mdPreviewClose" title="返回商品数据">×</span>
+          <div class="md-preview-tabs" id="mdPreviewTabs"></div>
+          <span class="md-preview-close" id="mdPreviewClose" title="关闭全部表格标签，返回商品数据">×</span>
         </div>
         <div class="md-preview-meta" id="mdPreviewMeta"></div>
         <div class="excel-wrap md-preview-scroll" style="margin:0">
@@ -5926,25 +5943,30 @@
     return '<td' + cls + '><div class="md-cell-prod">' + imgTag + '<div class="prod-txt">' + rest + '</div></div></td>';
   }
 
-  /* —— 中栏表格"查看更多"：点击后右栏展示该表格完整数据 —— */
+  /* —— 中栏表格"查看更多"：点击后右栏展示该表格完整数据 ——
+     多 Tab：同轮对话的多个表格并行打开为标签页，切换查看互不覆盖；
+     已打开的表格再次点击"查看更多"仅激活对应 Tab（保留其翻页进度） —— */
   function viewMdTableFull(tid) {
+    // 统一为字符串：onclick 内联传入的是数字，Tab 事件委托里 dataset.tid 是字符串，必须一致才能正确比较高亮/切换
+    tid = String(tid);
     const t = (window.__mdTables || {})[tid];
     const wrap = document.getElementById('mdTablePreview');
     const tableEl = document.getElementById('mdPreviewTable');
     if (!t || !wrap || !tableEl) return;
-    // 初始化分页器：默认每页 50 条回到第 1 页；沿用用户已选的每页条数
-    const sizeSel = document.getElementById('mdPgSize');
-    window.__mdPager = { tid: tid, page: 1, size: Number(sizeSel && sizeSel.value) || 50 };
-    tableEl.innerHTML = '<thead><tr>' + t.headers.map(c => '<th' + mdColCls(c) + '>' + c + '</th>').join('') + '</tr></thead><tbody></tbody>';
-    document.getElementById('mdPreviewTitle').textContent = '📋 ' + (t.title || '对话表格详情');
-    document.getElementById('mdPreviewCsvName').textContent = '📊 ' + (t.title || '对话表格详情') + '.xlsx';
-    window.__mdPreviewTid = tid;
-    renderMdPage();
+    // Tab 注册：__mdTabs 为打开顺序表，__mdTabPagers 按 tid 独立保留各 Tab 的翻页状态
+    if (!Array.isArray(window.__mdTabs)) window.__mdTabs = [];
+    if (!window.__mdTabPagers) window.__mdTabPagers = {};
+    if (window.__mdTabs.indexOf(tid) === -1) {
+      const sizeSel0 = document.getElementById('mdPgSize');
+      window.__mdTabPagers[tid] = { tid: tid, page: 1, size: Number(sizeSel0 && sizeSel0.value) || 50 };
+      window.__mdTabs.push(tid);
+    }
+    activateMdTab(tid);
     // 记住并替换顶部 Tab 名，关闭时还原
     const tabEl = document.getElementById('previewTabName');
     if (tabEl) {
       if (!window.__mdPrevTabName) window.__mdPrevTabName = tabEl.textContent;
-      tabEl.textContent = '📋 表格详情 (' + t.rows.length + '条)';
+      tabEl.textContent = '📋 表格详情 (' + window.__mdTabs.length + '个)';
     }
     wrap.style.display = '';
     // 用户主动点击"查看更多"= 明确意图 + 会话内真实数据：解除首屏守卫并退出空态。
@@ -5964,6 +5986,70 @@
     const rightPanel = document.getElementById('rightPanel');
     if (rightPanel && rightPanel.classList.contains('collapsed') && typeof setCollapsed === 'function') setCollapsed(false);
   }
+  // 激活某个表格 Tab：__mdPager 指向该 Tab 的分页器对象（同一引用存于 __mdTabPagers，翻页即自动持久化），
+  // 重建 thead、同步导出文件名与每页条数下拉，再走 renderMdPage 切片渲染
+  function activateMdTab(tid) {
+    const t = (window.__mdTables || {})[tid];
+    const tableEl = document.getElementById('mdPreviewTable');
+    if (!t || !tableEl) return;
+    if (!window.__mdTabPagers) window.__mdTabPagers = {};
+    if (!window.__mdTabPagers[tid]) {
+      const sizeSel0 = document.getElementById('mdPgSize');
+      window.__mdTabPagers[tid] = { tid: tid, page: 1, size: Number(sizeSel0 && sizeSel0.value) || 50 };
+    }
+    window.__mdPager = window.__mdTabPagers[tid];
+    window.__mdPreviewTid = tid;
+    const sizeSel = document.getElementById('mdPgSize');
+    if (sizeSel) sizeSel.value = String(window.__mdPager.size);
+    tableEl.innerHTML = '<thead><tr>' + t.headers.map(c => '<th' + mdColCls(c) + '>' + c + '</th>').join('') + '</tr></thead><tbody></tbody>';
+    document.getElementById('mdPreviewCsvName').textContent = '📊 ' + (t.title || '对话表格详情') + '.xlsx';
+    renderMdTabs();
+    renderMdPage();
+  }
+  // 重建 Tab 标签条：激活 Tab 橙色高亮，每项带独立关闭 ×；超出宽度时横向滚动并滚动到激活项
+  function renderMdTabs() {
+    const box = document.getElementById('mdPreviewTabs');
+    if (!box) return;
+    const regs = window.__mdTables || {};
+    box.innerHTML = (window.__mdTabs || []).map(tid => {
+      const t = regs[tid];
+      const name = String((t && t.title) || '对话表格详情')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      const active = tid === window.__mdPreviewTid;
+      return '<span class="md-tab' + (active ? ' active' : '') + '" data-tid="' + tid + '">' +
+        '<span class="md-tab-t">📋 ' + name + '</span>' +
+        '<span class="md-tab-x" title="关闭此标签">×</span></span>';
+    }).join('');
+    const act = box.querySelector('.md-tab.active');
+    if (act && act.scrollIntoView) { try { act.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) { /* 旧浏览器忽略 */ } }
+  }
+  // 关闭单个 Tab：清掉其分页状态；关闭的是激活 Tab 则自动切到相邻 Tab（优先右侧）；
+  // 全部关完才走 closeMdTablePreview 整体退回商品视图
+  function closeMdTab(tid) {
+    const tabs = window.__mdTabs || [];
+    const pos = tabs.indexOf(tid);
+    if (pos === -1) return;
+    tabs.splice(pos, 1);
+    if (window.__mdTabPagers) delete window.__mdTabPagers[tid];
+    if (!tabs.length) { closeMdTablePreview(); return; }
+    if (window.__mdPreviewTid === tid) activateMdTab(tabs[Math.min(pos, tabs.length - 1)]);
+    else renderMdTabs();
+    const tabEl = document.getElementById('previewTabName');
+    if (tabEl && window.__mdPrevTabName) tabEl.textContent = '📋 表格详情 (' + tabs.length + '个)';
+  }
+  // Tab 栏事件委托：点 × 关闭单个 Tab，点其余区域切换激活 Tab
+  (function bindMdTabs() {
+    const box = document.getElementById('mdPreviewTabs');
+    if (!box) return;
+    box.addEventListener('click', e => {
+      const tab = e.target.closest('.md-tab');
+      if (!tab) return;
+      const tid = tab.dataset.tid;
+      if (!tid) return;
+      if (e.target.closest('.md-tab-x')) { closeMdTab(tid); return; }
+      if (tid !== window.__mdPreviewTid) activateMdTab(tid);
+    });
+  })();
   // 对话表格详情分页渲染：按 __mdPager 切片渲染 tbody，同步分页条与 meta 文案（导出走全量 __mdTables，不受分页影响）
   function renderMdPage() {
     const pager = window.__mdPager;
@@ -6023,6 +6109,13 @@
     const wrap = document.getElementById('mdTablePreview');
     const wasVisible = !!(wrap && wrap.style.display !== 'none');
     if (wrap) wrap.style.display = 'none';
+    // 清空多 Tab 状态与标签条（切换会话 resetRightPreview 亦走此处，避免残留旧会话的 Tab）
+    window.__mdTabs = [];
+    window.__mdTabPagers = {};
+    window.__mdPager = null;
+    window.__mdPreviewTid = null;
+    const tabsBox = document.getElementById('mdPreviewTabs');
+    if (tabsBox) tabsBox.innerHTML = '';
     const rightBody = document.querySelector('.right-body');
     if (rightBody) rightBody.classList.remove('md-full-mode');
     const tabEl = document.getElementById('previewTabName');
