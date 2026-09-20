@@ -3302,6 +3302,7 @@
       if (!el) return;
       // 用户主动打开历史会话时才恢复右侧预览，页面初始化不带出旧预览
       if (options.restorePreview !== false) {
+        window.__initialPreviewGuard = false;
         document.dispatchEvent(new CustomEvent('dld:right-empty', { detail: { empty: false } }));
       }
       convList.querySelectorAll('.conv-item').forEach(x => x.classList.remove('active'));
@@ -4618,6 +4619,7 @@
   const collapseBtn = document.getElementById('rightCollapseBtn');
   const COLLAPSE_KEY = 'dld_right_collapsed';
   let previewOpenedThisSession = false;
+  window.__initialPreviewGuard = true;
 
   function setCollapsed(collapsed) {
     rightPanel.classList.toggle('collapsed', collapsed);
@@ -4626,6 +4628,7 @@
     try { localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0'); } catch(e) {}
   }
   function openPreviewPanel() {
+    if (window.__initialPreviewGuard) return;
     previewOpenedThisSession = true;
     setCollapsed(false);
   }
@@ -4846,6 +4849,7 @@
   }
 
   function send(regenerate = false) {
+    window.__initialPreviewGuard = false;
     const text = input.value.trim();
     if (!text && attaches.length === 0) return;
     // 确定目标会话 key：当前活跃会话；无（首次发送的空白态）→ 自动创建草稿
@@ -6086,6 +6090,11 @@
     return s;
   }
   function renderOffers(list, meta) {
+    // 首次进入时忽略自动恢复的历史商品结果，右侧保持真正空态
+    if (window.__initialPreviewGuard) {
+      if (typeof resetRightPreview === 'function') resetRightPreview();
+      return;
+    }
     // 若右栏正展示"对话表格详情"或"选品报告"，新商品数据到达时自动关闭该视图恢复商品表
     const rb = document.querySelector('.right-body');
     if (rb && rb.classList.contains('md-full-mode') && typeof closeMdTablePreview === 'function') closeMdTablePreview();
