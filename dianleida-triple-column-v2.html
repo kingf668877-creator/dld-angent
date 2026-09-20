@@ -2151,18 +2151,40 @@
   .md-full-table th:first-child, .md-full-table td:first-child { width: 24%; }
   .md-full-table .md-cell-prod { min-width: 0; max-width: none; }
   .md-full-table .md-cell-prod .prod-txt { word-break: break-word; }
-  /* 对话表格详情视图：醒目的导出操作按钮 */
-  .md-export-bar { height: auto; padding: 7px 10px; }
+  /* 对话表格详情视图：醒目的导出操作按钮（1688 橙） */
+  .md-export-bar {
+    height: auto; padding: 7px 10px;
+    background: linear-gradient(135deg, #FFF7EE, #FFF0DE);
+    border: 1px solid #FFE3C8; border-radius: 10px;
+  }
   .md-export-btn {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 6px 14px; border: none; border-radius: 6px;
-    background: var(--brand); color: #fff;
+    background: linear-gradient(135deg, #FF8A1E, #FF6A00); color: #fff;
     font-size: 12px; font-weight: 600; cursor: pointer;
-    transition: background .15s;
+    box-shadow: 0 2px 6px rgba(255,106,0,.28);
+    transition: filter .15s, transform .1s;
   }
-  .md-export-btn:hover { background: var(--brand-dark); }
-  .md-export-btn:active { transform: translateY(1px); }
-  .md-export-name { font-size: 11px; color: #8a949d; font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%; }
+  .md-export-btn:hover { filter: brightness(1.07); }
+  .md-export-btn:active { transform: translateY(1px); box-shadow: none; }
+  .md-export-name { font-size: 11px; color: #b06a2c; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%; }
+  /* 对话表格详情视图：1688 橙色主题表格（橙底表头白字 + 斑马纹 + 圆角卡片） */
+  .md-preview-toolbar .md-preview-title { border-left: 3px solid #FF6A00; padding-left: 8px; }
+  .md-preview-scroll { border: 1px solid #FFE3C8; border-radius: 10px; }
+  .md-table-clip { border-radius: 10px; }
+  .md-full-table th {
+    background: linear-gradient(180deg, #FF8A1E, #FF6A00); color: #fff;
+    font-weight: 700; border-bottom: none; padding: 10px 9px; text-align: left;
+  }
+  .md-full-table th:not(:last-child) { border-right: 1px solid rgba(255,255,255,.25); }
+  .md-full-table th:first-child { border-top-left-radius: 9px; }
+  .md-full-table th:last-child { border-top-right-radius: 9px; }
+  .md-full-table td { border-bottom: 1px solid #FFE9D2; }
+  .md-full-table td:not(:last-child) { border-right: 1px solid #FFF3E4; }
+  .md-full-table tbody tr:nth-child(even) td { background: #FFF7ED; }
+  .md-full-table tbody tr:hover td { background: #FFEFD9; }
+  .md-full-table tbody tr:last-child td:first-child { border-bottom-left-radius: 9px; }
+  .md-full-table tbody tr:last-child td:last-child { border-bottom-right-radius: 9px; }
   /* 表格详情模式下，隐藏右栏 1688 商品区块，只显示对话表格完整视图 */
   .right-body.md-full-mode > *:not(#mdTablePreview) { display: none; }
   /* —— "报告已生成"卡片：报告类回复完成后中栏展示，点击打开右栏预览 —— */
@@ -2458,7 +2480,7 @@
 
         <div class="excel-wrap">
         <div class="excel-toolbar">
-          <span class="name">📊 1688 商品选品结果.csv</span>
+          <span class="name">📊 1688 商品选品结果.xlsx</span>
           <span class="spacer"></span>
           <span class="ic fullscreen-btn" title="全屏查看">⛶</span>
           <span class="ic export-btn" title="导出 Excel">⤓</span>
@@ -2491,13 +2513,13 @@
           <span class="md-preview-close" id="mdPreviewClose" title="返回商品数据">×</span>
         </div>
         <div class="md-preview-meta" id="mdPreviewMeta"></div>
-        <div class="excel-wrap" style="margin:0">
+        <div class="excel-wrap md-preview-scroll" style="margin:0">
           <div class="excel-toolbar md-export-bar">
-            <button class="md-export-btn" id="mdPreviewExport" type="button" title="导出当前表格为 CSV 文件">⤓ 导出 Excel</button>
-            <span class="md-export-name" id="mdPreviewCsvName">📊 对话表格详情.csv</span>
+            <button class="md-export-btn" id="mdPreviewExport" type="button" title="导出当前表格为 Excel（.xlsx）文件">⤓ 导出 Excel</button>
+            <span class="md-export-name" id="mdPreviewCsvName">📊 对话表格详情.xlsx</span>
             <span class="spacer"></span>
           </div>
-          <div style="overflow:hidden">
+          <div class="md-table-clip">
             <table class="preview-table md-full-table" id="mdPreviewTable"></table>
           </div>
         </div>
@@ -3933,7 +3955,7 @@
       <div class="detail-table-card">
         <div class="dt-head">
           <span class="dt-title">📋 商品详情 Top 10</span>
-          <span class="dt-meta">按销量排序，可导出 CSV</span>
+          <span class="dt-meta">按销量排序，可导出 Excel</span>
         </div>
         <table>
           <thead>
@@ -3991,7 +4013,7 @@
   // 顶栏胶囊与弹窗层级已由 CSS 统一规范：胶囊 z-index:60 < 模态遮罩 z-index:400 < toast z-index:500，
   // 新增弹窗只需沿用现有遮罩类（z-index:400），无需再维护 JS 白名单（历史反复复发的补丁已移除）
 
-  // 右侧表格：价格、销量、评分排序 + CSV 导出
+  // 右侧表格：价格、销量、评分排序 + Excel(.xlsx) 导出
   function parseCellNumber(value) {
     const n = String(value || '').replace(/[$,分%]/g, '').match(/-?[\d.]+/);
     return n ? Number(n[0]) : 0;
@@ -4031,12 +4053,9 @@
       });
     });
   }
-  function csvEscape(value) {
-    return '"' + String(value ?? '').replace(/"/g, '""') + '"';
-  }
-  function exportPreviewCsv() {
+  function exportPreviewXlsx() {
     const table = document.querySelector('.preview-table');
-    if (!table) return;
+    if (!table || !table.rows.length) return;
     const rows = Array.from(table.rows).map(row => Array.from(row.cells).map(cell => {
       // 商品信息列：移除图片容器后取剩余文字（product-title），保证商品名完整导出
       if (cell.querySelector('.img-cell')) {
@@ -4047,21 +4066,13 @@
       }
       return cell.textContent.trim();
     }));
-    const csv = '\uFEFF' + rows.map(row => row.map(csvEscape).join(',')).join('\r\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = '1688商品选品结果-' + ((window.__dldOffers || []).length || 20) + '款.csv';
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(url);
+    // 首行为表头；商品表每组含主行+详情行，原样导出
+    exportTableToXlsx(rows[0], rows.slice(1), '1688商品选品结果-' + ((window.__dldOffers || []).length || 20) + '款.xlsx', '1688商品选品结果');
   }
   bindPreviewTableTools();
   document.querySelector('.export-btn')?.addEventListener('click', e => {
     e.currentTarget.classList.add('exporting');
-    exportPreviewCsv();
+    exportPreviewXlsx();
     setTimeout(() => e.currentTarget.classList.remove('exporting'), 700);
   });
   document.querySelector('.fullscreen-btn')?.addEventListener('click', () => {
@@ -5624,7 +5635,7 @@
       + '<tbody>' + t.rows.map(r => '<tr>' + r.map(mdCellHtml).join('') + '</tr>').join('') + '</tbody>';
     document.getElementById('mdPreviewTitle').textContent = '📋 ' + (t.title || '对话表格详情');
     document.getElementById('mdPreviewMeta').innerHTML = '共 <strong>' + t.rows.length + '</strong> 条数据 · 已展示全部 · 数据来自对话回复';
-    document.getElementById('mdPreviewCsvName').textContent = '📊 ' + (t.title || '对话表格详情') + '.csv';
+    document.getElementById('mdPreviewCsvName').textContent = '📊 ' + (t.title || '对话表格详情') + '.xlsx';
     window.__mdPreviewTid = tid;
     // 记住并替换顶部 Tab 名，关闭时还原
     const tabEl = document.getElementById('previewTabName');
@@ -5671,18 +5682,185 @@
       if (typeof setRightEmpty === 'function') setRightEmpty(true);
     } finally { window.__rightRestoring = false; }
   }
-  function exportMdTableCsv() {
-    const t = (window.__mdTables || {})[window.__mdPreviewTid];
-    if (!t) return;
-    const strip = h => String(h).replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
-    const rows = [t.headers].concat(t.rows).map(r => r.map(strip));
-    const csv = '\ufeff' + rows.map(r => r.map(c => '"' + c.replace(/"/g, '""') + '"').join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  /* ==================== 零依赖 XLSX 导出（ZIP + OOXML，1688 橙色主题样式） ==================== */
+  const XLSX_CRC_TABLE = (() => {
+    const t = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+      let c = n;
+      for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      t[n] = c >>> 0;
+    }
+    return t;
+  })();
+  function crc32(u8) {
+    let c = 0xFFFFFFFF;
+    for (let i = 0; i < u8.length; i++) c = XLSX_CRC_TABLE[(c ^ u8[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+  // 极简字节写出器：按需拼接 u16/u32/字节数组
+  function xlsxByteWriter() {
+    const parts = [];
+    let len = 0;
+    return {
+      u16(v) { parts.push(new Uint8Array([v & 0xFF, (v >>> 8) & 0xFF])); len += 2; },
+      u32(v) { parts.push(new Uint8Array([v & 0xFF, (v >>> 8) & 0xFF, (v >>> 16) & 0xFF, (v >>> 24) & 0xFF])); len += 4; },
+      bytes(a) { parts.push(a); len += a.length; },
+      done() { const out = new Uint8Array(len); let p = 0; parts.forEach(x => { out.set(x, p); p += x.length; }); return out; }
+    };
+  }
+  // 打包 ZIP：全部 stored（不压缩），实现最简且 Excel/WPS 兼容
+  function buildXlsxZip(entries) {
+    const enc = new TextEncoder();
+    const local = xlsxByteWriter(), central = xlsxByteWriter();
+    const now = new Date();
+    const dTime = ((now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1)) & 0xFFFF;
+    const dDate = ((((now.getFullYear() - 1980) & 0x7F) << 9) | ((now.getMonth() + 1) << 5) | now.getDate()) & 0xFFFF;
+    let offset = 0;
+    entries.forEach(e => {
+      const data = e.data instanceof Uint8Array ? e.data : enc.encode(e.data);
+      const name = enc.encode(e.name);
+      const crc = crc32(data);
+      local.u32(0x04034B50); local.u16(20); local.u16(0x0800); local.u16(0);
+      local.u16(dTime); local.u16(dDate); local.u32(crc); local.u32(data.length); local.u32(data.length);
+      local.u16(name.length); local.u16(0); local.bytes(name); local.bytes(data);
+      central.u32(0x02014B50); central.u16(20); central.u16(20); central.u16(0x0800); central.u16(0);
+      central.u16(dTime); central.u16(dDate); central.u32(crc); central.u32(data.length); central.u32(data.length);
+      central.u16(name.length); central.u16(0); central.u16(0); central.u16(0); central.u16(0);
+      central.u32(0); central.u32(offset); central.bytes(name);
+      offset += 30 + name.length + data.length;
+    });
+    const cd = central.done();
+    const end = xlsxByteWriter();
+    end.u32(0x06054B50); end.u16(0); end.u16(0);
+    end.u16(entries.length); end.u16(entries.length);
+    end.u32(cd.length); end.u32(offset); end.u16(0);
+    const tail = end.done(), head = local.done();
+    const out = new Uint8Array(head.length + cd.length + tail.length);
+    out.set(head, 0); out.set(cd, head.length); out.set(tail, head.length + cd.length);
+    return out;
+  }
+  function xlsxXmlEscape(s) {
+    return String(s == null ? '' : s)
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+  }
+  function xlsxColLetter(n) { // 0-based → A/B/.../AA...
+    let s = '';
+    for (let x = n + 1; x > 0; x = Math.floor((x - 1) / 26)) s = String.fromCharCode(65 + (x - 1) % 26) + s;
+    return s;
+  }
+  // 列宽按内容估算（中文按 2 个字符宽），8–45 之间
+  function xlsxColWidth(texts) {
+    let max = 0;
+    texts.forEach(t => String(t || '').split('\n').forEach(line => {
+      let w = 0;
+      for (const ch of line) w += ch.charCodeAt(0) > 255 ? 2 : 1;
+      if (w > max) max = w;
+    }));
+    return Math.min(Math.max(max + 2, 8), 45);
+  }
+  // 单元格 → 内联字符串（inlineStr，免 sharedStrings 部件）
+  function xlsxCellXml(r, c, v, style) {
+    const text = xlsxXmlEscape(v).replace(/\n/g, '&#10;');
+    return '<c r="' + xlsxColLetter(c) + r + '" s="' + style + '" t="inlineStr"><is><t xml:space="preserve">' + text + '</t></is></c>';
+  }
+  // 工作表：冻结首行 + 表头筛选 + 自适应列宽
+  function buildSheetXml(headers, rows) {
+    const widths = [];
+    for (let c = 0; c < headers.length; c++) widths.push(xlsxColWidth([headers[c]].concat(rows.map(r => r[c]))));
+    const cols = '<cols>' + widths.map((w, i) => '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + w + '" customWidth="1"/>').join('') + '</cols>';
+    const headRow = '<row r="1" ht="26" customHeight="1">' + headers.map((h, c) => xlsxCellXml(1, c, h, 1)).join('') + '</row>';
+    const bodyRows = rows.map((r, ri) => '<row r="' + (ri + 2) + '">' + headers.map((h, c) => xlsxCellXml(ri + 2, c, r[c], ri % 2 ? 3 : 2)).join('') + '</row>').join('');
+    const lastCell = xlsxColLetter(headers.length - 1) + (rows.length + 1);
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      + '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+      + '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>'
+      + '<sheetFormatPr defaultRowHeight="20"/>'
+      + cols
+      + '<sheetData>' + headRow + bodyRows + '</sheetData>'
+      + '<autoFilter ref="A1:' + lastCell + '"/>'
+      + '</worksheet>';
+  }
+  // 样式表：0默认 / 1橙底白字粗体表头(居中) / 2白底数据行 / 3淡橙斑马纹行（细橙边框 + 自动换行）
+  function buildStylesXml() {
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+      + '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+      + '<fonts count="3">'
+      + '<font><sz val="11"/><color theme="1"/><name val="微软雅黑"/><charset val="134"/></font>'
+      + '<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="微软雅黑"/><charset val="134"/></font>'
+      + '<font><sz val="10"/><color rgb="FF3C4652"/><name val="微软雅黑"/><charset val="134"/></font>'
+      + '</fonts>'
+      + '<fills count="5">'
+      + '<fill><patternFill patternType="none"/></fill>'
+      + '<fill><patternFill patternType="gray125"/></fill>'
+      + '<fill><patternFill patternType="solid"><fgColor rgb="FFFF6A00"/><bgColor indexed="64"/></patternFill></fill>'
+      + '<fill><patternFill patternType="solid"><fgColor rgb="FFFFF4EA"/><bgColor indexed="64"/></patternFill></fill>'
+      + '<fill><patternFill patternType="solid"><fgColor rgb="FFFFFFFF"/><bgColor indexed="64"/></patternFill></fill>'
+      + '</fills>'
+      + '<borders count="2">'
+      + '<border><left/><right/><top/><bottom/><diagonal/></border>'
+      + '<border><left style="thin"><color rgb="FFFFE3CD"/></left><right style="thin"><color rgb="FFFFE3CD"/></right><top style="thin"><color rgb="FFFFE3CD"/></top><bottom style="thin"><color rgb="FFFFE3CD"/></bottom><diagonal/></border>'
+      + '</borders>'
+      + '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+      + '<cellXfs count="4">'
+      + '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
+      + '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>'
+      + '<xf numFmtId="0" fontId="2" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>'
+      + '<xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>'
+      + '</cellXfs>'
+      + '<cellStyles count="1"><cellStyle name="常规" xfId="0" builtinId="0"/></cellStyles>'
+      + '</styleSheet>';
+  }
+  // 组装并下载 .xlsx：headers/rows 均为已清洗的纯文本二维数组
+  function exportTableToXlsx(headers, rows, filename, sheetTitle) {
+    let name = String(sheetTitle || '数据').replace(/[\\\/\?\*\[\]:]/g, ' ').trim() || '数据';
+    const files = [
+      { name: '[Content_Types].xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+        + '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+        + '<Default Extension="xml" ContentType="application/xml"/>'
+        + '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+        + '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+        + '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
+        + '</Types>' },
+      { name: '_rels/.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        + '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
+        + '</Relationships>' },
+      { name: 'xl/workbook.xml', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        + '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+        + '<sheets><sheet name="' + xlsxXmlEscape(name.slice(0, 28)) + '" sheetId="1" r:id="rId1"/></sheets></workbook>' },
+      { name: 'xl/_rels/workbook.xml.rels', data: '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+        + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+        + '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
+        + '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'
+        + '</Relationships>' },
+      { name: 'xl/styles.xml', data: buildStylesXml() },
+      { name: 'xl/worksheets/sheet1.xml', data: buildSheetXml(headers, rows) }
+    ];
+    const blob = new Blob([buildXlsxZip(files)], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = (t.title || '对话表格详情') + '.csv';
+    a.download = filename;
     document.body.appendChild(a); a.click(); a.remove();
-    URL.revokeObjectURL(a.href);
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+  }
+  // 富文本单元格 → 纯文本：保留文字；含图片时把图片 URL 换行附在文字后（可点击查看）
+  function xlsxCellText(html) {
+    const s = String(html == null ? '' : html);
+    const srcMatch = s.match(/<img[^>]*\ssrc="([^"]*)"/i);
+    const text = s.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '')
+      .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+      .replace(/\s+/g, ' ').trim();
+    if (srcMatch && srcMatch[1]) return text ? text + '\n' + srcMatch[1] : srcMatch[1];
+    return text;
+  }
+  // 对话表格详情 → 导出 xlsx
+  function exportMdTableXlsx() {
+    const t = (window.__mdTables || {})[window.__mdPreviewTid];
+    if (!t) return;
+    exportTableToXlsx(t.headers.map(xlsxCellText), t.rows.map(r => r.map(xlsxCellText)), (t.title || '对话表格详情') + '.xlsx', t.title || '对话表格详情');
   }
   /* —— 表格型回复：未生成报告时中栏只渲染表格（部分数据 + 查看更多→右栏完整预览），不显示分析文字 —— */
   // 去除 <think> 块（含未闭合的尾部 think），返回剩余正文
@@ -5746,7 +5924,7 @@
     const closeBtn = document.getElementById('mdPreviewClose');
     if (closeBtn) closeBtn.addEventListener('click', closeMdTablePreview);
     const expBtn = document.getElementById('mdPreviewExport');
-    if (expBtn) expBtn.addEventListener('click', exportMdTableCsv);
+    if (expBtn) expBtn.addEventListener('click', exportMdTableXlsx);
   })();
 
   /* —— HTML 选品报告：AI 回复完成后自动生成，右栏"选品报告"Tab 查看，可下载独立 HTML —— */
