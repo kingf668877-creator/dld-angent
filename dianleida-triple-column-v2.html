@@ -2505,15 +2505,13 @@
 
   <!-- ========== 右：预览面板 ========== -->
   <div class="col-right-resizer" id="colRightResizer"></div>
-  <aside class="col-right" id="rightPanel">
+  <aside class="col-right panel-empty" id="rightPanel">
     <!-- 折叠 / 展开按钮 -->
     <button class="right-collapse-btn" id="rightCollapseBtn" title="折叠结果预览" aria-label="折叠结果预览">
       <span class="arrow">›</span>
     </button>
 
     <div class="right-tabs">
-      <div class="right-tab active"><span class="rt-name" id="previewTabName">📊 美国亚马逊连衣裙 (20款)</span><span class="x">×</span></div>
-      <div class="right-tab"><span class="rt-name">📄 选品报告</span><span class="x">×</span></div>
       <div class="right-tab">＋</div>
     </div>
 
@@ -2527,14 +2525,14 @@
     <div class="right-body">
       <h2 class="preview-h1" id="previewTitle">1688 商品选品结果</h2>
       <div class="preview-meta" id="previewMeta">
-        执行时间 · 2026-09-11 17:14 · 共 <strong>20</strong> 条 · 当前展示前 3 条
+        暂无商品预览数据
       </div>
 
       <div class="summary-row">
-        <div class="summary-pill"><span class="num">20</span><span class="lbl">命中商品</span></div>
-        <div class="summary-pill"><span class="num">¥0.80</span><span class="lbl">最低批发价</span></div>
-        <div class="summary-pill"><span class="num">¥64.00</span><span class="lbl">最高批发价</span></div>
-        <div class="summary-pill"><span class="num">4,580</span><span class="lbl">Top1 近30天订单</span></div>
+        <div class="summary-pill"><span class="num">—</span><span class="lbl">命中商品</span></div>
+        <div class="summary-pill"><span class="num">—</span><span class="lbl">最低批发价</span></div>
+        <div class="summary-pill"><span class="num">—</span><span class="lbl">最高批发价</span></div>
+        <div class="summary-pill"><span class="num">—</span><span class="lbl">Top1 近30天订单</span></div>
       </div>
 
       <div class="excel-wrap">
@@ -2557,28 +2555,12 @@
               <th class="sortable" data-sort-key="count">近30天件数 <span class="sort-indicator">⇕</span></th>
             </tr>
           </thead>
-          <tbody>
-            <tr class="product-main" data-group="1">
-              <td class="idx-cell">1</td>
-              <td><div class="product-info"><div class="img-cell">👟</div><div class="product-title">碎皮板·复古尖头内增高高跟鞋<br><span class="mini-tag">1688严选</span><span class="mini-tag green">代发</span></div></div></td>
-              <td class="time-cell">2026-06-20 13:24</td><td class="price"><span class="rmb">¥</span>64.00</td><td class="ladder">≥1双 <b><span class="rmb">¥</span>64.00</b></td><td>2,295</td><td>480,201</td>
-            </tr>
-            <tr class="product-main" data-group="2">
-              <td class="idx-cell">2</td>
-              <td><div class="product-info"><div class="img-cell">👞</div><div class="product-title">新款韩版尖头女鞋粗跟2026春季<br><span class="mini-tag blue">厂家直供</span><span class="mini-tag green">代发</span></div></div></td>
-              <td class="time-cell">2026-04-04 02:25</td><td class="price"><span class="rmb">¥</span>55.00</td><td class="ladder">1~99双 <b><span class="rmb">¥</span>58.00</b><br>≥100双 <b><span class="rmb">¥</span>55.00</b></td><td>1,897</td><td>257,123</td>
-            </tr>
-            <tr class="product-main" data-group="3">
-              <td class="idx-cell">3</td>
-              <td><div class="product-info"><div class="img-cell">👜</div><div class="product-title">植绒金色链条小方包2026新款<br><span class="mini-tag">1688严选</span><span class="mini-tag green">代发</span></div></div></td>
-              <td class="time-cell">2026-01-07 10:44</td><td class="price"><span class="rmb">¥</span>0.80</td><td class="ladder">≥1个 <b><span class="rmb">¥</span>0.80</b></td><td>76,101</td><td>3,074,537</td>
-            </tr>
-          </tbody>
+          <tbody></tbody>
         </table>
       </div>
 
       <div class="preview-h">选品摘要</div>
-      <p class="preview-p" id="previewSummary">覆盖 <strong>20</strong> 款 1688 商品，批发价区间 <strong>¥0.8 ~ ¥64</strong>，近 30 天订单 Top1 <strong>4,580 单</strong>，当前以商品库密集模式展示。</p>
+      <p class="preview-p" id="previewSummary">发起选品查询后，这里将展示真实商品摘要。</p>
 
       <div class="preview-h">下一步建议</div>
       <p class="preview-p">① 立即下载完整 Excel<br>② 加入监控跟踪 7 日增长率<br>③ 对比 1688 / OZON 同款货源</p>
@@ -3316,10 +3298,12 @@
     });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeConvMenu(); });
 
-    function selectConvItem(el) {
+    function selectConvItem(el, options = {}) {
       if (!el) return;
-      // 选中历史会话后右栏恢复内容视图
-      document.dispatchEvent(new CustomEvent('dld:right-empty', { detail: { empty: false } }));
+      // 用户主动打开历史会话时才恢复右侧预览，页面初始化不带出旧预览
+      if (options.restorePreview !== false) {
+        document.dispatchEvent(new CustomEvent('dld:right-empty', { detail: { empty: false } }));
+      }
       convList.querySelectorAll('.conv-item').forEach(x => x.classList.remove('active'));
       el.classList.add('active');
       const id = el.dataset.conv;
@@ -3541,7 +3525,7 @@
     }
     rerenderConvList();
     const firstItem = convList.querySelector('.conv-item');
-    if (firstItem) selectConvItem(firstItem);
+    if (firstItem) selectConvItem(firstItem, { restorePreview: false });
 
     // 监听 DLD 真实会话加载完成事件 → 自动刷新左栏
     document.addEventListener('dld:conversations-updated', (e) => {
@@ -3550,7 +3534,7 @@
       rerenderConvList();
       if (e.detail && e.detail.skipSelect) return;
       const fi = convList.querySelector('.conv-item');
-      if (fi) selectConvItem(fi);
+      if (fi) selectConvItem(fi, { restorePreview: false });
     });
   }
 
@@ -3973,7 +3957,9 @@
   }
   document.querySelectorAll('.conv-item').forEach(it => it.addEventListener('click', () => showSession(it)));
   // 右侧 tab
-  document.querySelectorAll('.right-tab').forEach(t => {
+  function bindRightTab(t) {
+    if (!t || t.dataset.bound === '1') return;
+    t.dataset.bound = '1';
     t.addEventListener('click', e => {
       if (e.target.classList.contains('x')) {
         e.stopPropagation();
@@ -3994,7 +3980,37 @@
         closeReportView();
       }
     });
-  });
+  }
+  document.querySelectorAll('.right-tab').forEach(bindRightTab);
+
+  function ensurePreviewTab() {
+    const tabsBox = document.querySelector('.right-tabs');
+    if (!tabsBox) return null;
+    let tab = tabsBox.querySelector('.right-tab[data-preview-tab]');
+    if (!tab) {
+      tab = document.createElement('div');
+      tab.className = 'right-tab';
+      tab.dataset.previewTab = '1';
+      tab.innerHTML = '<span class="rt-name" id="previewTabName"></span><span class="x">×</span>';
+      tabsBox.insertBefore(tab, tabsBox.lastElementChild);
+      bindRightTab(tab);
+    }
+    return tab;
+  }
+  function ensureReportTab() {
+    const tabsBox = document.querySelector('.right-tabs');
+    if (!tabsBox) return null;
+    let tab = tabsBox.querySelector('.right-tab[data-report-tab]');
+    if (!tab) {
+      tab = document.createElement('div');
+      tab.className = 'right-tab';
+      tab.dataset.reportTab = '1';
+      tab.innerHTML = '<span class="rt-name">📄 选品报告</span><span class="x">×</span>';
+      tabsBox.insertBefore(tab, tabsBox.lastElementChild);
+      bindRightTab(tab);
+    }
+    return tab;
+  }
 
   // 任务卡折叠
   document.querySelectorAll('.task-head').forEach(h => {
@@ -5874,6 +5890,7 @@
       raw: plain,
       time: doc.time
     };
+    ensureReportTab();
     // "选品报告"Tab 加徽标提示有新报告
     document.querySelectorAll('.right-tab .rt-name').forEach(el => {
       if (el.textContent.indexOf('选品报告') !== -1 && el.dataset.badge !== '1') {
@@ -6083,7 +6100,8 @@
     }
     const sumEl = document.getElementById('previewSummary');
     if (sumEl) sumEl.innerHTML = '覆盖 <strong>' + list.length + '</strong> 款 1688 商品（后端共 ' + fmtN(total) + ' 条），批发价区间 <strong>¥' + minP.toFixed(1) + ' ~ ¥' + maxP.toFixed(1) + '</strong>，近 30 天订单 Top1 <strong>' + fmtN(topOrders) + ' 单</strong>，当前以商品库密集模式展示。';
-    const tabEl = document.getElementById('previewTabName');
+    const previewTab = ensurePreviewTab();
+    const tabEl = previewTab ? previewTab.querySelector('.rt-name') : null;
     if (tabEl) tabEl.textContent = '📊 1688 商品选品 (' + list.length + '款)';
     if (!list.length) {
       table.querySelector('tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#909399">暂无商品数据</td></tr>';
