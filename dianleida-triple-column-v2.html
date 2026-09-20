@@ -4654,6 +4654,8 @@
     window.__mdPreviewTid = null;
   }
   function setRightEmpty(empty) {
+    // 首次进入期间忽略历史会话发出的“恢复预览”事件，保持右侧真正为空且收起
+    if (!empty && window.__initialPreviewGuard) return;
     const wasEmpty = rightPanel.classList.contains('panel-empty');
     rightPanel.classList.toggle('panel-empty', !!empty);
     if (empty) {
