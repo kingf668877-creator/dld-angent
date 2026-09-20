@@ -3019,15 +3019,15 @@
       return '';
     };
     const title = pick('welcomeTitle', 'openingTitle', 'greetingTitle');
-    const desc = pick('welcomeMessage', 'greeting', 'opening', 'welcome', 'openingMessage', 'description');
-    const rawPrompts = source.quickQuestions || source.promptSuggestions || source.exampleQuestions || config.quickQuestions || config.promptSuggestions || [];
+    const desc = pick('openingStatement', 'welcomeMessage', 'greeting', 'opening', 'welcome', 'openingMessage', 'description');
+    const rawPrompts = source.suggestedQuestions || source.quickQuestions || source.promptSuggestions || source.exampleQuestions || config.suggestedQuestions || config.quickQuestions || config.promptSuggestions || [];
     const prompts = Array.isArray(rawPrompts) ? rawPrompts.map(item => typeof item === 'string' ? item : item && (item.label || item.text || item.question)).filter(Boolean).slice(0, 4) : [];
     return { title: title || AGENT_OPENING.title, desc: desc || (title ? '' : AGENT_OPENING.desc), prompts };
   }
   function renderOpening(viewEl) {
     if (!viewEl) return;
     const prompts = AGENT_OPENING.prompts.map(q => `<button data-q="${escapeOpeningText(q)}">${escapeOpeningText(q)}</button>`).join('');
-    viewEl.innerHTML = `<div class="empty-state"><div class="empty-inner"><div class="empty-mark">AI</div><div class="empty-title">${escapeOpeningText(AGENT_OPENING.title)}</div>${AGENT_OPENING.desc ? `<div class="empty-desc">${escapeOpeningText(AGENT_OPENING.desc)}</div>` : ''}${prompts ? `<div class="empty-prompts">${prompts}</div>` : ''}</div></div>`;
+    viewEl.innerHTML = `<div class="empty-state"><div class="empty-inner"><div class="empty-mark">AI</div><div class="empty-title">${escapeOpeningText(AGENT_OPENING.title)}</div>${AGENT_OPENING.desc ? `<div class="empty-desc">${escapeOpeningText(AGENT_OPENING.desc).replace(/\n/g, '<br>')}</div>` : ''}${prompts ? `<div class="empty-prompts">${prompts}</div>` : ''}</div></div>`;
     viewEl.querySelectorAll('.empty-prompts button').forEach(btn => btn.addEventListener('click', () => { input.value = btn.dataset.q; send(); }));
   }
   function refreshOpeningViews() {
