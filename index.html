@@ -2676,6 +2676,18 @@
             <table class="preview-table md-full-table" id="mdPreviewTable"></table>
           </div>
         </div>
+        <!-- 分页条：对话表格详情专用（renderMdPage 控制显隐；导出不受分页影响，始终全量） -->
+        <div class="table-pagination" id="mdPgBar" style="display:none">
+          <span class="pg-total" id="mdPgTotal"></span>
+          <span class="pg-nav" id="mdPgNav"></span>
+          <span class="spacer"></span>
+          <span class="pg-size">每页
+            <select id="mdPgSize" title="每页条数">
+              <option value="50" selected>50 条</option>
+              <option value="100">100 条</option>
+            </select>
+          </span>
+        </div>
       </div>
 
       <!-- HTML 选品报告视图（AI 回复完成后自动生成，点击"选品报告"Tab 查看；iframe 分屏预览） -->
@@ -5920,12 +5932,14 @@
     const wrap = document.getElementById('mdTablePreview');
     const tableEl = document.getElementById('mdPreviewTable');
     if (!t || !wrap || !tableEl) return;
-    tableEl.innerHTML = '<thead><tr>' + t.headers.map(c => '<th' + mdColCls(c) + '>' + c + '</th>').join('') + '</tr></thead>'
-      + '<tbody>' + t.rows.map(r => '<tr>' + r.map((c, ci) => mdCellHtml(c, t.headers[ci])).join('') + '</tr>').join('') + '</tbody>';
+    // 初始化分页器：默认每页 50 条回到第 1 页；沿用用户已选的每页条数
+    const sizeSel = document.getElementById('mdPgSize');
+    window.__mdPager = { tid: tid, page: 1, size: Number(sizeSel && sizeSel.value) || 50 };
+    tableEl.innerHTML = '<thead><tr>' + t.headers.map(c => '<th' + mdColCls(c) + '>' + c + '</th>').join('') + '</tr></thead><tbody></tbody>';
     document.getElementById('mdPreviewTitle').textContent = '📋 ' + (t.title || '对话表格详情');
-    document.getElementById('mdPreviewMeta').innerHTML = '共 <strong>' + t.rows.length + '</strong> 条数据 · 已展示全部 · 数据来自对话回复';
     document.getElementById('mdPreviewCsvName').textContent = '📊 ' + (t.title || '对话表格详情') + '.xlsx';
     window.__mdPreviewTid = tid;
+    renderMdPage();
     // 记住并替换顶部 Tab 名，关闭时还原
     const tabEl = document.getElementById('previewTabName');
     if (tabEl) {
@@ -5950,6 +5964,61 @@
     const rightPanel = document.getElementById('rightPanel');
     if (rightPanel && rightPanel.classList.contains('collapsed') && typeof setCollapsed === 'function') setCollapsed(false);
   }
+  // 对话表格详情分页渲染：按 __mdPager 切片渲染 tbody，同步分页条与 meta 文案（导出走全量 __mdTables，不受分页影响）
+  function renderMdPage() {
+    const pager = window.__mdPager;
+    const t = pager && (window.__mdTables || {})[pager.tid];
+    const tableEl = document.getElementById('mdPreviewTable');
+    const bar = document.getElementById('mdPgBar');
+    if (!pager || !t || !tableEl) return;
+    const tbody = tableEl.querySelector('tbody');
+    const total = t.rows.length;
+    const totalPages = Math.max(1, Math.ceil(total / pager.size));
+    pager.page = Math.min(Math.max(1, pager.page), totalPages);
+    const start = (pager.page - 1) * pager.size;
+    const pageRows = t.rows.slice(start, start + pager.size);
+    const end = start + pageRows.length;
+    if (tbody) tbody.innerHTML = pageRows.map(r => '<tr>' + r.map((c, ci) => mdCellHtml(c, t.headers[ci])).join('') + '</tr>').join('');
+    const metaEl = document.getElementById('mdPreviewMeta');
+    if (metaEl) metaEl.innerHTML = total > pager.size
+      ? '共 <strong>' + total + '</strong> 条数据 · 本页 ' + (start + 1) + '-' + end + ' 条 · 数据来自对话回复'
+      : '共 <strong>' + total + '</strong> 条数据 · 已展示全部 · 数据来自对话回复';
+    if (bar) {
+      // 数据一页放得下就不显示分页条，避免噪音
+      bar.style.display = total > pager.size ? '' : 'none';
+      const totalEl = bar.querySelector('#mdPgTotal');
+      if (totalEl) totalEl.textContent = '共 ' + total + ' 条 · 第 ' + pager.page + '/' + totalPages + ' 页';
+      const navEl = bar.querySelector('#mdPgNav');
+      if (navEl) navEl.innerHTML =
+        '<button type="button" class="pg-btn pg-step" data-step="-1"' + (pager.page <= 1 ? ' disabled' : '') + '>‹ 上一页</button>' +
+        pagerPageButtons(pager.page, totalPages) +
+        '<button type="button" class="pg-btn pg-step" data-step="1"' + (pager.page >= totalPages ? ' disabled' : '') + '>下一页 ›</button>';
+    }
+  }
+  // 对话表格详情分页事件：翻页/页码（事件委托）+ 每页条数切换（50/100，切换后回第 1 页）
+  (function bindMdPager() {
+    const bar = document.getElementById('mdPgBar');
+    if (!bar) return;
+    bar.addEventListener('click', e => {
+      const pager = window.__mdPager;
+      if (!pager) return;
+      const stepBtn = e.target.closest('.pg-step');
+      if (stepBtn) {
+        if (!stepBtn.disabled) { pager.page += Number(stepBtn.dataset.step) || 0; renderMdPage(); }
+        return;
+      }
+      const numBtn = e.target.closest('.pg-num');
+      if (numBtn) { pager.page = Number(numBtn.dataset.page) || 1; renderMdPage(); }
+    });
+    const sizeSel = bar.querySelector('#mdPgSize');
+    if (sizeSel) sizeSel.addEventListener('change', () => {
+      const pager = window.__mdPager;
+      if (!pager) return;
+      pager.size = Number(sizeSel.value) || 50;
+      pager.page = 1;
+      renderMdPage();
+    });
+  })();
   function closeMdTablePreview() {
     const wrap = document.getElementById('mdTablePreview');
     const wasVisible = !!(wrap && wrap.style.display !== 'none');
