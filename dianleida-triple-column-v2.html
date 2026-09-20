@@ -2415,9 +2415,6 @@
       <div class="preview-h">选品摘要</div>
       <p class="preview-p" id="previewSummary">发起选品查询后，这里将展示真实商品摘要。</p>
 
-      <div class="preview-h">下一步建议</div>
-      <p class="preview-p">① 立即下载完整 Excel<br>② 加入监控跟踪 7 日增长率<br>③ 对比 1688 / OZON 同款货源</p>
-
       <!-- 对话表格完整数据视图（点击中栏表格"查看更多"时展示） -->
       <div class="md-preview-wrap" id="mdTablePreview" style="display:none">
         <div class="md-preview-toolbar">
@@ -3199,10 +3196,11 @@
 
     function selectConvItem(el, options = {}) {
       if (!el) return;
-      // 用户主动打开历史会话时才恢复右侧预览，页面初始化不带出旧预览
+      // 用户主动打开历史会话后，解除"首次进入保护"，后续真实数据（报告/表格/商品）可正常展开右栏。
+      // 注意：这里不再强行把右栏切到"有内容"状态——历史会话没有可恢复的预览数据，
+      // 强行解除空态只会露出静态骨架（假数据感）；右栏应保持空态收起，直到真实数据到达。
       if (options.restorePreview !== false) {
         window.__initialPreviewGuard = false;
-        document.dispatchEvent(new CustomEvent('dld:right-empty', { detail: { empty: false } }));
       }
       convList.querySelectorAll('.conv-item').forEach(x => x.classList.remove('active'));
       el.classList.add('active');
@@ -4410,7 +4408,10 @@
   function openPreviewPanel() {
     if (window.__initialPreviewGuard) return;
     previewOpenedThisSession = true;
-    setCollapsed(false);
+    // 空态（panel-empty）下 right-body 整体隐藏，直接展开只会露出静态骨架；
+    // 有真实内容要展示时先解除空态，setRightEmpty 内部会顺带自动展开面板
+    if (rightPanel.classList.contains('panel-empty')) setRightEmpty(false);
+    else setCollapsed(false);
   }
   // 无内容空态：面板切换为空态视图，且自动收起为窄条；恢复内容时若收起由空态引起则自动展开
   function resetRightPreview() {
@@ -4690,7 +4691,8 @@
     }
     RUNNING_TASKS.set(convKey, { runId: null, startedAt: Date.now() });
     LAST_QUERY = text;
-    document.dispatchEvent(new CustomEvent('dld:right-empty', { detail: { empty: false } }));
+    // 任务刚开始不展开右栏：此时还没有任何真实结果数据，提前展开只会露出静态骨架（空统计卡/写死的建议文案）。
+    // 右栏会在真实数据到达时自动解除空态并展开（renderOffers / openPreviewPanel）
     refreshRunUI();
     refreshConvItemRunning(convKey);
     view.loaded = true;  // 发送后该视图进入"会话流"模式，切换时直接恢复缓冲而非重新拉历史
@@ -5962,6 +5964,8 @@
       table.querySelector('tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#909399">暂无商品数据</td></tr>';
       return;
     }
+    // 有真实商品数据才解除右栏空态（panel-empty 下 right-body 整体隐藏），setRightEmpty 会顺带自动展开面板
+    if (typeof setRightEmpty === 'function') setRightEmpty(false);
     table.querySelector('tbody').innerHTML = list.map((o, i) => {
       const title = escapeHtml(o.title || o.offerTitle || o.name || ('商品 #' + (o.offerId || o.id || i + 1)));
       const offerId = o.offerId || o.id || '';
