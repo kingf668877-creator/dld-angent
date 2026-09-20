@@ -3098,6 +3098,8 @@
         const list = (SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] || []);
         if (list.length === 0) return;
         rerenderConvList();
+        // 首次进入默认打开「新建对话」开场白（左栏同步显示草稿高亮），不自动恢复最近历史会话
+        if (e.detail && e.detail.openDraft) { showEmptyConversation(); return; }
         if (e.detail && e.detail.skipSelect) return;
         const fi = convList.querySelector('.conv-item');
         if (fi) selectConvItem(fi, { restorePreview: false });
@@ -3179,7 +3181,8 @@
     }
 
     function getActiveConvId() {
-      return document.querySelector('.conv-item.active')?.dataset.conv;
+      // 优先读全局活跃标记（草稿态/首次进入时 DOM 尚无 active 条目），DOM 作兜底
+      return ACTIVE_CONV_KEY || document.querySelector('.conv-item.active')?.dataset.conv;
     }
 
     function rerenderConvList() {
@@ -5487,7 +5490,8 @@
           timestamp: c.lastMessageAt ? new Date(c.lastMessageAt).getTime() : Date.now()
         }));
         SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] = mapped;
-        document.dispatchEvent(new CustomEvent('dld:conversations-updated', { detail: { list: mapped } }));
+        // openDraft：列表灌入后左栏顶部显示「新建对话」草稿并高亮，中栏保持开场白空态
+        document.dispatchEvent(new CustomEvent('dld:conversations-updated', { detail: { list: mapped, skipSelect: true, openDraft: true } }));
       }
     } catch (e) {
       console.warn('[DLD] conversations 失败：', e.message);
