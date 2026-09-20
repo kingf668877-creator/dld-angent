@@ -4630,11 +4630,33 @@
     setCollapsed(false);
   }
   // 无内容空态：面板切换为空态视图，且自动收起为窄条；恢复内容时若收起由空态引起则自动展开
+  function resetRightPreview() {
+    if (typeof closeMdTablePreview === 'function') closeMdTablePreview();
+    if (typeof closeReportView === 'function') closeReportView();
+    document.querySelectorAll('.right-tab[data-preview-tab], .right-tab[data-report-tab], .right-tab[data-detail-tab]').forEach(tab => tab.remove());
+    document.querySelectorAll('.right-tab').forEach(tab => tab.classList.remove('active'));
+    const table = document.getElementById('previewTable');
+    if (table) {
+      const tbody = table.querySelector('tbody');
+      if (tbody) tbody.innerHTML = '';
+    }
+    const titleEl = document.getElementById('previewTitle');
+    const metaEl = document.getElementById('previewMeta');
+    const summaryEl = document.getElementById('previewSummary');
+    if (titleEl) titleEl.textContent = '1688 商品选品结果';
+    if (metaEl) metaEl.textContent = '暂无商品预览数据';
+    if (summaryEl) summaryEl.textContent = '发起选品查询后，这里将展示真实商品摘要。';
+    document.querySelectorAll('.summary-row .summary-pill .num').forEach(num => { num.textContent = '—'; });
+    window.__lastReport = null;
+    window.__mdPreviewTid = null;
+  }
   function setRightEmpty(empty) {
     const wasEmpty = rightPanel.classList.contains('panel-empty');
     rightPanel.classList.toggle('panel-empty', !!empty);
-    if (empty) setCollapsed(true);
-    else if (wasEmpty) setCollapsed(false);
+    if (empty) {
+      resetRightPreview();
+      setCollapsed(true);
+    } else if (wasEmpty) setCollapsed(false);
   }
   document.addEventListener('dld:right-empty', e => setRightEmpty(!!(e.detail && e.detail.empty)));
   // 新页面会话默认收起；不继承上一次页面会话的展开状态
