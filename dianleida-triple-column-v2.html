@@ -4659,8 +4659,8 @@
     } else if (wasEmpty) setCollapsed(false);
   }
   document.addEventListener('dld:right-empty', e => setRightEmpty(!!(e.detail && e.detail.empty)));
-  // 新页面会话默认收起；不继承上一次页面会话的展开状态
-  setCollapsed(true);
+  // 新页面会话默认进入空预览：清掉历史残留并保持右侧收起
+  setRightEmpty(true);
   collapseBtn.addEventListener('click', () => {
     setCollapsed(!rightPanel.classList.contains('collapsed'));
   });
