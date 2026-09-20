@@ -3341,11 +3341,18 @@
       CONV_VIEWS.forEach((v, k) => { if (k.indexOf('draft-') === 0 && !RUNNING_TASKS.has(k) && !v.el.querySelector('.msg')) CONV_VIEWS.delete(k); });
       const key = 'draft-' + (++DRAFT_SEQ);
       ACTIVE_CONV_KEY = key;
+      // 左侧同步显示当前草稿，首次发送后会由真实会话标题替换
+      const sessions = SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] || (SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] = []);
+      for (let i = sessions.length - 1; i >= 0; i--) {
+        if (sessions[i].draft) sessions.splice(i, 1);
+      }
+      sessions.unshift({ id: key, title: '新建对话', tag: '草稿', time: '刚刚', timestamp: Date.now(), draft: true });
       const view = { el: makeConvView(key), loaded: false, scrollPos: null };
       CONV_VIEWS.set(key, view);
       view.el.innerHTML = `
         <div class="empty-state"><div class="empty-inner"><div class="empty-mark">AI</div><div class="empty-title">开始一次新的选品分析</div><div class="empty-desc">输入需求后，AI 将为你搜索和分析商品。</div><div class="empty-prompts"><button data-q="帮我筛选 1688 近 30 天销量增长快的收纳盒">1688 增长款</button><button data-q="查找 OZON 热销麻将包并对比 1688 货源">OZON 同款对比</button><button data-q="帮我找适合 TikTok Shop 的宠物用品">TikTok 潜力品</button></div></div></div>`;
       switchToView(view.el);
+      rerenderConvList();
       const title = document.querySelector('.chat-head .title');
       if (title) title.textContent = '新建对话';
       const tag = document.querySelector('.chat-head .agent-tag');
@@ -4648,6 +4655,36 @@
     renderAll();
   }
 
+  async function syncOfficialConversationTitle(conversationId) {
+    if (!conversationId || typeof DLD === 'undefined' || !DLD.conversations) return;
+    try {
+      const res = await DLD.conversations(null, null, 20);
+      const remoteList = (res && res.result && res.result.list) || [];
+      const remote = remoteList.find(item => item.conversationId === conversationId);
+      if (!remote || !remote.title) return;
+      const key = CURRENT_ACCOUNT.id;
+      const localList = SESSIONS_BY_ACCOUNT[key] || [];
+      const existing = localList.find(item => item.id === conversationId);
+      const officialTitle = remote.title;
+      if (existing) {
+        existing.title = officialTitle;
+        existing.time = remote.lastMessageAt ? formatRelativeTime(remote.lastMessageAt) : existing.time;
+        existing.timestamp = remote.lastMessageAt ? new Date(remote.lastMessageAt).getTime() : existing.timestamp;
+        existing.draft = false;
+      } else {
+        localList.unshift({ id: conversationId, convId: conversationId, appCode: remote.appCode, title: officialTitle, tag: (remote.appCode || 'chat').slice(0, 8), time: remote.lastMessageAt ? formatRelativeTime(remote.lastMessageAt) : '刚刚', timestamp: remote.lastMessageAt ? new Date(remote.lastMessageAt).getTime() : Date.now() });
+      }
+      SESSIONS_BY_ACCOUNT[key] = localList.filter(item => !item.draft || item.id === conversationId);
+      rerenderConvList();
+      if (ACTIVE_CONV_KEY === conversationId) {
+        const titleEl = document.querySelector('.chat-head .title');
+        if (titleEl) titleEl.textContent = officialTitle;
+      }
+    } catch (e) {
+      console.warn('[DLD] 首次会话正式标题刷新失败，保留临时标题：', e.message);
+    }
+  }
+
   function send(regenerate = false) {
     window.__initialPreviewGuard = false;
     const text = input.value.trim();
@@ -4928,7 +4965,7 @@
               }
               if (typeof SESSIONS_BY_ACCOUNT !== 'undefined') {
                 const key = CURRENT_ACCOUNT.id;
-                SESSIONS_BY_ACCOUNT[key] = SESSIONS_BY_ACCOUNT[key] || [];
+                SESSIONS_BY_ACCOUNT[key] = (SESSIONS_BY_ACCOUNT[key] || []).filter(s => s.id !== convKey && !s.draft);
                 SESSIONS_BY_ACCOUNT[key].unshift(newSess);
               }
               document.dispatchEvent(new CustomEvent('dld:conversations-updated', { detail: { skipSelect: true } }));
@@ -5010,6 +5047,8 @@
             bindRegenerate(ai);
             scrollBottom();
             finishRun();
+            // 首次会话完成后读取服务端正式标题，覆盖临时问题摘要
+            if (!convId) syncOfficialConversationTitle(convIdFromHeader || convKey);
           },
           onError: (payload) => {
             showError(typeof payload === 'string' ? payload : (payload && payload.message) || '流式错误');
