@@ -5601,6 +5601,11 @@
       tabEl.textContent = '📋 表格详情 (' + t.rows.length + '条)';
     }
     wrap.style.display = '';
+    // 用户主动点击"查看更多"= 明确意图 + 会话内真实数据：解除首屏守卫并退出空态。
+    // 否则自动选中的历史会话（restorePreview:false 保留守卫 + panel-empty 隐藏 right-body）
+    // 会让下面的 DOM 操作全部发生在隐藏容器里，表现为"点击没反应"。
+    window.__initialPreviewGuard = false;
+    if (typeof setRightEmpty === 'function') setRightEmpty(false);
     if (typeof openPreviewPanel === 'function') openPreviewPanel();
     const rightBody = document.querySelector('.right-body');
     // 与"选品报告"视图互斥：先退出报告模式
