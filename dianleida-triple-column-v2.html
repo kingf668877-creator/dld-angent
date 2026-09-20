@@ -2933,6 +2933,20 @@
   function loadAccountSessions() {
     const convList = document.getElementById('convList');
     if (!convList) return;
+    // dld:conversations-updated 监听器必须无条件注册：下方空桶分支会提前 return，
+    // 若注册代码放在 return 之后，真实会话异步加载完成后将无人刷新左栏（「暂无历史对话」不消失的根因）。
+    // 用函数属性做一次性绑定标志；闭包内 CURRENT_ACCOUNT 为外层 let 变量，重渲染时实时读取最新账号。
+    if (!loadAccountSessions.__convUpdatedBound) {
+      loadAccountSessions.__convUpdatedBound = true;
+      document.addEventListener('dld:conversations-updated', (e) => {
+        const list = (SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] || []);
+        if (list.length === 0) return;
+        rerenderConvList();
+        if (e.detail && e.detail.skipSelect) return;
+        const fi = convList.querySelector('.conv-item');
+        if (fi) selectConvItem(fi, { restorePreview: false });
+      });
+    }
     // 会话操作工具：置顶 / 重命名 / 删除
     function renderConvItem(s, active = false) {
       const running = RUNNING_TASKS.has(s.id);
@@ -3346,16 +3360,6 @@
     rerenderConvList();
     const firstItem = convList.querySelector('.conv-item');
     if (firstItem) selectConvItem(firstItem, { restorePreview: false });
-
-    // 监听 DLD 真实会话加载完成事件 → 自动刷新左栏
-    document.addEventListener('dld:conversations-updated', (e) => {
-      const list = (SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] || []);
-      if (list.length === 0) return;
-      rerenderConvList();
-      if (e.detail && e.detail.skipSelect) return;
-      const fi = convList.querySelector('.conv-item');
-      if (fi) selectConvItem(fi, { restorePreview: false });
-    });
   }
 
   /* ============ 子账号互看 / 主账号控制 ============ */
