@@ -4085,7 +4085,7 @@
   function openProductDetails(event) {
     if (event) event.preventDefault();
     const rightPanel = document.getElementById('rightPanel');
-    if (rightPanel && rightPanel.classList.contains('collapsed')) setCollapsed(false);
+    if (typeof openPreviewPanel === 'function') openPreviewPanel();
 
     const detailTab = ensureDetailTab();
     if (detailTab) {
@@ -4601,12 +4601,17 @@
   const rightPanel = document.getElementById('rightPanel');
   const collapseBtn = document.getElementById('rightCollapseBtn');
   const COLLAPSE_KEY = 'dld_right_collapsed';
+  let previewOpenedThisSession = false;
 
   function setCollapsed(collapsed) {
     rightPanel.classList.toggle('collapsed', collapsed);
     collapseBtn.title = collapsed ? '展开结果预览' : '折叠结果预览';
     collapseBtn.setAttribute('aria-label', collapseBtn.title);
     try { localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0'); } catch(e) {}
+  }
+  function openPreviewPanel() {
+    previewOpenedThisSession = true;
+    setCollapsed(false);
   }
   // 无内容空态：面板切换为空态视图，且自动收起为窄条；恢复内容时若收起由空态引起则自动展开
   function setRightEmpty(empty) {
@@ -4616,10 +4621,8 @@
     else if (wasEmpty) setCollapsed(false);
   }
   document.addEventListener('dld:right-empty', e => setRightEmpty(!!(e.detail && e.detail.empty)));
-  // 恢复上次状态
-  try {
-    if (localStorage.getItem(COLLAPSE_KEY) === '1') setCollapsed(true);
-  } catch(e) {}
+  // 新页面会话默认收起；不继承上一次页面会话的展开状态
+  setCollapsed(true);
   collapseBtn.addEventListener('click', () => {
     setCollapsed(!rightPanel.classList.contains('collapsed'));
   });
@@ -5656,6 +5659,7 @@
       tabEl.textContent = '📋 表格详情 (' + t.rows.length + '条)';
     }
     wrap.style.display = '';
+    if (typeof openPreviewPanel === 'function') openPreviewPanel();
     const rightBody = document.querySelector('.right-body');
     // 与"选品报告"视图互斥：先退出报告模式
     if (typeof closeReportView === 'function') closeReportView();
@@ -5920,9 +5924,8 @@
     // 与"表格详情"视图互斥：先退出表格模式
     if (typeof closeMdTablePreview === 'function') closeMdTablePreview();
     wrap.style.display = '';
+    if (typeof openPreviewPanel === 'function') openPreviewPanel();
     if (rightBody) { rightBody.classList.remove('md-full-mode'); rightBody.classList.add('report-mode'); rightBody.scrollTop = 0; }
-    const rightPanel = document.getElementById('rightPanel');
-    if (rightPanel && rightPanel.classList.contains('collapsed') && typeof setCollapsed === 'function') setCollapsed(false);
   }
   function closeReportView() {
     const wrap = document.getElementById('reportView');
