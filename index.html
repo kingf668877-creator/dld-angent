@@ -2236,9 +2236,14 @@
   .md-code { font-size: 11px; background: #f0f0f0; padding: 1px 4px; border-radius: 2px; }
   /* 对话表格：卡片式宽表格（与右栏选品表同风格：横向滚动、单元格不折行、圆角卡片行） */
   .md-table-wrap { margin: 8px 0 4px; overflow-x: auto; border-radius: 10px; }
-  .md-table { min-width: 720px; border-collapse: separate; border-spacing: 0 6px; font-size: 12px; line-height: 1.5; color: #3c4652; }
-  .md-table th { background: #fff; padding: 2px 10px 6px; text-align: left; font-weight: 500; font-size: 11px; color: #8a939d; white-space: nowrap; border-bottom: 1px solid #eef1f4; }
-  .md-table td { padding: 12px 10px; background: #fff; color: #3c4652; vertical-align: middle; white-space: nowrap; border-top: 1px solid #eef1f4; border-bottom: 1px solid #eef1f4; box-shadow: 0 1px 3px rgba(16,24,40,.05); }
+  /* 呼吸感优化：行高放宽 + 单元格内边距加大，多行小字不再糊成一团 */
+  .md-table { min-width: 720px; border-collapse: separate; border-spacing: 0 6px; font-size: 12px; line-height: 1.6; color: #3c4652; }
+  .md-table th { background: #fff; padding: 4px 14px 8px; text-align: left; font-weight: 500; font-size: 11px; color: #8a939d; white-space: nowrap; border-bottom: 1px solid #eef1f4; }
+  .md-table td { padding: 13px 14px; background: #fff; color: #3c4652; vertical-align: middle; white-space: nowrap; border-top: 1px solid #eef1f4; border-bottom: 1px solid #eef1f4; box-shadow: 0 1px 3px rgba(16,24,40,.05); }
+  /* 单元格内 <br> 多行内容加空隙，竖排小字更透气 */
+  .md-table td br { display: block; content: ""; margin-top: 3px; }
+  /* 斑马纹：用 :where 清零权重，避免盖住 hover 高亮 */
+  :where(.md-table) tbody tr:nth-child(even) td { background: #fafbfd; }
   .md-table td:first-child { border-left: 1px solid #eef1f4; border-radius: 12px 0 0 12px; }
   .md-table td:last-child { border-right: 1px solid #eef1f4; border-radius: 0 12px 12px 0; }
   .md-table tr:hover td { background: #fafcfe; }
@@ -2267,13 +2272,15 @@
   }
   .md-preview-toolbar .md-preview-close:hover { background: #e4e7ea; color: #303943; }
   .md-preview-meta { font-size: 11px; color: #7b858e; margin-bottom: 8px; }
-  /* 对话表格详情视图：表格自适应宽度，超出换行而不是横向滚动 */
-  .md-full-table { table-layout: fixed; width: 100%; }
-  .md-full-table th { white-space: normal; word-break: break-all; }
-  .md-full-table td { white-space: normal; word-break: break-word; min-width: 0; }
-  .md-full-table th:first-child, .md-full-table td:first-child { width: 24%; }
+  /* 对话表格详情视图：列宽按内容自然分配 + 容器横向滚动（避免多列均分导致内容竖排挤压） */
+  .md-preview-scroll { border: 1px solid #FFE3C8; border-radius: 10px; overflow-x: auto; overscroll-behavior: contain; }
+  .md-full-table { table-layout: auto; min-width: 960px; width: 100%; }
+  .md-full-table th { white-space: nowrap; }
+  .md-full-table td { white-space: nowrap; word-break: normal; }
+  /* 首列（商品信息）与图文列允许换行，避免撑出超宽列 */
+  .md-full-table th:first-child, .md-full-table td:first-child { width: 24%; min-width: 240px; }
+  .md-full-table td:first-child, .md-full-table .md-cell-prod, .md-full-table .md-cell-prod .prod-txt { white-space: normal; word-break: break-word; }
   .md-full-table .md-cell-prod { min-width: 0; max-width: none; }
-  .md-full-table .md-cell-prod .prod-txt { word-break: break-word; }
   /* 对话表格详情视图：醒目的导出操作按钮（1688 橙） */
   .md-export-bar {
     height: auto; padding: 7px 10px;
@@ -2293,12 +2300,17 @@
   .md-export-name { font-size: 11px; color: #b06a2c; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%; }
   /* 对话表格详情视图：1688 橙色主题表格（橙底表头白字 + 斑马纹 + 圆角卡片） */
   .md-preview-toolbar .md-preview-title { border-left: 3px solid #FF6A00; padding-left: 8px; }
-  .md-preview-scroll { border: 1px solid #FFE3C8; border-radius: 10px; }
   .md-table-clip { border-radius: 10px; }
   .md-full-table th {
     background: linear-gradient(180deg, #FF8A1E, #FF6A00); color: #fff;
-    font-weight: 700; border-bottom: none; padding: 10px 9px; text-align: left;
+    font-weight: 700; border-bottom: none; padding: 10px 14px; text-align: left;
   }
+  /* 长表下滚时表头吸附置顶（容器 .md-preview-scroll 内） */
+  .md-full-table thead th { position: sticky; top: 0; z-index: 2; }
+  .md-full-table td { padding: 12px 14px; line-height: 1.6; }
+  .md-full-table td br { display: block; content: ""; margin-top: 3px; }
+  /* 数字列（价格/销量/订单等）右对齐 + 等宽数字，便于扫读对比 */
+  .md-table th.num-col, .md-table td.num-col, .md-full-table th.num-col, .md-full-table td.num-col { text-align: right; font-variant-numeric: tabular-nums; }
   .md-full-table th:not(:last-child) { border-right: 1px solid rgba(255,255,255,.25); }
   .md-full-table th:first-child { border-top-left-radius: 9px; }
   .md-full-table th:last-child { border-top-right-radius: 9px; }
@@ -5837,8 +5849,8 @@
           window.__mdTables[tid] = { headers: mdHeaders, rows: mdDataRows, title: '对话表格详情' };
           moreBtn = '<div class="md-more-btn" onclick="viewMdTableFull(' + tid + ')">查看更多 · 共 ' + mdTotal + ' 条数据</div>';
         }
-        let thead = '<thead><tr>' + mdHeaders.map(c => '<th>' + c + '</th>').join('') + '</tr></thead>';
-        let tbody = '<tbody>' + mdShown.map(r => '<tr>' + r.map(mdCellHtml).join('') + '</tr>').join('') + '</tbody>';
+        let thead = '<thead><tr>' + mdHeaders.map(c => '<th' + mdColCls(c) + '>' + c + '</th>').join('') + '</tr></thead>';
+        let tbody = '<tbody>' + mdShown.map(r => '<tr>' + r.map((c, ci) => mdCellHtml(c, mdHeaders[ci])).join('') + '</tr>').join('') + '</tbody>';
         out.push('<div class="md-table-wrap"><table class="md-table">' + thead + tbody + '</table>' + moreBtn + '</div>');
         continue;
       }
@@ -5884,15 +5896,22 @@
     return s.split('|').map(c => inlineMd(c.trim()));
   }
 
+  // 数字列识别：表头含价格/销量/订单等关键词的列右对齐（返回 ' class="num-col"' 或 ''）
+  const MD_NUM_HEAD_RE = /(价|销量|订单|件数|销售额|佣金|利润|评分|库存|数量|点击|转化)/;
+  function mdColCls(h) {
+    return MD_NUM_HEAD_RE.test(String(h || '')) ? ' class="num-col"' : '';
+  }
+
   // 单元格 → td：含图片的视为"商品信息"单元格，包成图左文右结构
-  function mdCellHtml(c) {
+  function mdCellHtml(c, h) {
+    const cls = mdColCls(h);
     const idx = String(c).indexOf('<img');
-    if (idx === -1) return '<td>' + c + '</td>';
+    if (idx === -1) return '<td' + cls + '>' + c + '</td>';
     const end = String(c).indexOf('>', idx);
     const imgTag = end > idx ? String(c).slice(idx, end + 1) : '';
-    if (!imgTag || imgTag.indexOf('class="md-img"') === -1) return '<td>' + c + '</td>';
+    if (!imgTag || imgTag.indexOf('class="md-img"') === -1) return '<td' + cls + '>' + c + '</td>';
     const rest = (String(c).slice(0, idx) + String(c).slice(end + 1)).trim();
-    return '<td><div class="md-cell-prod">' + imgTag + '<div class="prod-txt">' + rest + '</div></div></td>';
+    return '<td' + cls + '><div class="md-cell-prod">' + imgTag + '<div class="prod-txt">' + rest + '</div></div></td>';
   }
 
   /* —— 中栏表格"查看更多"：点击后右栏展示该表格完整数据 —— */
@@ -5901,8 +5920,8 @@
     const wrap = document.getElementById('mdTablePreview');
     const tableEl = document.getElementById('mdPreviewTable');
     if (!t || !wrap || !tableEl) return;
-    tableEl.innerHTML = '<thead><tr>' + t.headers.map(c => '<th>' + c + '</th>').join('') + '</tr></thead>'
-      + '<tbody>' + t.rows.map(r => '<tr>' + r.map(mdCellHtml).join('') + '</tr>').join('') + '</tbody>';
+    tableEl.innerHTML = '<thead><tr>' + t.headers.map(c => '<th' + mdColCls(c) + '>' + c + '</th>').join('') + '</tr></thead>'
+      + '<tbody>' + t.rows.map(r => '<tr>' + r.map((c, ci) => mdCellHtml(c, t.headers[ci])).join('') + '</tr>').join('') + '</tbody>';
     document.getElementById('mdPreviewTitle').textContent = '📋 ' + (t.title || '对话表格详情');
     document.getElementById('mdPreviewMeta').innerHTML = '共 <strong>' + t.rows.length + '</strong> 条数据 · 已展示全部 · 数据来自对话回复';
     document.getElementById('mdPreviewCsvName').textContent = '📊 ' + (t.title || '对话表格详情') + '.xlsx';
@@ -6275,8 +6294,8 @@
       const tid = window.__mdTableSeq;
       window.__mdTables[tid] = { headers, rows: dataRows, title: b.title || '对话表格详情' };
       const shown = total > MD_TABLE_VISIBLE_ROWS ? dataRows.slice(0, MD_TABLE_VISIBLE_ROWS) : dataRows;
-      const thead = '<thead><tr>' + headers.map(c => '<th>' + c + '</th>').join('') + '</tr></thead>';
-      const tbody = '<tbody>' + shown.map(r => '<tr>' + r.map(mdCellHtml).join('') + '</tr>').join('') + '</tbody>';
+      const thead = '<thead><tr>' + headers.map(c => '<th' + mdColCls(c) + '>' + c + '</th>').join('') + '</tr></thead>';
+      const tbody = '<tbody>' + shown.map(r => '<tr>' + r.map((c, ci) => mdCellHtml(c, headers[ci])).join('') + '</tr>').join('') + '</tbody>';
       const btn = total ? '<div class="md-more-btn" onclick="viewMdTableFull(' + tid + ')">'
         + (total > MD_TABLE_VISIBLE_ROWS ? ('查看更多 · 共 ' + total + ' 条数据') : ('查看完整表格 · ' + total + ' 条数据')) + '</div>' : '';
       return '<div class="md-table-wrap"><table class="md-table">' + thead + tbody + '</table>' + btn + '</div>';
