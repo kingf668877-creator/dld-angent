@@ -2261,32 +2261,7 @@
       </div>
     </div>
     <div class="left-section">最近对话</div>
-    <div class="conv-list" id="convList">
-      <div class="conv-item active">
-        <div class="conv-title">搜索美国亚马逊 20 款近 30 天新品</div>
-        <div class="conv-meta"><span class="tag">亚马逊</span>· 2m</div>
-      </div>
-      <div class="conv-item">
-        <div class="conv-title">万里节商品选品 100 款</div>
-        <div class="conv-meta"><span class="tag">1688</span>· 1h</div>
-      </div>
-      <div class="conv-item">
-        <div class="conv-title">OZON 选品库·类目爬取</div>
-        <div class="conv-meta"><span class="tag">OZON</span>· 3h</div>
-      </div>
-      <div class="conv-item">
-        <div class="conv-title">OZON AI 搜索页</div>
-        <div class="conv-meta"><span class="tag">OZON</span>· 昨天</div>
-      </div>
-      <div class="conv-item">
-        <div class="conv-title">1688 蓝海专项项目</div>
-        <div class="conv-meta">· 2d</div>
-      </div>
-      <div class="conv-item">
-        <div class="conv-title">Dify 框架搭建</div>
-        <div class="conv-meta">· 3d</div>
-      </div>
-    </div>
+    <div class="conv-list" id="convList"></div>
     <button class="col-left-toggle" id="colLeftToggle" aria-label="折叠侧栏"><span class="cl-arrow" id="clArrow">‹</span><span class="cl-tip" id="clTip">折叠侧栏</span></button>
   </aside>
   <div class="col-left-resizer" id="colLeftResizer"></div>
@@ -2295,7 +2270,7 @@
   <section class="col-mid">
     <div class="chat-card">
       <div class="chat-head">
-        <span class="title">搜索美国亚马逊 20 款近 30 天新品</span>
+        <span class="title">新建对话</span>
         <div class="right">
           <button class="stop-btn" id="stopBtn" title="停止当前生成">■ 停止生成</button>
           <!-- 主/子账号胶囊（独立，不含积分） -->
@@ -2337,132 +2312,9 @@
       </div>
 
       <div class="chat-body" id="stream">
+        <div class="empty-state"><div class="empty-inner"><div class="empty-mark">AI</div><div class="empty-title">开始一次新的选品分析</div><div class="empty-desc">输入需求后，AI 将为你搜索和分析商品。</div><div class="empty-prompts"><button data-q="帮我筛选 1688 近 30 天销量增长快的收纳盒">1688 增长款</button><button data-q="查找 OZON 热销麻将包并对比 1688 货源">OZON 同款对比</button><button data-q="帮我找适合 TikTok Shop 的宠物用品">TikTok 潜力品</button></div></div></div>
 
-        <!-- 用户消息 -->
-        <div class="msg user">
-          <div class="avatar">我</div>
-          <div class="msg-body">
-            <div class="msg-role">我 <span class="time">· 17:14</span></div>
-            <div class="msg-bubble">
-              <p>帮我搜一下美国亚马逊近 30 天新上架的连衣裙，要求 20 款，按销量排序。</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- AI 消息：任务执行卡 -->
-        <div class="msg ai">
-          <div class="avatar">AI</div>
-          <div class="msg-body">
-            <div class="msg-role">店雷达 AI <span class="time">· 17:14</span></div>
-
-            <!-- 任务规划卡 -->
-            <div class="task-card">
-              <div class="task-head" onclick="this.parentElement.classList.toggle('collapsed')">
-                <span class="task-ic">⬢</span>
-                <span class="task-title">任务规划</span>
-                <span class="task-arrow">⌃</span>
-              </div>
-              <div class="task-body">
-                <div class="task-block-title">需求理解</div>
-                <div class="task-block-sub">在美国亚马逊站点搜索近30天上架的东南亚连衣裙，筛选20款具有市场潜力的商品，提供选品参考清单</div>
-                <div class="task-block-title">美国亚马逊近30天上架东南亚连衣裙推荐</div>
-                <ol class="task-block-list" style="list-style: none">
-                  <li><span class="task-block-num">1</span>搜索美国亚马逊20款新上架东南亚连衣裙</li>
-                </ol>
-                <ul class="task-block-list">
-                  <li>查询美国亚马逊站点近30天上架的东南亚连衣裙的销量、价格、评分、销量趋势等数据，筛选出20款有市场潜力的商品并总结。</li>
-                </ul>
-              </div>
-            </div>
-
-            <!-- 任务执行卡 -->
-            <div class="task-card">
-              <div class="task-head" onclick="this.parentElement.classList.toggle('collapsed')">
-                <span class="task-ic">≡</span>
-                <span class="task-title">任务执行</span>
-                <span class="task-arrow">⌃</span>
-              </div>
-              <div class="task-body">
-                <div class="task-step done">
-                  <span class="node">✓</span>
-                  <span class="step-name">搜索有机会商品</span>
-                </div>
-
-                <div class="product-list">
-                  <div class="pl-title">商品列表</div>
-                  <div class="pl-grid">
-                    <div class="pl-card">
-                      <div class="pl-thumb">👗</div>
-                      <div class="pl-name">Bbonlinedress Womens Short Formal Dress</div>
-                    </div>
-                    <div class="pl-card">
-                      <div class="pl-thumb">👗</div>
-                      <div class="pl-name">Women's Summer Short Sleeve Maxi Dress</div>
-                    </div>
-                    <div class="pl-card">
-                      <div class="pl-thumb">👗</div>
-                      <div class="pl-name">BTFBM Womens Dresses Fall Chiffon</div>
-                    </div>
-                    <div class="pl-card">
-                      <div class="pl-thumb">👗</div>
-                      <div class="pl-name">Womens Short Sleeve Mini Denim Dress</div>
-                    </div>
-                    <div class="pl-card">
-                      <div class="pl-thumb">👗</div>
-                      <div class="pl-name">OFEEFAN Womens Wrap V Neck Dress</div>
-                    </div>
-                    <div class="pl-footer">
-                      共 20 商品，<a href="#" class="detail-link" data-detail-trigger="products">查看详情 ›</a>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="status-line-list">
-                  <div class="status-line"><span class="sl-tick">✓</span><span>任务【搜索美国亚马逊20款新上架东南亚连衣裙】执行完成</span></div>
-                  <div class="status-line"><span class="sl-tick">✓</span><span>Perfect！即将撰写选品报告...</span></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 下一步建议 -->
-            <div class="next-suggest">
-              <div class="ns-head">
-                💡 你可能还想问
-                <span class="ai-tag">AI</span>
-              </div>
-              <div class="ns-list">
-                <div class="ns-item" data-q="继续查连衣裙 30 天销量 TOP100">
-                  <span class="ns-ic">🔍</span>
-                  <span class="ns-text">继续查连衣裙 30 天销量 TOP100</span>
-                  <span class="ns-arrow">›</span>
-                </div>
-                <div class="ns-item" data-q="对比 OZON 同款连衣裙货源价格">
-                  <span class="ns-ic">🌍</span>
-                  <span class="ns-text">对比 OZON 同款连衣裙货源价格</span>
-                  <span class="ns-arrow">›</span>
-                </div>
-                <div class="ns-item" data-q="把这 20 款连衣裙加入我的监控">
-                  <span class="ns-ic">📦</span>
-                  <span class="ns-text">把这 20 款连衣裙加入我的监控</span>
-                  <span class="ns-arrow">›</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- 积分消耗条（放在每次对话最后） -->
-            <div class="cost-bar">
-              <div class="cb-coin">🪙</div>
-              <div class="cb-info">
-                <div class="cb-title">本次对话消耗</div>
-                <div class="cb-sub">已从账户余额扣除</div>
-              </div>
-              <div class="cb-total">
-                <div class="cb-num">-12</div>
-                <div class="cb-unit">积分</div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- 首次进入保持新对话空态，不预置历史消息、商品或扣费结果 -->
       </div>
 
       <!-- 轮次锚点导航：中栏左缘圆点列，每轮用户提问一个圆点（滚动联动高亮 + 悬停摘要 + 点击跳转） -->
@@ -2857,13 +2709,8 @@
   const NOW = Date.now();
   function tsFromNow(minAgo) { return new Date(NOW - minAgo * 60 * 1000).toISOString(); }
   const SESSIONS_BY_ACCOUNT = {
-    'main-001': [
-      { id: 'm1', title: '搜索美国亚马逊 20 款近 30 天新品', agent: '店雷达 AI', tag: '亚马逊', time: '2 分钟前', snippet: '销量 $9.99~$34.99，Top1 4,820 件', timestamp: tsFromNow(2), pinned: true },
-      { id: 'm2', title: '万里节商品选品 100 款', agent: '店雷达 AI', tag: '1688', time: '1 小时前', snippet: '爆品 100 款已落库', timestamp: tsFromNow(60) },
-      { id: 'm3', title: '团队周选品复盘', agent: '店雷达 AI', tag: '复盘', time: '昨天 20:10', snippet: '本周消耗 320 积分，命中 47 款', timestamp: tsFromNow(60 * 28) },
-      { id: 'm4', title: 'OZON 8 月爆品榜单', agent: '店雷达 AI', tag: 'OZON', time: '3 天前', snippet: '命中 18 款', timestamp: tsFromNow(60 * 24 * 3) },
-      { id: 'm5', title: '1688 连衣裙趋势分析', agent: '店雷达 AI', tag: '1688', time: '上周', snippet: '趋势已落库', timestamp: tsFromNow(60 * 24 * 8) }
-    ],
+    // 主账号不预置历史会话；真实会话由后端加载后注入
+    'main-001': [],
     'sub-001': [
       { id: 's1-1', title: '亚马逊连衣裙选品', agent: '店雷达 AI', tag: '亚马逊', time: '5 分钟前', snippet: '已筛 20 款', timestamp: tsFromNow(5) },
       { id: 's1-2', title: '宠物用品选品（华东仓）', agent: '店雷达 AI', tag: '1688', time: '今天 09:42', snippet: '已筛 18 款', timestamp: tsFromNow(60 * 3) },
@@ -3423,7 +3270,7 @@
       return window.escapeHtml ? window.escapeHtml(s) : String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
     }
 
-    /* 渲染无真实 convId 的会话（本地 mock）—— 保留原 selectConvItem 逻辑 */
+    /* 兼容无真实 convId 的历史会话；主账号不再预置此类会话 */
     function renderConvMockMessages(target, view) {
       if (!view) return;
       if (view.loaded) { switchToView(view.el); return; }
@@ -3497,7 +3344,7 @@
       const view = { el: makeConvView(key), loaded: false, scrollPos: null };
       CONV_VIEWS.set(key, view);
       view.el.innerHTML = `
-        <div class="empty-state"><div class="empty-inner"><div class="empty-mark">AI</div><div class="empty-title">开始一次新的选品分析</div><div class="empty-desc">先用假数据演示完整交互，后续可直接替换为 Dify / MCP 真实返回。</div><div class="empty-prompts"><button data-q="帮我筛选 1688 近 30 天销量增长快的收纳盒">1688 增长款</button><button data-q="查找 OZON 热销麻将包并对比 1688 货源">OZON 同款对比</button><button data-q="帮我找适合 TikTok Shop 的宠物用品">TikTok 潜力品</button></div></div></div>`;
+        <div class="empty-state"><div class="empty-inner"><div class="empty-mark">AI</div><div class="empty-title">开始一次新的选品分析</div><div class="empty-desc">输入需求后，AI 将为你搜索和分析商品。</div><div class="empty-prompts"><button data-q="帮我筛选 1688 近 30 天销量增长快的收纳盒">1688 增长款</button><button data-q="查找 OZON 热销麻将包并对比 1688 货源">OZON 同款对比</button><button data-q="帮我找适合 TikTok Shop 的宠物用品">TikTok 潜力品</button></div></div></div>`;
       switchToView(view.el);
       const title = document.querySelector('.chat-head .title');
       if (title) title.textContent = '新建对话';
@@ -3514,14 +3361,9 @@
       convList.innerHTML = '<div class="conv-empty">该账号暂无历史对话</div>';
       ACTIVE_CONV_KEY = '';  // 无历史会话：清空活跃标记，首次发送时自动创建新草稿视图
       bindGroupEvents();
-      // 清空右侧对话区
-      const stream = document.getElementById('stream');
-      if (stream) stream.innerHTML = `
-        <div class="msg user"><div class="avatar">我</div><div class="msg-body"><div class="msg-role">${CURRENT_ACCOUNT.name} <span class="time">· 历史记录</span></div><div class="msg-bubble"><p>该账号暂无历史对话</p></div></div></div>`;
-      const title = document.querySelector('.chat-head .title');
-      if (title) title.textContent = CURRENT_ACCOUNT.name + ' 的对话';
-      const tag = document.querySelector('.chat-head .agent-tag');
-      if (tag) tag.textContent = CURRENT_ACCOUNT.role === 'main' ? '主账号' : '子账号';
+      // 无历史会话时保持新对话空态，不写入模拟消息
+      showEmptyConversation();
+      document.dispatchEvent(new CustomEvent('dld:right-empty', { detail: { empty: true } }));
       return;
     }
     rerenderConvList();
@@ -3920,43 +3762,9 @@
   });
   renderAll();
 
-  // 会话切换：演示版从本地预置消息加载
-  const SESSION_DATA = {
-    '搜索美国亚马逊 20 款近 30 天新品': { agent:'店雷达 AI', tag:'亚马逊', query:'帮我搜一下美国亚马逊近 30 天新上架的连衣裙，要求 20 款，按销量排序。' },
-    '万里节商品选品 100 款': { agent:'店雷达 AI', tag:'1688', query:'帮我筛选万里节适合上新的高潜商品 100 款，按销量和价格排序。' },
-    'OZON 选品库·类目爬取': { agent:'店雷达 AI', tag:'OZON', query:'抓取 OZON 热门类目商品，整理价格、销量和评分。' },
-    'OZON AI 搜索页': { agent:'店雷达 AI', tag:'OZON', query:'分析 OZON AI 搜索页的热门商品和竞争情况。' },
-    '1688 蓝海专项项目': { agent:'店雷达 AI', tag:'1688', query:'查找 1688 蓝海品类，输出供应商和利润空间。' },
-    'Dify 框架搭建': { agent:'店雷达 AI', tag:'1688', query:'整理 Dify Agent 工作流搭建方案和页面交互。' }
-  };
+  // 历史会话统一由真实会话接口加载；不再使用本地预置消息
   const stream = document.getElementById('stream');
   const chatTitle = document.querySelector('.chat-head .title');
-  function showSession(item) {
-    const title = item.querySelector('.conv-title')?.textContent.trim();
-    const data = SESSION_DATA[title];
-    document.querySelectorAll('.conv-item').forEach(x => x.classList.remove('active'));
-    item.classList.add('active');
-    if (data) {
-      chatTitle.textContent = title;
-      stream.innerHTML = `<div class="msg user"><div class="avatar">我</div><div class="msg-body"><div class="msg-role">我 <span class="time">· 历史记录</span></div><div class="msg-bubble"><p>${data.query}</p></div></div></div><div class="msg ai"><div class="avatar">AI</div><div class="msg-body"><div class="msg-role">${data.agent} <span class="time">· 已完成</span></div>
-        <div class="next-suggest">
-          <div class="ns-head">💡 你可能还想问 <span class="ai-tag">AI</span></div>
-          <div class="ns-list">
-            <div class="ns-item" data-q="继续查 30 天销量 TOP100"><span class="ns-ic">🔍</span><span class="ns-text">继续查 30 天销量 TOP100</span><span class="ns-arrow">›</span></div>
-            <div class="ns-item" data-q="对比 OZON 同款货源价格"><span class="ns-ic">🌍</span><span class="ns-text">对比 OZON 同款货源价格</span><span class="ns-arrow">›</span></div>
-            <div class="ns-item" data-q="把这 20 款加入我的监控"><span class="ns-ic">📦</span><span class="ns-text">把这 20 款加入我的监控</span><span class="ns-arrow">›</span></div>
-          </div>
-        </div>
-        <div class="cost-bar">
-          <div class="cb-info"><div class="cb-title">本次对话消耗</div></div>
-          <div class="cb-total"><div class="cb-num">-12</div><div class="cb-unit">积分</div></div>
-        </div>
-        <button class="regen-btn" data-regenerate="${data.query.replace(/"/g, '&quot;')}">↻ 重新生成</button>`;
-      bindRegenerate(stream);
-      bindSuggestionClicks(stream);
-    }
-  }
-  document.querySelectorAll('.conv-item').forEach(it => it.addEventListener('click', () => showSession(it)));
   // 右侧 tab
   function bindRightTab(t) {
     if (!t || t.dataset.bound === '1') return;
@@ -4019,18 +3827,8 @@
   });
 
   // 查看详情：打开右侧预览并切换到商品详情
-  const DETAIL_ROWS = [
-    { rank: 1, title: 'Bbonlinedress Womens Short Formal Dress', price: '$18.5', sales: 4820, rating: 4.7, stock: '充足', ship: 'FBA' },
-    { rank: 2, title: "Women's Summer Short Sleeve Maxi Dress", price: '$15.2', sales: 3680, rating: 4.6, stock: '充足', ship: 'FBA' },
-    { rank: 3, title: 'BTFBM Womens Dresses Fall Chiffon', price: '$22.9', sales: 3254, rating: 4.5, stock: '中等', ship: 'FBM' },
-    { rank: 4, title: 'Womens Short Sleeve Mini Denim Dress', price: '$19.8', sales: 2890, rating: 4.4, stock: '紧张', ship: 'FBA' },
-    { rank: 5, title: 'OFEEFAN Womens Wrap V Neck Dress', price: '$17.6', sales: 2670, rating: 4.6, stock: '充足', ship: 'FBA' },
-    { rank: 6, title: 'MEROKE Womens Summer Casual Dress', price: '$13.4', sales: 2410, rating: 4.3, stock: '充足', ship: 'FBM' },
-    { rank: 7, title: 'Dressystar Womens V Neck Cocktail', price: '$24.9', sales: 2180, rating: 4.5, stock: '中等', ship: 'FBA' },
-    { rank: 8, title: 'GRACEFUL Womens Zip Up Bandage Dress', price: '$21.3', sales: 1990, rating: 4.4, stock: '充足', ship: 'FBM' },
-    { rank: 9, title: 'HETHROU Womens Lace Bodycon Dress', price: '$16.8', sales: 1820, rating: 4.5, stock: '紧张', ship: 'FBA' },
-    { rank: 10, title: 'ZERDOCOST Womens Floral Maxi Dress', price: '$20.5', sales: 1730, rating: 4.6, stock: '充足', ship: 'FBA' }
-  ];
+  // 商品详情只渲染真实查询结果；主账号默认不提供固定商品数据
+  const DETAIL_ROWS = [];
 
   function ensureDetailTab() {
     let detailTab = document.querySelector('.right-tab[data-detail-tab]');
@@ -5466,8 +5264,9 @@
       if (Array.isArray(list) && list.length) {
         window.__dldApps = list;
         const first = list[0];
+        // 首次进入保持新对话标题，不用智能体名称伪装成已打开的会话
         const chatTitle = document.querySelector('.chat-head .title');
-        if (chatTitle && first.name) chatTitle.textContent = '与 ' + first.name + ' 对话';
+        if (chatTitle) chatTitle.textContent = '新建对话';
       }
     } catch (e) {
       console.warn('[DLD] chatApps 失败：', e.message);
