@@ -416,6 +416,33 @@
   .conv-menu .cm-sep {
     height:1px; background: var(--border-light); margin:4px 4px;
   }
+  /* ===== 输入框右键菜单：剪切/复制/粘贴/全选（带快捷键提示） ===== */
+  .input-menu {
+    position: fixed; z-index: 150; min-width: 190px;
+    background:#fff; border:1px solid var(--border-light);
+    border-radius:8px; box-shadow:0 12px 32px rgba(31,35,41,.18);
+    padding:6px; display:none;
+  }
+  .input-menu.open { display:block; animation:fadeInUp .12s ease; }
+  .input-menu .im-item {
+    display:flex; align-items:center; gap:10px;
+    padding:8px 10px; border-radius:5px; cursor:pointer;
+    font-size:12.5px; color: var(--text); user-select:none;
+  }
+  .input-menu .im-item:hover { background: var(--brand-soft); color: var(--brand-dark); }
+  .input-menu .im-item .im-ic {
+    width:16px; text-align:center; color: var(--text-muted);
+    font-size:13px;
+  }
+  .input-menu .im-item:hover .im-ic { color: var(--brand-dark); }
+  .input-menu .im-item .im-kbd {
+    margin-left:auto; font-size:10.5px; color: var(--text-muted);
+    background:#f5f6f8; border:1px solid var(--border-light);
+    border-radius:4px; padding:2px 6px; font-family:inherit; letter-spacing:.3px;
+  }
+  .input-menu .im-item:hover .im-kbd { color: var(--brand-dark); background:#fff; }
+  .input-menu .im-item.disabled { opacity:.38; pointer-events:none; }
+  .input-menu .im-sep { height:1px; background: var(--border-light); margin:4px 4px; }
   /* 会话切换淡入 */
   @keyframes convFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
   .conv-fade-in { animation: convFadeIn .25s ease; }
@@ -843,15 +870,46 @@
 
   /* 积分明细：青虎 AI 订单页风格 */
   .ledger-filter { display:grid; grid-template-columns:repeat(3, 1fr) auto; gap:12px; align-items:center; padding:14px 16px; border:1px solid var(--border-light); border-radius:6px; background:#f7f8fa; margin-bottom:12px; }
-  .ledger-filter .lf-field { display:flex; flex-direction:column; gap:4px; }
-  .ledger-filter .lf-label { font-size:11px; color:var(--text-dim); }
-  .ledger-filter input, .ledger-filter select { height:30px; border:1px solid var(--border); border-radius:4px; padding:0 10px; background:#fff; font-size:12px; color:var(--text); outline:none; }
-  .ledger-filter input:focus, .ledger-filter select:focus { border-color:var(--brand); }
-  .ledger-filter .lf-actions { display:flex; gap:8px; }
-  .ledger-filter .lf-btn { height:30px; padding:0 14px; border-radius:4px; border:1px solid var(--border); background:#fff; color:var(--text-muted); cursor:pointer; font-size:12px; display:inline-flex; align-items:center; gap:4px; }
-  .ledger-filter .lf-btn.primary { background:var(--brand); border-color:var(--brand); color:#fff; }
-  .ledger-filter .lf-btn:hover { color:var(--brand-dark); border-color:var(--brand); }
-  .ledger-filter .lf-btn.primary:hover { background:var(--brand-dark); color:#fff; }
+  .ledger-filter.lf-buy { display:flex; }
+   .ledger-filter.lf-buy .lf-rangebox, .ledger-filter.lf-consume .lf-rangebox { position:relative; display:flex; align-items:center; justify-content:space-between; gap:6px; width:300px; height:30px; padding:0 10px; border:1px solid var(--border); border-radius:4px; background:#fff; cursor:pointer; }
+  .ledger-filter.lf-buy .lf-rangebox:hover, .ledger-filter.lf-consume .lf-rangebox:hover { border-color:var(--brand); }
+  .ledger-filter.lf-buy .lr-text, .ledger-filter.lf-consume .lr-text { font-size:12px; color:var(--text); white-space:nowrap; overflow:hidden; }
+  .ledger-filter.lf-buy .lr-text.is-empty, .ledger-filter.lf-consume .lr-text.is-empty { color:var(--text-dim); }
+  .ledger-filter.lf-buy .lr-icon, .ledger-filter.lf-consume .lr-icon { display:inline-flex; align-items:center; color:var(--text-muted); }
+  .ledger-filter.lf-buy .lr-clear, .ledger-filter.lf-consume .lr-clear { display:none; width:15px; height:15px; align-items:center; justify-content:center; border-radius:50%; background:#d3d7dc; color:#fff; font-size:11px; line-height:1; cursor:pointer; flex:none; }
+  .ledger-filter.lf-buy .lr-clear:hover, .ledger-filter.lf-consume .lr-clear:hover { background:var(--text-muted); }
+  .ledger-filter.lf-buy .lf-rangebox.has-value:hover .lr-icon, .ledger-filter.lf-consume .lf-rangebox.has-value:hover .lr-icon { display:none; }
+  .ledger-filter.lf-buy .lf-rangebox.has-value:hover .lr-clear, .ledger-filter.lf-consume .lf-rangebox.has-value:hover .lr-clear { display:inline-flex; }
+  .ledger-filter.lf-buy .date-panel, .ledger-filter.lf-consume .date-panel { position:absolute; top:calc(100% + 8px); left:0; z-index:60; background:#fff; border:1px solid var(--border-light); border-radius:8px; box-shadow:0 8px 28px rgba(17,24,39,.14); padding:12px 14px 8px; cursor:default; }
+  .dp-head { display:flex; align-items:center; gap:2px; padding:0 2px 10px; }
+  .dp-title { flex:1; text-align:center; font-size:13px; font-weight:600; color:var(--text); }
+  .dp-nav { width:22px; height:22px; display:inline-flex; align-items:center; justify-content:center; border-radius:4px; color:var(--text-muted); cursor:pointer; font-size:14px; line-height:1; }
+  .dp-nav:hover { background:#f2f3f5; color:var(--text); }
+  .dp-gap { width:24px; flex:none; }
+  .dp-body { display:flex; gap:20px; }
+  .dp-grid { display:grid; grid-template-columns:repeat(7, 34px); gap:2px 0; }
+  .dp-week { height:26px; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--text-dim); }
+  .dp-cell { height:28px; display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--text); border-radius:4px; cursor:pointer; user-select:none; }
+  .dp-cell:hover { background:#f2f3f5; }
+  .dp-cell.today { color:var(--brand-dark); font-weight:700; }
+  .dp-cell.in-range { background:#e9f7ee; border-radius:0; }
+  .dp-cell.edge { background:var(--brand); color:#fff; font-weight:600; border-radius:4px; }
+  .dp-cell.edge:hover { background:var(--brand); }
+  .dp-cell.dim { color:#c9ced4; cursor:default; }
+  .dp-cell.dim:hover { background:none; }
+  .ledger-filter.lf-consume { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+  .ledger-filter.lf-consume .lf-chips { display:flex; gap:8px; }
+  .ledger-filter.lf-consume .chip { height:30px; padding:0 16px; border-radius:15px; border:1px solid transparent; background:#eef0f3; color:#5a6573; font-size:12px; cursor:pointer; }
+  .ledger-filter.lf-consume .chip:hover { color:var(--brand-dark); }
+  .ledger-filter.lf-consume .chip.active { background:#2a2e35; border-color:#2a2e35; color:#fff; }
+  .ledger-filter.lf-consume .lf-rangebox input, .ledger-filter.lf-consume .lr-sep { display:none; }
+  /* 消耗明细日期框靠右，双月面板改为右对齐展开，避免溢出弹窗右缘被裁切 */
+  .ledger-filter.lf-consume .date-panel { left:auto; right:0; }
+  /* 消耗明细表格：发起对话文字截断 + 来源会话徽章 */
+  .ledger-table .ct-msg { max-width:340px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ledger-table .conv-tag { display:inline-flex; align-items:center; gap:5px; max-width:148px; height:22px; padding:0 9px; border-radius:11px; background:#f2f4f6; color:#5a6573; font-size:11px; line-height:1; }
+  .ledger-table .conv-tag svg { flex:none; color:#98a1ab; }
+  .ledger-table .conv-tag b { font-weight:400; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .ledger-table { width:100%; border-collapse:separate; border-spacing:0; font-size:12px; color:#3c4652; background:#fff; }
   .ledger-table th { background:#f7f8fa; color:#5a6573; font-weight:500; padding:10px 12px; border-bottom:1px solid var(--border-light); text-align:left; white-space:nowrap; }
   .ledger-table td { padding:12px; border-bottom:1px solid #edf0f2; vertical-align:middle; }
@@ -912,6 +970,53 @@
   .msg.user .msg-bubble { background: var(--brand-soft); }
   .msg-bubble p { margin: 0 0 6px; }
   .msg-bubble p:last-child { margin-bottom: 0; }
+  /* ===== AI 回复操作栏：点赞 / 点踩 / 复制 / 重新发起（每次对话完成后出现在气泡下方右侧） ===== */
+  .msg-actions { display:flex; justify-content:flex-end; gap:6px; margin-top:6px; animation: fadeInUp .25s ease; }
+  .msg-actions .act-group, .user-actions .act-group { display:flex; background:#fff; border:1px solid #e5e9ee; border-radius:10px; overflow:hidden; }
+  /* 用户操作栏需放开 overflow 以显示编辑按钮的 tooltip，圆角改由按钮自身承担 */
+  .user-actions .act-group { overflow:visible; }
+  .user-actions .act-group .msg-act-btn:first-child { border-radius:10px 0 0 10px; }
+  .user-actions .act-group .msg-act-btn:last-child { border-radius:0 10px 10px 0; }
+  .msg-act-btn { width:30px; height:27px; display:flex; align-items:center; justify-content:center; border:none; background:transparent; color:#98a2ad; cursor:pointer; padding:0; transition:background .15s ease, color .15s ease; }
+  .msg-act-btn + .msg-act-btn { border-left:1px solid #eef1f4; }
+  .msg-act-btn svg { width:14px; height:14px; display:block; }
+  .msg-act-btn:hover { color:var(--brand-dark); background:var(--brand-soft); }
+  .msg-act-btn.active { color:#fff; background:var(--brand); }
+  /* ===== 用户消息操作栏：编辑（添加到对话）/ 复制（hover 气泡时出现在下方右侧） ===== */
+  .user-actions { display:flex; justify-content:flex-end; margin-top:6px; opacity:0; visibility:hidden; transform:translateY(-2px); transition:opacity .18s ease, transform .18s ease, visibility .18s; }
+  .msg.user:hover .user-actions, .user-actions:hover { opacity:1; visibility:visible; transform:translateY(0); }
+  /* 编辑按钮轻提示（tooltip）：hover 上方弹出小黑泡 */
+  .msg-act-btn[data-tip] { position:relative; }
+  .msg-act-btn[data-tip]::after {
+    content: attr(data-tip); position:absolute; bottom:calc(100% + 7px); left:50%;
+    transform:translateX(-50%) translateY(3px); background:#1c2530; color:#fff; font-size:11px; line-height:1;
+    padding:6px 9px; border-radius:6px; white-space:nowrap; opacity:0; pointer-events:none;
+    transition:opacity .15s ease, transform .15s ease; z-index:60; font-weight:500;
+  }
+  .msg-act-btn[data-tip]::before {
+    content:''; position:absolute; bottom:calc(100% + 3px); left:50%; transform:translateX(-50%);
+    border:4px solid transparent; border-top-color:#1c2530; opacity:0; pointer-events:none; transition:opacity .15s ease; z-index:60;
+  }
+  .msg-act-btn[data-tip]:hover::after { opacity:1; transform:translateX(-50%) translateY(0); }
+  .msg-act-btn[data-tip]:hover::before { opacity:1; }
+  /* ===== 点踩反馈弹窗（提供反馈） ===== */
+  .fb-modal { position:fixed; inset:0; background:rgba(16,24,40,.45); z-index:450; display:none; align-items:center; justify-content:center; }
+  .fb-modal.show { display:flex; }
+  .fb-dialog { width:min(440px, calc(100vw - 32px)); background:#fff; border-radius:16px; padding:20px 22px; box-shadow:0 20px 50px rgba(16,24,40,.18); animation: fadeInUp .2s ease; }
+  .fb-head { display:flex; align-items:center; justify-content:space-between; }
+  .fb-title { font-size:16px; font-weight:700; color:#1c2530; }
+  .fb-close { border:none; background:none; font-size:18px; color:#98a2ad; cursor:pointer; line-height:1; padding:2px 4px; }
+  .fb-close:hover { color:#4a5460; }
+  .fb-sub { margin-top:6px; font-size:12px; color:#7b8590; }
+  .fb-label { display:block; margin:14px 0 6px; font-size:12px; font-weight:600; color:#3c4652; }
+  .fb-dialog textarea { width:100%; box-sizing:border-box; height:96px; resize:vertical; border:1px solid #e3e8ee; border-radius:10px; padding:9px 11px; font-size:12.5px; color:#2b3540; outline:none; font-family:inherit; line-height:1.6; }
+  .fb-dialog textarea::placeholder { color:#a8b2bd; }
+  .fb-dialog textarea:focus { border-color:var(--brand); box-shadow:0 0 0 3px rgba(0,200,75,.12); }
+  .fb-foot { display:flex; justify-content:flex-end; gap:8px; margin-top:14px; }
+  .fb-btn { padding:7px 18px; border-radius:9px; border:1px solid #dfe5ec; background:#fff; color:#4a5460; font-size:12.5px; cursor:pointer; }
+  .fb-btn:hover { border-color:var(--brand); color:var(--brand-dark); }
+  .fb-btn.primary { background:var(--brand); border-color:var(--brand); color:#fff; font-weight:600; }
+  .fb-btn.primary:hover { background:var(--brand-dark); border-color:var(--brand-dark); color:#fff; }
 
   /* ====================================================== */
   /* === 任务执行卡（趣虾风格：紫色图标 + 步骤节点） ====== */
@@ -1367,6 +1472,9 @@
     display: flex; align-items: center; justify-content: space-between;
     gap: 8px; padding: 0 0 2px;
   }
+  /* 上传按钮隐藏后 space-between 只剩一个子元素会靠左：margin-left:auto 保证「开始查询」贴右侧；
+     下版本恢复上传按钮后两按钮自然左右分布，此规则依然成立 */
+  .composer-bar .cb-go { margin-left: auto; }
   .cb-upload {
     height: 30px; padding: 0 14px 0 5px;
     display: inline-flex; align-items: center; gap: 7px;
@@ -1795,29 +1903,49 @@
     overflow: hidden;
     background: #fff;
   }
+  /* 工具栏 = 表格上方导出条：与对话表格详情导出条（md-export-bar）同款 1688 橙渐变底 */
   .excel-toolbar {
-    height: 30px;
-    background: #fafafa;
-    border-bottom: 1px solid var(--border-light);
+    height: 40px;
+    background: linear-gradient(135deg, #FFF7EE, #FFF0DE);
+    border-bottom: 1px solid #FFE3C8;
     display: flex; align-items: center;
-    padding: 0 10px;
+    padding: 0 12px;
     font-size: 12px;
     color: var(--text-muted);
     gap: 8px;
   }
   .excel-toolbar .name {
-    color: var(--brand-dark);
-    font-weight: 500;
+    color: #b06a2c;
+    font-weight: 600;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .excel-toolbar .spacer { margin-left: auto; }
   .excel-toolbar .ic {
     color: var(--text-dim);
     cursor: pointer;
-    padding: 2px 6px;
-    border-radius: 3px;
+    padding: 3px 7px;
+    border-radius: 5px;
   }
-  .excel-toolbar .ic:hover { background: var(--bg); color: var(--brand); }
+  .excel-toolbar .ic:hover { background: rgba(255,138,30,.14); color: #E85D00; }
   .excel-toolbar .ic.exporting { color: var(--brand-dark); background: var(--brand-soft); }
+  /* 表格上方导出按钮：次按钮白底橙描边，主按钮橙渐变白字（与 md-export-btn 同语言） */
+  .pg-export-btn {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 5px 12px; border-radius: 6px; border: 1px solid #FFB877;
+    background: #fff; color: #E85D00; font-size: 12px; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
+    transition: background .15s, filter .15s, box-shadow .15s;
+  }
+  .pg-export-btn:hover:not(:disabled) { background: #FFF3E6; }
+  .pg-export-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .pg-export-btn.primary {
+    border: none; color: #fff;
+    background: linear-gradient(135deg, #FF8A1E, #FF6A00);
+    box-shadow: 0 2px 6px rgba(255,106,0,.28);
+  }
+  .pg-export-btn.primary:hover:not(:disabled) { filter: brightness(1.07); background: linear-gradient(135deg, #FF8A1E, #FF6A00); }
+  .pg-export-btn:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
+  .pg-export-btn.exporting { opacity: .7; pointer-events: none; }
 
   .excel-wrap { overflow: auto; max-height: calc(100vh - 320px); }
   .preview-table {
@@ -1826,14 +1954,14 @@
   }
   .preview-table .product-info { white-space: normal; }
   .preview-table th {
-    background: #f3f4f6; color: #44505c; font-weight: 600; text-align: left;
-    padding: 9px 8px; border-bottom: 1px solid #e5e7eb; white-space: nowrap;
+    background: #f7f8fa; color: #5a6472; font-weight: 700; text-align: left;
+    padding: 9px 8px; border-bottom: 1px solid #e6e9ed; white-space: nowrap;
     position: sticky; top: 0; z-index: 2;
   }
   .preview-table th.sortable { cursor: pointer; user-select: none; }
-  .preview-table th.sortable:hover { color: var(--brand-dark); background: var(--brand-soft); }
-  .sort-indicator { color: #9aa3ad; font-size: 9px; margin-left: 2px; }
-  .preview-table th.sort-active .sort-indicator { color: var(--brand-dark); font-weight: 700; }
+  .preview-table th.sortable:hover, .preview-table th.sort-active { background: #eef1f4; }
+  .sort-indicator { color: #98a1ab; font-size: 9px; margin-left: 2px; }
+  .preview-table th.sort-active .sort-indicator { color: #FF6A00; font-weight: 700; }
   .preview-table td { padding: 8px; border-bottom: 1px solid #edf0f2; vertical-align: middle; white-space: nowrap; }
   .preview-table .product-main:hover td { background: #fbfefc; }
   .preview-table .product-detail td { padding: 5px 8px 7px; background: #fff; color: #7b858e; border-bottom: 1px solid #e7eaed; }
@@ -1857,7 +1985,7 @@
     background: #f1f3f5;
   }
   .preview-table .product-info { display:flex; align-items:center; gap:7px; min-width:170px; max-width:220px; }
-  .preview-table .product-title { white-space:normal; line-height:1.35; color:#303943; font-size:10px; }
+  .preview-table .product-title { white-space:normal; line-height:1.35; color:#00873C; font-size:10px; }
   .preview-table .trend { width:76px; height:30px; display:block; }
   .preview-table .trend path { fill:none; stroke:#00c84b; stroke-width:1.4; }
   .preview-table .trend .axis { stroke:#d6dce1; stroke-width:.7; }
@@ -1874,11 +2002,13 @@
   /* ==================== 选品表卡片式风格（仅主商品表 #previewTable） ==================== */
   #previewTable { border-spacing: 0 8px; font-size: 12px; color: #3c4652; }
   #previewTable th {
-    background: #fff; color: #8a939d; font-weight: 500; font-size: 11px;
-    padding: 4px 10px 8px; border-bottom: 1px solid #eef1f4;
+    background: #f7f8fa; color: #5a6472; font-weight: 700; font-size: 11px;
+    padding: 8px 10px; border-bottom: 1px solid #e6e9ed;
   }
-  #previewTable th.sortable:hover { color: var(--brand-dark); background: #f7faf8; }
-  #previewTable th.sort-active { color: var(--brand-dark); font-weight: 700; }
+  #previewTable th:first-child { border-top-left-radius: 10px; }
+  #previewTable th:last-child { border-top-right-radius: 10px; }
+  #previewTable th:not(:last-child) { border-right: 1px solid #e6e9ed; }
+  #previewTable th.sortable:hover, #previewTable th.sort-active { background: #eef1f4; }
   #previewTable td {
     padding: 13px 10px; background: #fff; vertical-align: middle; white-space: nowrap;
     border-top: 1px solid #eef1f4; border-bottom: 1px solid #eef1f4;
@@ -1894,7 +2024,7 @@
   #previewTable .img-cell { width: 56px; height: 56px; min-width: 56px; border-radius: 8px; font-size: 26px; }
   #previewTable .img-cell img, #previewTable td > img { width: 56px; height: 56px; max-width: 56px; max-height: 56px; border-radius: 8px; }
   #previewTable .product-info { min-width: 210px; max-width: 290px; gap: 10px; }
-  #previewTable .product-title { color: #2b3540; font-size: 12px; font-weight: 500; line-height: 1.45; }
+  #previewTable .product-title { color: #00873C; font-size: 12px; font-weight: 500; line-height: 1.45; }
   #previewTable .mini-tag { margin: 2px 4px 0 0; padding: 1px 5px; border-radius: 3px; font-size: 10px; }
   /* ===== 预览表格：横向滚动 + 表头吸附加固 + 分页条 ===== */
   .excel-wrap { overscroll-behavior: contain; }
@@ -1906,26 +2036,65 @@
     background: #fff; border: 1px solid var(--border-light); border-radius: var(--r);
     font-size: 12px; color: #6f7a85;
   }
-  .table-pagination .pg-nav { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  /* 页码条：参考 Element 风格 —— 无独立描边的方块按钮拼成一条带分隔线的圆角条，激活页绿字浅绿底 */
+  .table-pagination .pg-nav { display: inline-flex; align-items: center; border: 1px solid #e3e8ee; border-radius: 3px; background: #fff; overflow: hidden; }
   .table-pagination .pg-btn {
-    border: 1px solid #e3e8ee; background: #fff; color: #4a5560;
-    border-radius: 6px; padding: 3px 9px; font-size: 12px; line-height: 1.5; cursor: pointer;
+    border: none; border-left: 1px solid #f0f2f5; background: #fff; color: #4a5560;
+    min-width: 30px; height: 30px; padding: 0 7px; font-size: 13px; line-height: 1;
+    cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
   }
-  .table-pagination .pg-btn:hover:not(:disabled) { border-color: var(--brand); color: var(--brand-dark); }
-  .table-pagination .pg-btn:disabled { opacity: .4; cursor: not-allowed; }
-  .table-pagination .pg-btn.active { background: var(--brand-soft); border-color: var(--brand); color: var(--brand-dark); font-weight: 700; }
-  .table-pagination .pg-ellipsis { color: #a8b0b8; padding: 0 2px; }
+  .table-pagination .pg-btn:first-child { border-left: none; }
+  .table-pagination .pg-btn:hover:not(:disabled) { background: #f5f7fa; color: #00A65A; }
+  .table-pagination .pg-btn:disabled { color: #c8cfd6; cursor: not-allowed; }
+  .table-pagination .pg-btn.active { background: #f4fbf7; color: #00A65A; font-weight: 700; }
+  .table-pagination .pg-ellipsis { color: #a8b0b8; padding: 0 5px; height: 30px; line-height: 30px; background: #fff; border-left: 1px solid #f0f2f5; }
   .table-pagination select {
-    border: 1px solid #e3e8ee; border-radius: 6px; padding: 2px 6px;
+    height: 30px; border: 1px solid #e3e8ee; border-radius: 3px; padding: 0 4px;
     font-size: 12px; color: #4a5560; background: #fff; cursor: pointer;
   }
-  .table-pagination .pg-size { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
-  .table-pagination .spacer { margin-left: auto; }
+  .table-pagination .pg-size { display: inline-flex; align-items: center; white-space: nowrap; }
+  /* 跳页：参考图同款「前往 X 页」，贴右侧；隐藏 number 微调按钮更干净 */
+  .table-pagination .pg-jump { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; margin-left: auto; }
+  .table-pagination .pg-jump input {
+    width: 46px; height: 30px; box-sizing: border-box; text-align: center;
+    border: 1px solid #e3e8ee; border-radius: 3px; font-size: 12px; color: #35434d;
+  }
+  .table-pagination .pg-jump input::-webkit-outer-spin-button,
+  .table-pagination .pg-jump input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   /* ===== 勾选列 + 勾选导出/导出全部 ===== */
   #previewTable th.chk-cell, #previewTable td.chk-cell { text-align: center; min-width: 34px; width: 34px; padding-left: 12px; padding-right: 2px; }
+  /* 自定义勾选框：appearance:none 抛弃原生大色块，造型与表格主题统一——
+     白底圆角描边 + hover 绿色光圈 + 选中态绿渐变（成功色语义：勾选=已选入导出）+ 白色对勾/半选横杠。
+     半选（:indeterminate）由 updateExportSelCount 在"部分勾选"时写入，必须覆盖。 */
   #previewTable input.row-chk, #previewTable thead input#pgCheckAll {
-    width: 15px; height: 15px; min-width: 15px; min-height: 15px; margin: 0;
-    accent-color: var(--brand); cursor: pointer; vertical-align: middle; display: inline-block;
+    appearance: none; -webkit-appearance: none;
+    position: relative;
+    width: 16px; height: 16px; min-width: 16px; min-height: 16px; margin: 0; padding: 0;
+    border: 1.5px solid #d2d9e0; border-radius: 5px; background: #fff;
+    cursor: pointer; vertical-align: middle; display: inline-block;
+    transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+  }
+  #previewTable input.row-chk:hover, #previewTable thead input#pgCheckAll:hover {
+    border-color: #00A65A; box-shadow: 0 0 0 3px rgba(0, 166, 90, .14);
+  }
+  #previewTable input.row-chk:focus-visible, #previewTable thead input#pgCheckAll:focus-visible {
+    outline: 2px solid #00A65A; outline-offset: 2px;
+  }
+  /* 选中 / 半选：绿渐变填充（与勾选主题同语言）；边框转透明但保留占位，尺寸稳定不跳动 */
+  #previewTable input.row-chk:checked, #previewTable thead input#pgCheckAll:checked,
+  #previewTable input.row-chk:indeterminate, #previewTable thead input#pgCheckAll:indeterminate {
+    border-color: transparent; background: linear-gradient(180deg, #18BD71, #00A65A);
+  }
+  /* 选中态：白色对勾（旋转边框绘制） */
+  #previewTable input.row-chk:checked::after, #previewTable thead input#pgCheckAll:checked::after {
+    content: ''; position: absolute; left: 4.5px; top: 2.5px;
+    width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+  /* 半选态：白色横杠 */
+  #previewTable input.row-chk:indeterminate::after, #previewTable thead input#pgCheckAll:indeterminate::after {
+    content: ''; position: absolute; left: 2.5px; top: 5.5px;
+    width: 8px; height: 2px; border-radius: 1px; background: #fff;
   }
   .table-pagination .pg-btn.pg-primary { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
   .table-pagination .pg-btn.pg-primary:hover:not(:disabled) { background: var(--brand-dark); color: #fff; }
@@ -2091,7 +2260,6 @@
     width: 24px; height: 24px; flex: none; border-radius: 6px;
     display: flex; align-items: center; justify-content: center;
     font-size: 13px; background: #e8f6ee;
-    animation: azPulse 2.6s ease-in-out infinite;
   }
   .table-skeleton .sk-title { font-size: 13px; font-weight: 600; color: var(--text); }
   .table-skeleton .sk-count {
@@ -2132,10 +2300,25 @@
     padding: 10px 12px; cursor: pointer; user-select: none;
   }
   .analyze-head .az-ic {
-    width: 22px; height: 22px; flex: none;
+    position: relative; width: 22px; height: 22px; flex: none;
     display: flex; align-items: center; justify-content: center;
     font-size: 13px; color: #7c5cff; background: #f1edff; border-radius: 5px;
-    animation: azPulse 2.6s ease-in-out infinite;
+  }
+  /* 雷达波纹：AI 正在搜索的动态图标（双扩散圆环 + 中心点） */
+  .az-ic .az-radar { position: relative; width: 12px; height: 12px; }
+  .az-ic .az-radar::before, .az-ic .az-radar::after {
+    content: ''; position: absolute; inset: 0; border-radius: 50%;
+    border: 1.5px solid #7c5cff; opacity: 0;
+    animation: azRipple 1.8s ease-out infinite;
+  }
+  .az-ic .az-radar::after { animation-delay: .9s; }
+  .az-ic .az-core {
+    position: absolute; width: 4px; height: 4px; border-radius: 50%;
+    background: #7c5cff; left: 50%; top: 50%; margin: -2px 0 0 -2px;
+  }
+  @keyframes azRipple {
+    0% { transform: scale(.35); opacity: .9; }
+    100% { transform: scale(1.3); opacity: 0; }
   }
   .analyze-head .az-stage { font-size: 13px; font-weight: 500; color: var(--text); }
   .analyze-head .az-time {
@@ -2145,24 +2328,95 @@
   }
   .analyze-head .az-arrow { margin-left: auto; color: var(--text-dim); font-size: 11px; transition: transform .2s; }
   .analyze-card.collapsed .az-arrow { transform: rotate(180deg); }
-  .analyze-card.collapsed .analyze-body { display: none; }
-  @keyframes azPulse { 0%, 100% { opacity: 1; } 50% { opacity: .78; } }
-  .analyze-steps { display: flex; align-items: center; gap: 5px; padding: 0 12px 10px; flex-wrap: wrap; }
-  .analyze-steps .az-step {
-    font-size: 10.5px; color: var(--text-dim);
-    padding: 2px 8px; border-radius: 9px; background: #f5f6f8; white-space: nowrap;
-    transition: all .25s;
+  /* 完成态：不删卡，折叠为「✓ 搜索分析完成 · Ns ∨」一行 */
+  .analyze-card.done .az-ic { color: #1f9d55; background: #e8f7ee; }
+  .analyze-card.done .az-stage { color: #1f9d55; }
+  .analyze-card.done .az-time { display: none; }
+  .analyze-card.done .azq-caret { display: none; }  /* 完成态隐藏打字光标（含历史重放） */
+  .analyze-card.done.collapsed .az-feed { display: none; }
+  /* —— AI 过程流：逐步追加的动作行（真实工作流节点 + 阶段动作轮播，完成后可展开回看） —— */
+  .az-feed { margin: 0 12px 8px; display: flex; flex-direction: column; gap: 2px; }
+  .az-line {
+    display: flex; align-items: center; gap: 7px;
+    padding: 4px 8px; border-radius: 6px;
+    font-size: 12px; color: var(--text);
+    animation: fadeInUp .25s ease;
   }
-  .analyze-steps .az-step.on { color: #c2560a; background: #fff1e6; font-weight: 500; }
-  .analyze-steps .az-step.done { color: #1689e8; background: #eef6fd; }
-  .analyze-steps .az-sep { color: #d3d9df; font-size: 10px; }
-  .analyze-body {
-    margin: 0 12px 10px; padding: 8px 10px;
-    max-height: 150px; overflow-y: auto;
-    border-left: 2px solid #e3e8ee;
-    font-size: 11.5px; line-height: 1.7; color: var(--text-muted);
-    white-space: pre-wrap; word-break: break-word;
+  .az-line .azl-ic {
+    width: 15px; height: 15px; flex: none;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
   }
+  .az-line .azl-txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .az-line .azl-dur { flex: none; font-size: 10.5px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  /* 当前行：浅紫高亮 + 旋转 spinner（AI 正在执行） */
+  .az-line.live { background: #f8f5ff; border: 1px solid #eae3ff; color: #6b4fd8; }
+  .az-line.live .azl-spin {
+    width: 11px; height: 11px; flex: none; border-radius: 50%;
+    border: 1.5px solid #dcd2ff; border-top-color: #7c5cff;
+    animation: azSpin .8s linear infinite;
+  }
+  @keyframes azSpin { to { transform: rotate(360deg); } }
+  .az-line.live .tdots span {
+    display: inline-block; width: 3px; height: 3px; border-radius: 50%;
+    background: #7c5cff; margin-left: 3px;
+    animation: dotsBlink 1.6s ease-in-out infinite;
+  }
+  .az-line.live .tdots span:nth-child(2) { animation-delay: .2s; }
+  .az-line.live .tdots span:nth-child(3) { animation-delay: .4s; }
+  /* 轮播文字淡入：切换时淡入上滑，制造"AI 在连续干活"的现场感 */
+  .az-line .azl-txt.azd-swap { animation: azdFade .45s ease; display: inline-block; }
+  @keyframes azdFade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+  /* 完成行：绿勾 + 文字收灰，保留耗时 */
+  .az-line.done { color: var(--text-dim); }
+  .az-line.done .azl-ic { color: #1f9d55; font-weight: 700; }
+  .az-line.done .azl-txt { color: var(--text); opacity: .78; }
+  /* 真实节点行：⚙ 图标 + 「执行」徽标，透出后端真实工作流节点名 */
+  .az-line.node .azl-ic { color: #8a7bd8; }
+  .az-line.node .azl-txt::before {
+    content: '执行'; font-size: 10px; color: #8a7bd8; background: #f1edff;
+    border-radius: 3px; padding: 1px 5px; margin-right: 6px;
+  }
+  /* 搜索词打字行：从用户真实提问提取关键词逐字打出，末尾光标持续闪烁 */
+  .az-query {
+    display: flex; align-items: center; gap: 7px;
+    margin: 0 12px 8px; padding: 7px 10px;
+    background: linear-gradient(135deg, #f6f3ff 0%, #fdf2ff 100%);
+    border: 1px solid #eae3ff; border-radius: 6px;
+    font-size: 12.5px;
+  }
+  .az-query .azq-badge {
+    flex: none; font-size: 10px; font-weight: 600; color: #7c5cff;
+    background: #efe9ff; border-radius: 4px; padding: 1px 6px; white-space: nowrap;
+  }
+  .az-query .azq-kw {
+    font-weight: 600; color: #2d2454;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .az-query .azq-caret {
+    flex: none; width: 1.5px; height: 13px; background: #7c5cff;
+    animation: azCaret .9s steps(1) infinite;
+  }
+  @keyframes azCaret { 50% { opacity: 0; } }
+  /* 数据接收计数条：商品 JSON 流式到达时显示真实去重计数（后端给了多少显示多少，不编造） */
+  .az-count {
+    display: flex; align-items: center; gap: 8px;
+    margin: 4px 0 0; padding: 6px 10px;
+    background: #f2f9f4; border: 1px solid #dcefe2; border-radius: 6px;
+    animation: fadeInUp .3s ease;
+  }
+  .az-count .azc-ic { flex: none; font-size: 11px; color: #1f9d55; }
+  .az-count .azc-txt { flex: 1; min-width: 0; font-size: 11.5px; color: #1f7a44; font-variant-numeric: tabular-nums; }
+  .az-count .azc-bar {
+    position: relative; flex: none; width: 64px; height: 4px;
+    border-radius: 2px; background: #e2f1e7; overflow: hidden;
+  }
+  .az-count .azc-bar i {
+    position: absolute; top: 0; bottom: 0; width: 40%; border-radius: 2px;
+    background: linear-gradient(90deg, transparent, #35b46b, transparent);
+    animation: azShimmer 1.2s linear infinite;
+  }
+  @keyframes azShimmer { from { left: -40%; } to { left: 100%; } }
 
   /* 第 1 批：空状态、停止与重新生成 */
   .chat-head .stop-btn {
@@ -2249,25 +2503,36 @@
   .md-link:hover { text-decoration: underline; }
   .md-img { max-width: 60px; max-height: 60px; border-radius: 2px; vertical-align: middle; }
   .md-code { font-size: 11px; background: #f0f0f0; padding: 1px 4px; border-radius: 2px; }
-  /* 对话表格：卡片式宽表格（与右栏选品表同风格：横向滚动、单元格不折行、圆角卡片行） */
+  /* 对话表格：1688 橙色主题（与右栏"对话表格详情"预览完全同款：橙底表头白字 + 斑马纹 + 圆角卡片） */
   .md-table-wrap { margin: 8px 0 4px; overflow-x: auto; border-radius: 10px; }
-  /* 呼吸感优化：行高放宽 + 单元格内边距加大，多行小字不再糊成一团 */
-  .md-table { min-width: 720px; border-collapse: separate; border-spacing: 0 6px; font-size: 12px; line-height: 1.6; color: #3c4652; }
-  .md-table th { background: #fff; padding: 4px 14px 8px; text-align: left; font-weight: 500; font-size: 11px; color: #8a939d; white-space: nowrap; border-bottom: 1px solid #eef1f4; }
-  .md-table td { padding: 13px 14px; background: #fff; color: #3c4652; vertical-align: middle; white-space: nowrap; border-top: 1px solid #eef1f4; border-bottom: 1px solid #eef1f4; box-shadow: 0 1px 3px rgba(16,24,40,.05); }
+  .md-table { min-width: 720px; border-collapse: separate; border-spacing: 0; font-size: 12px; line-height: 1.6; color: #3c4652; }
+  /* 全部用 :where 降低权重：报告文档模式（.report-doc .md-table）与右栏预览可按需覆盖 */
+  :where(.md-table) th { background: #f7f8fa; color: #5a6472; padding: 10px 14px; text-align: left; font-weight: 700; font-size: 12px; white-space: nowrap; border-bottom: 1px solid #e6e9ed; }
+  :where(.md-table) th:not(:last-child) { border-right: 1px solid #e6e9ed; }
+  :where(.md-table) th:first-child { border-top-left-radius: 9px; }
+  :where(.md-table) th:last-child { border-top-right-radius: 9px; }
+  :where(.md-table) td { padding: 12px 14px; background: #fff; color: #3c4652; vertical-align: middle; white-space: nowrap; border-bottom: 1px solid #edf0f3; }
+  :where(.md-table) td:not(:last-child) { border-right: 1px solid #f1f4f6; }
   /* 单元格内 <br> 多行内容加空隙，竖排小字更透气 */
-  .md-table td br { display: block; content: ""; margin-top: 3px; }
-  /* 斑马纹：用 :where 清零权重，避免盖住 hover 高亮 */
-  :where(.md-table) tbody tr:nth-child(even) td { background: #fafbfd; }
-  .md-table td:first-child { border-left: 1px solid #eef1f4; border-radius: 12px 0 0 12px; }
-  .md-table td:last-child { border-right: 1px solid #eef1f4; border-radius: 0 12px 12px 0; }
-  .md-table tr:hover td { background: #fafcfe; }
+  :where(.md-table) td br { display: block; content: ""; margin-top: 3px; }
+  /* 斑马纹与 hover 同权重，靠源码顺序保证 hover 胜出（与预览表一致） */
+  :where(.md-table) tbody tr:nth-child(even) td { background: #FAFBFC; }
+  :where(.md-table) tbody tr:hover td { background: #f1f4f6; }
+  :where(.md-table) tbody tr:last-child td:first-child { border-bottom-left-radius: 9px; }
+  :where(.md-table) tbody tr:last-child td:last-child { border-bottom-right-radius: 9px; }
   .md-table strong { color: #FF6600; }
   .md-table .md-img { width: 44px; height: 44px; max-width: 44px; max-height: 44px; border-radius: 6px; object-fit: cover; flex: none; }
-  /* 含图片的单元格（商品信息列）：图左文右，仅商品文字允许换行 */
-  .md-cell-prod { display: flex; align-items: center; gap: 9px; min-width: 190px; max-width: 270px; }
-  .md-cell-prod .prod-txt { white-space: normal; color: #2b3540; font-size: 12px; line-height: 1.45; }
-  .md-cell-prod .prod-txt .mini-tag { margin: 1px 4px 0 0; padding: 1px 5px; border-radius: 3px; font-size: 10px; background: #f2f4f7; color: #6b7683; display: inline-block; }
+  /* 含图片+文字的单元格（商品信息列）：图左文右，仅商品文字允许换行；宽度由内容自然撑开，不再强制 min-width */
+  .md-cell-prod { display: flex; align-items: center; gap: 9px; max-width: 270px; }
+  /* 商品标题统一深绿（与右栏表格 .product-title 同色），链接与否不再产生颜色区分 */
+  .md-cell-prod .prod-txt { white-space: normal; color: #00873C; font-size: 12px; line-height: 1.45; }
+  .md-table .md-link { color: #00873C; }
+  .md-cell-prod .prod-txt .mini-tag { margin: 1px 4px 0 0; padding: 1px 5px; border-radius: 3px; font-size: 10px; color: #fff; background: #ff7800; display: inline-block; }
+  .md-cell-prod .prod-txt .mini-tag.green { background: #00b95a; }
+  .md-cell-prod .prod-txt .mini-tag.blue { background: #4c9fff; }
+  /* 气泡迷你表可排序表头：hover/激活橙加深（与右栏两表同视觉语言） */
+  :where(.md-table) th.sortable { cursor: pointer; user-select: none; }
+  :where(.md-table) th.sortable:hover, :where(.md-table) th.sort-active { background: linear-gradient(180deg, #FF9630, #FF7A10); }
 
   /* 表格"查看更多"按钮（中栏，超过阈值行数时出现在表格底部） */
   .md-more-btn {
@@ -2331,11 +2596,11 @@
   .md-export-btn:hover { filter: brightness(1.07); }
   .md-export-btn:active { transform: translateY(1px); box-shadow: none; }
   .md-export-name { font-size: 11px; color: #b06a2c; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%; }
-  /* 对话表格详情视图：1688 橙色主题表格（橙底表头白字 + 斑马纹 + 圆角卡片） */
+  /* 对话表格详情视图：无色主题表格（浅灰表头深灰字 + 浅灰斑马纹 + 圆角卡片） */
   .md-table-clip { border-radius: 10px; }
   .md-full-table th {
-    background: linear-gradient(180deg, #FF8A1E, #FF6A00); color: #fff;
-    font-weight: 700; border-bottom: none; padding: 10px 14px; text-align: left;
+    background: #f7f8fa; color: #5a6472;
+    font-weight: 700; border-bottom: 1px solid #e6e9ed; padding: 10px 14px; text-align: left;
   }
   /* 长表下滚时表头吸附置顶（容器 .md-preview-scroll 内） */
   .md-full-table thead th { position: sticky; top: 0; z-index: 2; }
@@ -2346,10 +2611,10 @@
   .md-full-table th:not(:last-child) { border-right: 1px solid rgba(255,255,255,.25); }
   .md-full-table th:first-child { border-top-left-radius: 9px; }
   .md-full-table th:last-child { border-top-right-radius: 9px; }
-  .md-full-table td { border-bottom: 1px solid #FFE9D2; }
-  .md-full-table td:not(:last-child) { border-right: 1px solid #FFF3E4; }
-  .md-full-table tbody tr:nth-child(even) td { background: #FFF7ED; }
-  .md-full-table tbody tr:hover td { background: #FFEFD9; }
+  .md-full-table td { border-bottom: 1px solid #edf0f3; }
+  .md-full-table td:not(:last-child) { border-right: 1px solid #f1f4f6; }
+  .md-full-table tbody tr:nth-child(even) td { background: #FAFBFC; }
+  .md-full-table tbody tr:hover td { background: #f1f4f6; }
   .md-full-table tbody tr:last-child td:first-child { border-bottom-left-radius: 9px; }
   .md-full-table tbody tr:last-child td:last-child { border-bottom-right-radius: 9px; }
   /* 表格详情模式下，隐藏右栏 1688 商品区块，只显示对话表格完整视图 */
@@ -2596,7 +2861,8 @@
 
         <!-- 底部工具栏 -->
         <div class="composer-bar">
-          <button class="cb-upload" id="filePickBtn" type="button" title="上传文件">
+          <!-- 本版本暂不上线文件上传：按钮隐藏（代码保留，下版本恢复时去掉 display:none 即可） -->
+          <button class="cb-upload" id="filePickBtn" type="button" title="上传文件" style="display:none">
             <span class="up-ic"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M12 15.5V4.5M7.5 8.5L12 4l4.5 4.5" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 20h14" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg></span>
             上传文件
           </button>
@@ -2650,8 +2916,9 @@
         <div class="excel-toolbar">
           <span class="name">📊 1688 商品选品结果.xlsx</span>
           <span class="spacer"></span>
+          <button type="button" class="pg-export-btn" id="pgExportSel" title="仅导出勾选的商品" disabled>导出勾选 (<span id="pgSelCount">0</span>)</button>
+          <button type="button" class="pg-export-btn primary" id="pgExportAll" title="导出全部商品">⤓ 导出全部</button>
           <span class="ic fullscreen-btn" title="全屏查看">⛶</span>
-          <span class="ic export-btn" title="导出 Excel（全部）">⤓</span>
         </div>
 
         <table class="preview-table" id="previewTable">
@@ -2659,31 +2926,30 @@
             <tr>
               <th class="chk-cell" title="全选/取消本页"><input type="checkbox" id="pgCheckAll"></th>
               <th style="width:52px">序号</th>
-              <th>商品信息</th>
-              <th>上架时间</th>
-              <th class="sortable" data-sort-key="price">批发价 <span class="sort-indicator">⇕</span></th>
-              <th>起批范围</th>
-              <th class="sortable" data-sort-key="sales">近30天订单数 <span class="sort-indicator">⇕</span></th>
-              <th class="sortable" data-sort-key="count">近30天件数 <span class="sort-indicator">⇕</span></th>
+              <th>商品主图</th><th>商品标题</th><th>商品链接</th><th>商品类目</th><th>商品ID</th><th>上架时间</th>
+              <th>批发价</th><th>起批量</th><th>sku数量</th><th>近30天订单数</th><th>近30天件数</th><th>近30天销售额</th>
+              <th>24H揽收率</th><th>48H揽收率</th><th>7日订单增长率</th><th>7日采购集中率</th><th>复购率</th><th>代发价</th>
+              <th>跨境服务</th><th>权益保障</th><th>面单支持</th><th>商品标识</th><th>商品信息</th><th>供货类型</th><th>店铺名称</th>
+              <th>诚信通年限</th><th>店铺48H履约率</th><th>店铺回头率</th><th>店铺响应率</th><th>综合服务</th><th>所在地</th>
+              <th>公司类型</th><th>卖家会员类型</th><th>卖家服务</th><th>店铺链接</th><th>主图链接</th>
             </tr>
           </thead>
           <tbody></tbody>
         </table>
       </div>
 
-      <!-- 分页条：随 renderOfferPage 显示/隐藏（放 excel-wrap 外，垂直滚动表格时保持固定） -->
+      <!-- 分页条：随 renderOfferPage 显示/隐藏（放 excel-wrap 外，垂直滚动表格时保持固定）；导出按钮已上移至表格上方工具栏；
+           布局为参考图紧凑样式：共N条 · 条/页 · ‹页码› · 前往X页 -->
       <div class="table-pagination" id="tablePagination" style="display:none">
         <span class="pg-total" id="pgTotal"></span>
-        <span class="pg-nav" id="pgNav"></span>
-        <span class="spacer"></span>
-        <button type="button" class="pg-btn" id="pgExportSel" title="仅导出勾选的商品" disabled>导出勾选 (<span id="pgSelCount">0</span>)</button>
-        <button type="button" class="pg-btn pg-primary" id="pgExportAll" title="导出全部商品">导出全部</button>
-        <span class="pg-size">每页
+        <span class="pg-size">
           <select id="pgSize" title="每页条数">
-            <option value="50" selected>50 条</option>
-            <option value="100">100 条</option>
+            <option value="50" selected>50条/页</option>
+            <option value="100">100条/页</option>
           </select>
         </span>
+        <span class="pg-nav" id="pgNav"></span>
+        <span class="pg-jump">前往 <input id="pgJump" type="number" min="1" title="跳转到指定页，回车确认"> 页</span>
       </div>
       </div>
 
@@ -2827,12 +3093,29 @@
         <div><div class="ws-label">当前可用积分</div><div class="ws-balance"><span id="walletBalance">1000</span> <small>积分</small></div></div>
         <div class="ws-tip">预计可完成约 <strong id="walletRuns">42</strong> 次标准选品分析</div>
       </div>
-      <div class="wallet-section-title"><span>充值套餐</span><small>演示价格，正式版接入支付</small></div>
-      <div class="wallet-packages">
+      <div class="wallet-section-title"><span>充值套餐</span><small id="walletPkgTip">演示价格，正式版接入支付</small></div>
+      <div class="wallet-packages" id="walletPackages">
         <div class="wallet-package" data-coins="500" data-price="9.9" data-pkg-name="体验包"><div class="wp-name">体验包</div><div class="wp-coins">500 积分</div><div class="wp-price">¥9.9</div><div class="wp-actions"><button class="wp-action wp-buy">立即购买</button></div></div>
         <div class="wallet-package selected" data-coins="2000" data-price="29.9" data-pkg-name="常用包"><div class="wp-name">常用包</div><div class="wp-coins">2,000 积分</div><div class="wp-price">¥29.9</div><div class="wp-actions"><button class="wp-action wp-buy">立即购买</button></div></div>
         <div class="wallet-package" data-coins="10000" data-price="99" data-pkg-name="专业包"><div class="wp-name">专业包</div><div class="wp-coins">10,000 积分</div><div class="wp-price">¥99</div><div class="wp-actions"><button class="wp-action wp-buy">立即购买</button></div></div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== AI 回复反馈弹窗（点踩 → 提供反馈） ========== -->
+<div class="fb-modal" id="fbModal" role="dialog" aria-modal="true" aria-labelledby="fbTitle">
+  <div class="fb-dialog">
+    <div class="fb-head">
+      <span class="fb-title" id="fbTitle">提供反馈</span>
+      <button class="fb-close" id="fbClose" aria-label="关闭">×</button>
+    </div>
+    <div class="fb-sub">请告诉我们这次对话结果不符合您需求的原因</div>
+    <label class="fb-label" for="fbText">反馈内容</label>
+    <textarea id="fbText" placeholder="描述下结果不满意的原因或者希望我们如何可以改进..."></textarea>
+    <div class="fb-foot">
+      <button class="fb-btn" id="fbCancel">取消</button>
+      <button class="fb-btn primary" id="fbSubmit">提交</button>
     </div>
   </div>
 </div>
@@ -2842,7 +3125,7 @@
   <div class="wallet-dialog">
     <div class="wallet-head">
       <button class="wallet-back" id="ledgerBack" aria-label="返回积分中心">‹</button>
-      <div><div class="wh-title" id="ledgerTitle">充值明细</div><div class="wh-sub" id="ledgerSub">购买积分与退款记录</div></div>
+      <div><div class="wh-title" id="ledgerTitle">充值明细</div><div class="wh-sub" id="ledgerSub">购买积分记录</div></div>
       <div class="wallet-links">
         <button class="wallet-link buy" id="ledgerSwitchBuy" data-target="buy"><span class="wl-ic">+</span>充值明细</button>
         <button class="wallet-link consume" id="ledgerSwitchConsume" data-target="consume"><span class="wl-ic">−</span>消耗明细</button>
@@ -2851,22 +3134,22 @@
     </div>
     <div class="wallet-content">
       <section class="ledger-block" data-block="buy">
-        <div class="ledger-block-head"><h3>充值明细</h3><small>购买积分与退款记录</small></div>
-        <div class="ledger-filter">
-          <div class="lf-field"><label class="lf-label">日期范围</label><input type="text" id="buyDateRange" placeholder="开始日期 ~ 结束日期"></div>
-          <div class="lf-field"><label class="lf-label">支付方式</label><select id="buyPayFilter"><option value="all">全部</option><option value="微信支付">微信支付</option><option value="支付宝">支付宝</option><option value="对公转账">对公转账</option></select></div>
-          <div class="lf-field"><label class="lf-label">关键字</label><input type="text" id="buyKeyword" placeholder="搜索备注或订单号"></div>
-          <div class="lf-actions"><button class="lf-btn primary" data-block="buy">查询</button><button class="lf-btn" data-block-reset="buy">重置</button></div>
+        <div class="ledger-block-head"><h3>充值明细</h3><small>购买积分记录</small></div>
+        <div class="ledger-filter lf-buy">
+          <div class="lf-rangebox" id="buyRangeBox">
+            <span class="lr-text is-empty" id="buyRangeText">开始日期 - 结束日期</span>
+            <span class="lr-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg></span>
+            <span class="lr-clear" title="清除日期">×</span>
+            <div class="date-panel" id="buyDatePanel" style="display:none"></div>
+          </div>
         </div>
         <table class="ledger-table">
           <thead>
             <tr>
-              <th style="width:170px">订单号</th>
-              <th>备注</th>
-              <th style="width:80px">数量</th>
-              <th style="width:140px">创建时间</th>
-              <th style="width:110px">支付方式</th>
-              <th style="width:70px">操作</th>
+              <th style="width:190px">订单号</th>
+              <th>充值套餐</th>
+              <th style="width:150px">支付时间</th>
+              <th style="width:90px">积分数量</th>
             </tr>
           </thead>
           <tbody id="buyTbody"></tbody>
@@ -2878,22 +3161,27 @@
       </section>
 
       <section class="ledger-block" data-block="consume" style="display:none">
-        <div class="ledger-block-head"><h3>消耗明细</h3><small>商品搜索、AI 分析等任务扣费记录</small></div>
-        <div class="ledger-filter">
-          <div class="lf-field"><label class="lf-label">日期范围</label><input type="text" id="consumeDateRange" placeholder="开始日期 ~ 结束日期"></div>
-          <div class="lf-field"><label class="lf-label">来源</label><select id="consumeSourceFilter"><option value="all">全部</option><option value="AI 工具调用">AI 工具调用</option><option value="AI AGNET">AI AGNET</option><option value="选品报告">选品报告</option></select></div>
-          <div class="lf-field"><label class="lf-label">关键字</label><input type="text" id="consumeKeyword" placeholder="搜索备注"></div>
-          <div class="lf-actions"><button class="lf-btn primary" data-block="consume">查询</button><button class="lf-btn" data-block-reset="consume">重置</button></div>
+        <div class="ledger-block-head"><h3>消耗明细</h3><small>对话任务积分消耗记录</small></div>
+        <div class="ledger-filter lf-consume">
+          <div class="lf-chips" id="consumeChips">
+            <button class="chip" type="button" data-range="today">今天</button>
+            <button class="chip active" type="button" data-range="7d">7天</button>
+            <button class="chip" type="button" data-range="30d">30天</button>
+          </div>
+          <div class="lf-rangebox" id="consumeRangeBox">
+            <span class="lr-text is-empty" id="consumeRangeText">开始日期 - 结束日期</span>
+            <span class="lr-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg></span>
+            <span class="lr-clear" title="清除日期">×</span>
+            <div class="date-panel" id="consumeDatePanel" style="display:none"></div>
+          </div>
         </div>
         <table class="ledger-table">
           <thead>
             <tr>
-              <th style="width:90px">消耗积分</th>
-              <th>备注</th>
-              <th style="width:90px">状态</th>
-              <th style="width:170px">来源</th>
-              <th style="width:140px">创建时间</th>
-              <th style="width:70px">操作</th>
+              <th>对话记录</th>
+              <th style="width:150px">创建时间</th>
+              <th style="width:160px">来源对话</th>
+              <th style="width:90px">积分消耗</th>
             </tr>
           </thead>
           <tbody id="consumeTbody"></tbody>
@@ -2944,6 +3232,31 @@
   <div class="cm-item danger" data-menu="delete">
     <span class="cm-ic">🗑</span>
     <span>删除任务</span>
+  </div>
+</div>
+
+<!-- 输入框右键菜单：剪切 / 复制 / 粘贴 / 全选（右侧显示快捷键） -->
+<div class="input-menu" id="inputMenu">
+  <div class="im-item" data-act="cut">
+    <span class="im-ic">✂</span>
+    <span>剪切</span>
+    <span class="im-kbd">Ctrl+X</span>
+  </div>
+  <div class="im-item" data-act="copy">
+    <span class="im-ic">⧉</span>
+    <span>复制</span>
+    <span class="im-kbd">Ctrl+C</span>
+  </div>
+  <div class="im-sep"></div>
+  <div class="im-item" data-act="paste">
+    <span class="im-ic">📋</span>
+    <span>粘贴</span>
+    <span class="im-kbd">Ctrl+V</span>
+  </div>
+  <div class="im-item" data-act="selectAll">
+    <span class="im-ic">▢</span>
+    <span>全选</span>
+    <span class="im-kbd">Ctrl+A</span>
   </div>
 </div>
 
@@ -3031,7 +3344,140 @@
     ]
   };
   const ACCOUNT_KEY = 'dld_current_account';
+  const PRODUCT_CACHE_KEY = 'dld_products_by_conversation_v1';
   let CURRENT_ACCOUNT = ACCOUNTS[0];
+
+  function readConversationProducts() {
+    try {
+      const value = JSON.parse(localStorage.getItem(PRODUCT_CACHE_KEY) || '{}');
+      return value && typeof value === 'object' ? value : {};
+    } catch (e) { return {}; }
+  }
+  function saveConversationProducts(conversationId, payload) {
+    if (!conversationId || !payload || !Array.isArray(payload.products) || !payload.products.length) return;
+    try {
+      const all = readConversationProducts();
+      all[String(conversationId)] = { count: payload.count || payload.products.length, products: payload.products, savedAt: Date.now() };
+      localStorage.setItem(PRODUCT_CACHE_KEY, JSON.stringify(all));
+    } catch (e) { console.warn('[DLD] 商品结果缓存失败：', e.message); }
+  }
+  function getConversationProducts(conversationId) {
+    if (!conversationId) return null;
+    const all = readConversationProducts();
+    const value = all[String(conversationId)];
+    return value && Array.isArray(value.products) && value.products.length ? value : null;
+  }
+  function renderConversationProducts(payload) {
+    if (payload && Array.isArray(payload.products) && payload.products.length && typeof chatflowProductsToOffers === 'function') {
+      const offers = chatflowProductsToOffers(payload);
+      window.__dldOffers = offers;
+      if (typeof renderOffers === 'function') renderOffers(offers, { totalCount: payload.count || offers.length });
+      return true;
+    }
+    if (typeof setRightEmpty === 'function') setRightEmpty(true);
+    return false;
+  }
+
+  // 生产协议：商品元数据只能通过 workflow_finished.data.outputs.answer.payload 获取。
+  function parseNestedJson(value, depth = 0) {
+    if (depth > 6 || value == null) return value;
+    if (typeof value === 'string') {
+      const s = value.trim();
+      if (!s || !/^[\[{]/.test(s)) return value;
+      try { return parseNestedJson(JSON.parse(s), depth + 1); } catch (e) { return value; }
+    }
+    return value;
+  }
+  function getWorkflowOutputs(eventData) {
+    const outputs = eventData && eventData.data && eventData.data.outputs;
+    const parsed = parseNestedJson(outputs);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null;
+  }
+  function getAnswerEnvelope(outputs) {
+    if (!outputs || typeof outputs.answer !== 'string') return null;
+    const source = outputs.answer;
+    const candidates = [source, source.replace(/\\\\?"/g, '"')];
+
+    // 最新生产协议：outputs.answer 本身是 JSON 字符串，商品元数据位于 envelope.payload。
+    for (const candidate of candidates) {
+      try {
+        const parsed = JSON.parse(candidate.trim());
+        const payload = parsed && parsed.payload && typeof parsed.payload === 'object'
+          ? parsed.payload
+          : null;
+        if (payload && typeof payload.obsUrl === 'string') {
+          return {
+            ...parsed,
+            obsUrl: payload.obsUrl,
+            totalCount: Number(payload.totalCount || 0) || 0,
+            count: Number(payload.count || 0) || 0
+          };
+        }
+      } catch (e) {}
+    }
+
+    const urlStart = source.indexOf('https://obs.dianleida.net/');
+    if (urlStart >= 0) {
+      let urlEnd = urlStart;
+      while (urlEnd < source.length && !/["\\\\\s]/.test(source[urlEnd])) urlEnd += 1;
+      const metadataSource = source.replace(/\\\\+"/g, '"');
+      const totalMatch = metadataSource.match(/totalCount[^0-9]{0,12}(\\d+)/);
+      const countMatch = metadataSource.match(/(?:^|[^A-Za-z])count[^0-9]{0,12}(\\d+)/);
+      return { obsUrl: source.slice(urlStart, urlEnd), totalCount: totalMatch ? Number(totalMatch[1]) : 0, count: countMatch ? Number(countMatch[1]) : 0 };
+    }
+    for (const src of candidates) {
+      const marker = src.indexOf('"obsUrl"');
+      if (marker < 0) continue;
+      let start = src.lastIndexOf('{', marker);
+    while (start >= 0) {
+      let depth = 0, inString = false, escaped = false;
+      for (let i = start; i < src.length; i += 1) {
+        const ch = src[i];
+        if (escaped) { escaped = false; continue; }
+        if (ch === '\\') { escaped = true; continue; }
+        if (ch === '"') { inString = !inString; continue; }
+        if (inString) continue;
+        if (ch === '{') depth += 1;
+        else if (ch === '}' && --depth === 0) {
+          try {
+            const parsed = JSON.parse(src.slice(start, i + 1));
+            if (parsed && typeof parsed === 'object' && parsed.obsUrl) return parsed;
+          } catch (e) {}
+          break;
+        }
+      }
+        start = src.lastIndexOf('{', start - 1);
+      }
+    }
+    return null;
+  }
+  async function loadObsProducts(obsUrl, totalCount, convId) {
+    const response = await fetch(obsUrl, { method: 'GET', mode: 'cors', credentials: 'omit' });
+    if (!response.ok) throw new Error('商品数据请求失败: HTTP ' + response.status);
+    const raw = await response.json();
+    const parsed = parseNestedJson(raw);
+    const items = Array.isArray(parsed) ? parsed
+      : (Array.isArray(parsed && parsed.products) ? parsed.products
+        : (Array.isArray(parsed && parsed.list) ? parsed.list
+          : (Array.isArray(parsed && parsed.data) ? parsed.data : null)));
+    if (!items) throw new Error('obsUrl 返回的数据不是商品数组');
+    const products = items.slice(0, 10000);
+    const payload = { count: products.length, products, obsUrl };
+    window.__dldObsMeta = { obsUrl, totalCount: Number(totalCount || 0), fetchedCount: items.length, renderedCount: products.length };
+    console.log('obsUrl:', obsUrl);
+    console.log('totalCount:', Number(totalCount || 0));
+    console.log('count:', products.length);
+    window.currentResult = {
+      answer: window.__dldCurrentAnswer || '',
+      obsUrl,
+      totalCount: Number(totalCount || 0),
+      count: products.length,
+      products
+    };
+    saveConversationProducts(convId, payload);
+    renderConversationProducts(payload);
+    return payload;
+  }
 
   function findAccount(id) { return ACCOUNTS.find(a => a.id === id) || ACCOUNTS[0]; }
 
@@ -3193,8 +3639,20 @@
   // 停止指定会话的运行中任务（服务端断流 → 客户端 reader 结束 → onDone → finishRun 收尾）
   function stopTask(convKey) {
     const task = RUNNING_TASKS.get(convKey);
-    if (!task || !task.runId || typeof DLD === 'undefined' || !DLD.stopRun) return;
-    DLD.stopRun(task.runId).catch(e => console.warn('[DLD] stopRun 失败：', e.message));
+    if (!task || task.stopped) return;
+    task.stopped = true;
+    if (task.abortController) task.abortController.abort();
+    if (task.cancelStream) task.cancelStream();
+    if (task.runId && typeof DLD !== 'undefined' && DLD.stopRun) {
+      DLD.stopRun(task.runId).catch(e => console.warn('[DLD] stopRun 失败：', e.message));
+    }
+    if (task.finishRun) task.finishRun();
+    else {
+      // 兜底：finishRun 尚未注册（极端早期点击）也要立即释放运行锁并还原按钮态
+      RUNNING_TASKS.delete(convKey);
+      refreshRunUI();
+      refreshConvItemRunning(convKey);
+    }
   }
 
   /* ============ 服务端智能体开场配置 ============
@@ -3561,7 +4019,13 @@
           switchToView(view.el);
           return;
         }
-        view.el.innerHTML = messages.map(renderMessageBubble).join('');
+        view.el.innerHTML = messages.map((mm, i) => renderMessageBubble(mm, messages[i - 1])).join('');
+        // 方案B：历史 answer 只有摘要时，从本会话缓存恢复 node_finished 商品结果；没有缓存就保持右栏空态。
+        renderConversationProducts(getConversationProducts(target.convId));
+        // 历史消息操作栏（点赞/点踩/复制/重新发起）事件绑定
+        bindMsgActions(view.el);
+        // 历史用户消息操作栏（编辑=添加到对话 / 复制）事件绑定
+        bindUserActions(view.el);
         view.el.classList.add('conv-fade-in');
         bindSuggestionClicks(view.el);
         view.el.querySelectorAll('.task-head').forEach(h => {
@@ -3615,18 +4079,20 @@
       }
       return out;
     }
-    function renderMessageBubble(m) {
+    function renderMessageBubble(m, prev) {
       const time = m.createdAt ? new Date(m.createdAt).toLocaleString('zh-CN', { hour12: false }) : '';
       if (m.role === 'user') {
-        return `<div class="msg user"><div class="avatar">我</div><div class="msg-body"><div class="msg-role">我 <span class="time">${time}</span></div><div class="msg-bubble"><p>${escapeHtml(m.content)}</p></div></div></div>`;
+        return `<div class="msg user"><div class="avatar">我</div><div class="msg-body"><div class="msg-role">我 <span class="time">${time}</span></div><div class="msg-bubble"><p>${escapeHtml(m.content)}</p></div>${userActionsHtml(m.content)}</div></div>`;
       }
-      // AI 消息：与流式完成后一致（表格型只渲染表格+查看更多→右栏预览，不铺分析文字；其余走 Markdown 渲染）
-      const html = (typeof hasMdTable === 'function' && typeof renderTablesOnly === 'function' && hasMdTable(m.content))
-        ? renderTablesOnly(m.content)
-        : ((typeof renderMarkdown === 'function')
-          ? renderMarkdown(m.content)
-          : escapeHtml(m.content).replace(/\n/g, '<br>'));
-      return `<div class="msg ai"><div class="avatar">AI</div><div class="msg-body"><div class="msg-role">${CURRENT_ACCOUNT.agent || '店雷达 AI'} <span class="time">${time} · 已完成</span></div><div class="msg-bubble">${html}</div></div></div>`;
+      // AI 消息：与流式完成后共用 renderAiAnswerHtml（商品 JSON → 36 列表格 / 报告卡片 / 表格 / Markdown），避免历史恢复显示原始 JSON
+      const html = renderAiAnswerHtml(m.content);
+      // 历史恢复：选品类回答补一张静态「搜索分析完成」卡，与流式收尾视觉一致
+      // 搜索词取自用户提问原文；耗时与阶段明细后端未存，不虚构，故不展示
+      let azCard = '';
+      if (prev && prev.role === 'user' && typeof extractSearchKw === 'function' && typeof extractProductJson === 'function' && extractProductJson(m.content)) {
+        azCard = '<div class="analyze-card done collapsed"><div class="analyze-head" style="cursor:default"><span class="az-ic">✓</span><span class="az-stage">搜索分析完成</span></div><div class="az-query"><span class="azq-badge">已搜索</span><span class="azq-kw">' + escapeHtml(extractSearchKw(prev.content)) + '</span></div></div>';
+      }
+      return `<div class="msg ai"><div class="avatar">AI</div><div class="msg-body"><div class="msg-role">${CURRENT_ACCOUNT.agent || '店雷达 AI'} <span class="time">${time} · 已完成</span></div><div class="msg-bubble">${azCard}${html}</div>${msgActionsHtml(prev && prev.role === 'user' ? prev.content : '', m.content)}</div></div>`;
     }
     function escapeHtml(s) {
       // 使用外层全局 escapeHtml；此处保留空实现以兼容旧引用
@@ -3638,17 +4104,16 @@
       CONV_VIEWS.forEach((v, k) => { if (k.indexOf('draft-') === 0 && !RUNNING_TASKS.has(k) && !v.el.querySelector('.msg')) CONV_VIEWS.delete(k); });
       const key = 'draft-' + (++DRAFT_SEQ);
       ACTIVE_CONV_KEY = key;
-      // 左侧同步显示当前草稿，首次发送后会由真实会话标题替换
+      // 左栏不显示未发言的草稿条目：新建对话只切换右栏到开场白，
+      // 首次发送后由 syncOfficialConversationTitle 把后端真实会话灌入列表
       const sessions = SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] || (SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] = []);
       for (let i = sessions.length - 1; i >= 0; i--) {
         if (sessions[i].draft) sessions.splice(i, 1);
       }
-      sessions.unshift({ id: key, title: '新建对话', tag: '草稿', time: '刚刚', timestamp: Date.now(), draft: true });
       const view = { el: makeConvView(key), loaded: false, scrollPos: null };
       CONV_VIEWS.set(key, view);
       renderOpening(view.el);
       switchToView(view.el);
-      rerenderConvList();
       const title = document.querySelector('.chat-head .title');
       if (title) title.textContent = '新建对话';
       const tag = document.querySelector('.chat-head .agent-tag');
@@ -3828,36 +4293,40 @@
   const buyPager = document.getElementById('buyPager');
   const buyTotalCount = document.getElementById('buyTotalCount');
   const buyTotalCoins = document.getElementById('buyTotalCoins');
-  const buyPayFilter = document.getElementById('buyPayFilter');
-  const buyKeyword = document.getElementById('buyKeyword');
-  const buyDateRange = document.getElementById('buyDateRange');
+  const buyRangeBox = document.getElementById('buyRangeBox');
+  const buyRangeText = document.getElementById('buyRangeText');
+  const buyDatePanel = document.getElementById('buyDatePanel');
 
   // 消耗明细区块引用
   const consumeTbody = document.getElementById('consumeTbody');
   const consumePager = document.getElementById('consumePager');
   const consumeTotalCount = document.getElementById('consumeTotalCount');
   const consumeTotalCoins = document.getElementById('consumeTotalCoins');
-  const consumeSourceFilter = document.getElementById('consumeSourceFilter');
-  const consumeKeyword = document.getElementById('consumeKeyword');
-  const consumeDateRange = document.getElementById('consumeDateRange');
+  const consumeRangeBox = document.getElementById('consumeRangeBox');
+  const consumeRangeText = document.getElementById('consumeRangeText');
+  const consumeDatePanel = document.getElementById('consumeDatePanel');
 
   // 数据：充值 + 消耗，各自维护
+  // 【对接说明】后端暂未提供充值/消耗流水接口（对接指南 11 个接口中无此类），
+  // 暂用本地演示数据；流水接口就绪后在 bootstrapDld 中拉取并替换这两个数组的数据源。
   const BUY_LEDGER = [
-    { id: 'ORDg1a732060324PS15R', note: '购买积分：常用包', amount: 2000, time: '2026-08-24 10:20:15', pay: '微信支付' },
-    { id: 'ORDg1a73206032431010A', note: '购买积分：体验包', amount: 500, time: '2026-08-22 18:41:10', pay: '微信支付' },
-    { id: 'ORDg1a732060312PRKXNS', note: '退款：订单异常退还', amount: -200, time: '2026-08-18 09:15:42', pay: '原路退回' }
+    { id: 'dld20260824102015842', pkg: '常用包', amount: 2000, time: '2026-08-24 10:20:15' },
+    { id: 'dld20260822184110673', pkg: '体验包', amount: 500, time: '2026-08-22 18:41:10' },
+    { id: 'dld20260818091542291', pkg: '—', amount: -200, time: '2026-08-18 09:15:42' }
   ];
   const CONSUME_LEDGER = [
-    { coins: 25, note: '生成报告', status: '完成', source: '选品报告', time: '2026-09-07 15:35:45' },
-    { coins: 0.5, note: '完成', status: '完成', source: 'AI AGNET', time: '2026-09-07 17:06:57' },
-    { coins: 1, note: '成功', status: '成功', source: 'AI 工具调用', time: '2026-09-07 17:06:18' },
-    { coins: 0.2, note: '完成', status: '完成', source: 'AI AGNET', time: '2026-09-07 16:43:36' },
-    { coins: 0.8, note: '完成', status: '完成', source: 'AI AGNET', time: '2026-09-07 16:42:16' },
-    { coins: 0.5, note: '完成', status: '完成', source: 'AI AGNET', time: '2026-09-07 16:39:32' },
-    { coins: 1, note: '成功', status: '成功', source: 'AI 工具调用', time: '2026-09-07 16:39:17' },
-    { coins: 0.7, note: '完成', status: '完成', source: 'AI AGNET', time: '2026-09-01 20:28:32' },
-    { coins: 1, note: '成功', status: '成功', source: 'AI 工具调用', time: '2026-09-01 20:26:54' },
-    { coins: 1, note: '成功', status: '成功', source: 'AI 工具调用', time: '2026-09-01 20:26:54' }
+    { title: '帮我找一下近30天的连衣裙爆款，要价格和销量对比表', conv: '近30天连衣裙爆款价格', coins: -20, time: '2026-09-21 10:12:36' },
+    { title: '夏季防晒衣现在哪些是热销款？帮我做个选品分析', conv: '夏季防晒衣热销选品', coins: -20, time: '2026-09-20 16:44:02' },
+    { title: '推荐几款厨房收纳好物，最好带销量数据', conv: '厨房收纳好物推荐', coins: -25, time: '2026-09-19 09:38:51' },
+    { title: '宠物用品这个类目帮我分析一下，重点看狗窝和猫爬架', conv: '宠物用品类目分析', coins: -20, time: '2026-09-18 15:20:14' },
+    { title: '母婴用品热销榜单整理一下，要 top20', conv: '母婴用品热销榜单', coins: -30, time: '2026-09-17 11:05:47' },
+    { title: '秋冬男装外套的流行趋势是什么？帮我盘一盘', conv: '秋冬男装外套趋势', coins: -20, time: '2026-09-16 14:52:29' },
+    { title: '帮我出一份家居香薰的选品报告，侧重性价比', conv: '家居香薰选品报告', coins: -25, time: '2026-09-15 10:31:08' },
+    { title: '户外露营装备有哪些蓝海机会？帮我挖掘一下', conv: '户外露营装备挖掘', coins: -20, time: '2026-09-15 08:47:55' },
+    { title: '美妆工具类目的蓝海词帮我分析下', conv: '美妆工具蓝海词分析', coins: -20, time: '2026-09-10 17:23:41' },
+    { title: '汽车内饰爆品帮我盘点一下，要带价格带分布', conv: '汽车内饰爆品盘点', coins: -35, time: '2026-09-08 13:09:26' },
+    { title: '数码配件的价格带怎么分布的？帮我分析', conv: '数码配件价格带分析', coins: -20, time: '2026-09-05 19:40:13' },
+    { title: '健康食品类目帮我调研一下，侧重跨境电商', conv: '健康食品类目调研', coins: -20, time: '2026-09-01 12:28:07' }
   ];
   const PAGE_SIZE = 10;
   const BLOCK_PAGES = { buy: 1, consume: 1 };
@@ -3868,26 +4337,34 @@
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   }
   function makeOrderId() {
+    // 格式：dld + yyyyMMddHHmmss + 3位随机数字；与现有订单查重，重复则重新生成
     const d = new Date();
-    const rand = Math.random().toString(36).slice(2, 9).toUpperCase();
-    return `ORDg1a${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}${rand}`;
+    const stamp = `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+    let id;
+    do {
+      id = `dld${stamp}${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+    } while (BUY_LEDGER.some(item => item.id === id));
+    return id;
   }
 
   function getFilteredBuy() {
-    const kw = (buyKeyword.value || '').trim().toLowerCase();
-    const pay = buyPayFilter.value;
+    const start = buyPicker.getStart() || ''; // 'YYYY-MM-DD'
+    const end = buyPicker.getEnd() || '';
     return BUY_LEDGER.filter(item => {
-      if (pay !== 'all' && item.pay !== pay) return false;
-      if (kw && !(item.note.toLowerCase().includes(kw) || item.id.toLowerCase().includes(kw))) return false;
+      if (item.amount < 0) return false; // 退款记录不在充值明细中展示
+      const day = (item.time || '').slice(0, 10);
+      if (start && day < start) return false;
+      if (end && day > end) return false;
       return true;
     });
   }
   function getFilteredConsume() {
-    const kw = (consumeKeyword.value || '').trim().toLowerCase();
-    const src = consumeSourceFilter.value;
+    const start = consumePicker.getStart() || ''; // 'YYYY-MM-DD'
+    const end = consumePicker.getEnd() || '';
     return CONSUME_LEDGER.filter(item => {
-      if (src !== 'all' && item.source !== src) return false;
-      if (kw && !(item.note.toLowerCase().includes(kw) || item.source.toLowerCase().includes(kw))) return false;
+      const day = (item.time || '').slice(0, 10);
+      if (start && day < start) return false;
+      if (end && day > end) return false;
       return true;
     });
   }
@@ -3907,15 +4384,13 @@
     const cur = BLOCK_PAGES.buy;
     const slice = list.slice((cur - 1) * PAGE_SIZE, cur * PAGE_SIZE);
     buyTbody.innerHTML = slice.length === 0
-      ? `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-dim)">暂无充值记录</td></tr>`
+      ? `<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text-dim)">暂无充值记录</td></tr>`
       : slice.map(item => `
           <tr>
             <td class="lt-id">${item.id}</td>
-            <td>${item.note}</td>
-            <td class="lt-amount ${item.amount >= 0 ? 'plus' : 'minus'}">${item.amount >= 0 ? '+' : ''}${item.amount.toLocaleString()}</td>
+            <td>${item.pkg || '—'}</td>
             <td>${item.time}</td>
-            <td>${item.pay}</td>
-            <td><span class="lt-action">详情</span></td>
+            <td class="lt-amount ${item.amount >= 0 ? 'plus' : 'minus'}">${item.amount >= 0 ? '+' : ''}${item.amount.toLocaleString()}</td>
           </tr>`).join('');
     buyTotalCount.textContent = list.length;
     buyTotalCoins.textContent = list.reduce((s, x) => s + (x.amount > 0 ? x.amount : 0), 0).toLocaleString();
@@ -3926,15 +4401,13 @@
     const cur = BLOCK_PAGES.consume;
     const slice = list.slice((cur - 1) * PAGE_SIZE, cur * PAGE_SIZE);
     consumeTbody.innerHTML = slice.length === 0
-      ? `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-dim)">暂无消耗记录</td></tr>`
+      ? `<tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text-dim)">暂无消耗记录</td></tr>`
       : slice.map(item => `
           <tr>
-            <td class="lt-amount minus">${item.coins}</td>
-            <td>${item.note}</td>
-            <td>${item.status}</td>
-            <td>${item.source}</td>
+            <td class="ct-msg" title="${item.title}">${item.title}</td>
             <td>${item.time}</td>
-            <td><span class="lt-action">详情</span></td>
+            <td><span class="conv-tag" title="来源会话：${item.conv}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg><b>${item.conv}</b></span></td>
+            <td class="lt-amount minus">${item.coins.toLocaleString()}</td>
           </tr>`).join('');
     consumeTotalCount.textContent = list.length;
     consumeTotalCoins.textContent = list.reduce((s, x) => s + Number(x.coins || 0), 0).toLocaleString();
@@ -3946,12 +4419,12 @@
     walletBalance.textContent = TOTAL_COINS.toLocaleString();
     walletRuns.textContent = Math.floor(TOTAL_COINS / 24);
   }
-  function openWallet() { syncWalletSummary(); walletModal.classList.add('open'); }
+  function openWallet() { syncWalletSummary(); if (typeof renderWalletPackagesFromMember === 'function') renderWalletPackagesFromMember(); walletModal.classList.add('open'); }
   function closeWallet() { walletModal.classList.remove('open'); }
   function switchLedgerBlock(block) {
     ledgerModal.querySelectorAll('.ledger-block').forEach(el => { el.style.display = el.dataset.block === block ? '' : 'none'; });
     ledgerTitle.textContent = block === 'buy' ? '充值明细' : '消耗明细';
-    ledgerSub.textContent = block === 'buy' ? '购买积分与退款记录' : '商品搜索、AI 分析等任务扣费记录';
+    ledgerSub.textContent = block === 'buy' ? '购买积分记录' : '对话任务积分消耗记录';
     [ledgerSwitchBuy, ledgerSwitchConsume].forEach(btn => btn && btn.classList.toggle('active', btn.dataset.target === block));
     BLOCK_PAGES[block] = 1;
     renderAll();
@@ -3962,6 +4435,57 @@
   }
   function openLedger() { openLedgerBlock('buy'); }
   function closeLedger() { ledgerModal.classList.remove('open'); }
+
+  /* ===== 对接：getMemberVerObj → 积分中心 =====
+   * window.__dldMember 由 bootstrapDld 写入（getMemberVerObj 的 result）。
+   * 后端套餐字段名未定稿，这里做多候选字段兼容：
+   * 能识别出「当前套餐名 / 可购套餐列表」就替换演示数据，识别失败保留静态演示套餐。 */
+  function pickPositiveNum() {
+    for (let i = 0; i < arguments.length; i++) {
+      const n = Number(arguments[i]);
+      if (Number.isFinite(n) && n > 0) return n;
+    }
+    return null;
+  }
+  function extractPackageList(member) {
+    if (!member || typeof member !== 'object') return null;
+    const boxes = [member, member.result, member.data, member.memberVer, member.verObj];
+    for (const box of boxes) {
+      if (!box || typeof box !== 'object') continue;
+      for (const key of ['packageList', 'verList', 'packages', 'list', 'items', 'rows']) {
+        const arr = box[key];
+        if (Array.isArray(arr) && arr.length && arr.every(x => x && typeof x === 'object')) return arr;
+      }
+    }
+    return null;
+  }
+  function renderWalletPackagesFromMember() {
+    const box = document.getElementById('walletPackages');
+    if (!box) return;
+    const member = window.__dldMember;
+    // ① 当前套餐名 → 展示在套餐区标题右侧（不动余额区结构，避免 walletRuns 元素引用失效）
+    const curName = member && (member.packageName || member.verName || (member.packageObj && (member.packageObj.name || member.packageObj.packageName)));
+    if (curName) {
+      const tipEl = document.getElementById('walletPkgTip');
+      if (tipEl) tipEl.textContent = '当前套餐：' + curName + ' · 演示价格，正式版接入支付';
+    }
+    // ② 可购套餐列表 → 重渲染套餐卡；缺积分数的条目跳过，避免误导用户
+    const list = extractPackageList(member);
+    if (!list) return;
+    const cards = list.map((p, i) => {
+      const name = p.name || p.packageName || p.verName || p.title || ('套餐' + (i + 1));
+      const coins = pickPositiveNum(p.coins, p.limitNum, p.integral, p.coinNum, p.totalNum);
+      if (coins == null) return '';
+      const price = pickPositiveNum(p.price, p.salePrice, p.payMoney, p.money);
+      return '<div class="wallet-package' + (i === 0 ? ' selected' : '') + '" data-coins="' + coins + '" data-price="' + (price != null ? price : '') + '" data-pkg-name="' + name + '">' +
+        '<div class="wp-name">' + name + '</div><div class="wp-coins">' + coins.toLocaleString() + ' 积分</div>' +
+        '<div class="wp-price">' + (price != null ? '¥' + price : '价格待定') + '</div>' +
+        '<div class="wp-actions"><button class="wp-action wp-buy">立即购买</button></div></div>';
+    }).filter(Boolean).join('');
+    if (!cards) return;
+    box.innerHTML = cards;
+    console.info('[DLD] 积分中心套餐已接入 getMemberVerObj 真数据，共', list.length, '个套餐');
+  }
 
   // coinChip 点击统一由 accountChip 接管（打开账号下拉），积分中心入口移入下拉框 self 行
   walletClose.addEventListener('click', closeWallet);
@@ -3978,30 +4502,133 @@
     if (ledgerModal.classList.contains('open')) { closeLedger(); openWallet(); }
     else if (walletModal.classList.contains('open')) closeWallet();
   });
-  ledgerModal.querySelectorAll('[data-block]').forEach(btn => {
-    btn.addEventListener('click', () => { BLOCK_PAGES[btn.dataset.block] = 1; renderAll(); });
-  });
-  ledgerModal.querySelectorAll('[data-block-reset]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const key = btn.dataset.blockReset;
-      if (key === 'buy') { buyPayFilter.value = 'all'; buyKeyword.value = ''; buyDateRange.value = ''; }
-      if (key === 'consume') { consumeSourceFilter.value = 'all'; consumeKeyword.value = ''; consumeDateRange.value = ''; }
-      BLOCK_PAGES[key] = 1;
-      renderAll();
-    });
-  });
-  buyKeyword.addEventListener('keydown', e => { if (e.key === 'Enter') { BLOCK_PAGES.buy = 1; renderAll(); } });
-  consumeKeyword.addEventListener('keydown', e => { if (e.key === 'Enter') { BLOCK_PAGES.consume = 1; renderAll(); } });
-  walletModal.querySelectorAll('.wallet-package').forEach(pkg => {
-    pkg.addEventListener('click', e => {
-      if (e.target.closest('.wp-buy')) {
-        openBuyConfirm(pkg);
-        e.stopPropagation();
+  // 通用双月日期区间选择器（充值/消耗明细共用）：点击框展开面板，先点开始再点结束；悬停已选框出现 × 清除
+  function fmtDay(d) { return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+  function createRangePicker(cfg) {
+    const { box, textEl, panel, onChange } = cfg;
+    let start = null, end = null; // 选中的日期区间（'YYYY-MM-DD'），null 表示不限
+    let panelLeft = new Date(); // 面板左侧月份
+    const fmt = k => k.replace(/-/g, '/');
+    const panelOpen = () => panel.style.display !== 'none';
+    function updateBox() {
+      box.classList.toggle('has-value', !!(start || end));
+      if (start && end) { textEl.textContent = `${fmt(start)} - ${fmt(end)}`; textEl.classList.remove('is-empty'); }
+      else if (start) { textEl.textContent = `${fmt(start)} - `; textEl.classList.remove('is-empty'); }
+      else { textEl.textContent = '开始日期 - 结束日期'; textEl.classList.add('is-empty'); }
+    }
+    function renderPanel() {
+      const left = panelLeft;
+      const right = new Date(left.getFullYear(), left.getMonth() + 1, 1);
+      const title = d => `${d.getFullYear()} 年 ${d.getMonth() + 1} 月`;
+      const today = fmtDay(new Date());
+      const grid = base => {
+        const yy = base.getFullYear(), mm = base.getMonth();
+        const startWd = new Date(yy, mm, 1).getDay();
+        let html = '日一二三四五六'.split('').map(w => `<span class="dp-week">${w}</span>`).join('');
+        for (let i = 0; i < 42; i++) {
+          const d = new Date(yy, mm, i - startWd + 1);
+          const key = fmtDay(d);
+          const dim = d.getMonth() !== mm ? ' dim' : '';
+          let mark = '';
+          if (!dim) {
+            if (key === start || key === end) mark = ' edge';
+            else if (start && end && key > start && key < end) mark = ' in-range';
+            if (key === today) mark += ' today';
+          }
+          html += `<span class="dp-cell${dim}${mark}" data-day="${key}">${d.getDate()}</span>`;
+        }
+        return html;
+      };
+      panel.innerHTML = `
+        <div class="dp-head">
+          <span class="dp-nav" data-nav="py">«</span><span class="dp-nav" data-nav="pm">‹</span>
+          <b class="dp-title">${title(left)}</b><i class="dp-gap"></i>
+          <b class="dp-title">${title(right)}</b>
+          <span class="dp-nav" data-nav="nm">›</span><span class="dp-nav" data-nav="ny">»</span>
+        </div>
+        <div class="dp-body"><div class="dp-grid">${grid(left)}</div><div class="dp-grid">${grid(right)}</div></div>`;
+    }
+    box.addEventListener('click', e => {
+      if (e.target.closest('.date-panel')) return; // 面板内部点击不触发展开/收起
+      if (e.target.closest('.lr-clear')) { // 悬停出现的 × ：清除已选区间
+        start = null; end = null;
+        updateBox();
+        if (panelOpen()) renderPanel(); // 面板展开中则同步刷新，避免残留高亮
+        onChange && onChange();
         return;
       }
-      walletModal.querySelectorAll('.wallet-package').forEach(x => x.classList.remove('selected'));
-      pkg.classList.add('selected');
+      const willOpen = !panelOpen();
+      if (willOpen) {
+        panelLeft = new Date(start ? start.replace(/-/g, '/') : Date.now());
+        panelLeft.setDate(1);
+        renderPanel();
+      }
+      panel.style.display = willOpen ? 'block' : 'none';
     });
+    document.addEventListener('click', e => {
+      if (!box.contains(e.target)) panel.style.display = 'none'; // 点击外部收起
+    });
+    panel.addEventListener('click', e => {
+      e.stopPropagation(); // 面板内点击不冒泡：避免重绘后节点脱离子树导致被误判为外部点击而收起
+      const nav = e.target.closest('.dp-nav');
+      if (nav) {
+        const k = nav.dataset.nav;
+        const delta = k === 'py' ? -12 : k === 'pm' ? -1 : k === 'nm' ? 1 : 12;
+        panelLeft = new Date(panelLeft.getFullYear(), panelLeft.getMonth() + delta, 1);
+        renderPanel();
+        return;
+      }
+      const cell = e.target.closest('.dp-cell');
+      if (!cell || cell.classList.contains('dim')) return; // 非本月日期不可选
+      const day = cell.dataset.day;
+      if (!start || end) { start = day; end = null; renderPanel(); updateBox(); return; }
+      if (day < start) { start = day; renderPanel(); updateBox(); return; }
+      end = day; // 区间选满：收起面板并立即过滤
+      updateBox();
+      panel.style.display = 'none';
+      onChange && onChange();
+    });
+    updateBox();
+    return {
+      getStart: () => start,
+      getEnd: () => end,
+      setRange(s, e2) { start = s; end = e2; updateBox(); if (panelOpen()) renderPanel(); } // 程序化设置（chips 快捷键），不触发 onChange
+    };
+  }
+  const buyPicker = createRangePicker({ box: buyRangeBox, textEl: buyRangeText, panel: buyDatePanel, onChange: () => { BLOCK_PAGES.buy = 1; renderAll(); } });
+  // 消耗明细：快捷日期 chips + 日期区间（交互与充值明细一致）
+  const consumePicker = createRangePicker({ box: consumeRangeBox, textEl: consumeRangeText, panel: consumeDatePanel, onChange: () => {
+    document.querySelectorAll('#consumeChips .chip').forEach(c => c.classList.remove('active')); // 手动选区间/清除后取消 chips 高亮
+    BLOCK_PAGES.consume = 1;
+    renderAll();
+  } });
+  function applyConsumeRange(key) {
+    const end = new Date();
+    const start = new Date(end);
+    if (key === '7d') start.setDate(start.getDate() - 6);
+    else if (key === '30d') start.setDate(start.getDate() - 29);
+    consumePicker.setRange(fmtDay(start), fmtDay(end));
+    document.querySelectorAll('#consumeChips .chip').forEach(c => c.classList.toggle('active', c.dataset.range === key));
+  }
+  document.getElementById('consumeChips')?.addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    applyConsumeRange(chip.dataset.range);
+    BLOCK_PAGES.consume = 1;
+    renderAll();
+  });
+  applyConsumeRange('7d'); // 默认近7天
+  // 套餐卡点击/购买：容器事件委托。套餐区可能被 getMemberVerObj 真数据重渲染，逐卡直绑会丢事件
+  document.getElementById('walletPackages')?.addEventListener('click', e => {
+    const pkg = e.target.closest('.wallet-package');
+    if (!pkg) return;
+    if (e.target.closest('.wp-buy')) {
+      openBuyConfirm(pkg);
+      e.stopPropagation();
+      return;
+    }
+    document.querySelectorAll('#walletPackages .wallet-package').forEach(x => x.classList.remove('selected'));
+    pkg.classList.add('selected');
   });
 
   // 购买确认弹窗
@@ -4016,8 +4643,8 @@
   function openBuyConfirm(pkg) {
     pendingPkg = pkg;
     confirmPkg.textContent = pkg.dataset.pkgName || pkg.querySelector('.wp-name')?.textContent || '充值包';
-    confirmCoins.textContent = '+' + Number(pkg.dataset.coins).toLocaleString();
-    confirmPrice.textContent = '¥' + pkg.dataset.price;
+    confirmCoins.textContent = '+' + Number(pkg.dataset.coins || 0).toLocaleString();
+    confirmPrice.textContent = pkg.dataset.price ? '¥' + pkg.dataset.price : '价格待定';
     buyConfirm.classList.add('open');
   }
   function closeBuyConfirm() {
@@ -4039,10 +4666,9 @@
     syncWalletSummary();
     BUY_LEDGER.unshift({
       id: makeOrderId(),
-      note: `购买积分：${pkgName}`,
+      pkg: pkgName,
       amount: coins,
-      time: nowString(),
-      pay: '微信支付'
+      time: nowString()
     });
     BLOCK_PAGES.buy = 1;
     renderAll();
@@ -4218,50 +4844,119 @@
     const n = String(value || '').replace(/[$,分%]/g, '').match(/-?[\d.]+/);
     return n ? Number(n[0]) : 0;
   }
+  // 对话表格单元格排序取值：数字列支持 1.2万/3亿 缩写与 ¥/, 前缀；无数字返回 NaN 交由字符串比较
+  function mdCellNum(txt) {
+    const s = String(txt == null ? '' : txt);
+    const m = s.match(/-?[\d.]+/);
+    if (!m) return NaN;
+    let n = Number(m[0]);
+    if (/亿/.test(s)) n *= 1e8;
+    else if (/万/.test(s)) n *= 1e4;
+    return n;
+  }
+  // 对话表格两单元格比较：数字列按数值（空值视为最小），文本列按中文拼音序
+  function mdCellCompare(a, b, isNumCol) {
+    if (isNumCol) {
+      const x = mdCellNum(a), y = mdCellNum(b);
+      return (isNaN(x) ? -Infinity : x) - (isNaN(y) ? -Infinity : y);
+    }
+    return String(a == null ? '' : a).trim().localeCompare(String(b == null ? '' : b).trim(), 'zh-CN');
+  }
+  // 气泡迷你表重绘（排序后调用）：重画前 N 行；若该表详情视图打开中则同步刷新分页视图
+  function refreshMdBubble(tid) {
+    const t = (window.__mdTables || {})[tid];
+    if (!t) return;
+    const bubble = document.querySelector('.md-table[data-tid="' + tid + '"]');
+    if (bubble) {
+      const maxRows = (typeof MD_TABLE_VISIBLE_ROWS === 'number') ? MD_TABLE_VISIBLE_ROWS : t.rows.length;
+      const shown = t.rows.slice(0, Math.min(maxRows, t.rows.length));
+      const body = bubble.querySelector('tbody');
+      if (body) body.innerHTML = shown.map(r => '<tr>' + r.map((c, ci) => mdCellHtml(c, t.headers[ci])).join('') + '</tr>').join('');
+    }
+    const preview = document.getElementById('mdTablePreview');
+    if (String(window.__mdPreviewTid) === String(tid) && preview && preview.style.display !== 'none'
+      && typeof renderMdPage === 'function') renderMdPage();
+  }
+  // 统一排序入口：静态表头直接绑定 + 动态表头（气泡/详情表每次重建）事件委托共用
+  function handleSortableThClick(th) {
+    const table = th.closest('table');
+    const tbody = table?.querySelector('tbody');
+    if (!tbody) return;
+    const key = th.dataset.sortKey;
+    const colIndex = Array.from(th.parentElement.children).indexOf(th);
+    const direction = th.dataset.direction === 'asc' ? 'desc' : 'asc';
+    table.querySelectorAll('th.sortable').forEach(x => {
+      x.classList.remove('sort-active');
+      x.dataset.direction = '';
+      const icon = x.querySelector('.sort-indicator');
+      if (icon) icon.textContent = '⇕';
+    });
+    th.classList.add('sort-active');
+    th.dataset.direction = direction;
+    const indicator = th.querySelector('.sort-indicator');
+    if (indicator) indicator.textContent = direction === 'asc' ? '↑' : '↓';
+    const dir = direction === 'asc' ? 1 : -1;
+    // 商品表分页后 DOM 内只有当前页 → 数据级排序：排全量数组后回第 1 页重渲染（如 100 条即 100 条整体升降序）
+    if (table.id === 'previewTable' && window.__offerPager && window.__offerPager.full.length) {
+      window.__offerPager.full.sort((a, b) => (offerSortValue(a, key) - offerSortValue(b, key)) * dir);
+      window.__offerPager.page = 1;
+      renderOfferPage();
+      table.dispatchEvent(new CustomEvent('preview:sorted'));
+      return;
+    }
+    // 对话表格详情（右栏全量预览）：排注册表全量 rows 后回第 1 页切片渲染
+    if (table.id === 'mdPreviewTable' && window.__mdPreviewTid != null) {
+      const t = (window.__mdTables || {})[String(window.__mdPreviewTid)];
+      if (t && window.__mdPager) {
+        const isNumCol = th.classList.contains('num-col');
+        t.rows.sort((a, b) => mdCellCompare(a[colIndex], b[colIndex], isNumCol) * dir);
+        window.__mdPager.page = 1;
+        renderMdPage();
+        refreshMdBubble(String(window.__mdPreviewTid));
+        table.dispatchEvent(new CustomEvent('preview:sorted'));
+        return;
+      }
+    }
+    // 气泡迷你表：排注册表全量 rows 后重绘前 N 行（与初始折叠渲染同规则）
+    if (table.classList.contains('md-table')) {
+      const tid = table.dataset.tid;
+      const t = (window.__mdTables || {})[tid];
+      if (t) {
+        const isNumCol = th.classList.contains('num-col');
+        t.rows.sort((a, b) => mdCellCompare(a[colIndex], b[colIndex], isNumCol) * dir);
+        refreshMdBubble(tid);
+        table.dispatchEvent(new CustomEvent('preview:sorted'));
+        return;
+      }
+    }
+    // fallback：DOM 级排序（主从行结构）
+    const groups = Array.from(tbody.querySelectorAll('tr.product-main')).map(main => {
+      const detail = main.nextElementSibling?.classList.contains('product-detail') ? main.nextElementSibling : null;
+      return { main, detail, value: parseCellNumber(main.cells[colIndex]?.textContent) };
+    });
+    groups.sort((a, b) => (a.value - b.value) * dir);
+    groups.forEach(group => {
+      tbody.appendChild(group.main);
+      if (group.detail) tbody.appendChild(group.detail);
+    });
+    table.dispatchEvent(new CustomEvent('preview:sorted'));
+  }
   function bindPreviewTableTools(scope) {
     const root = scope || document;
     root.querySelectorAll('.preview-table th.sortable').forEach(th => {
       if (th.dataset.bound) return;
       th.dataset.bound = '1';
-      th.addEventListener('click', () => {
-        const table = th.closest('table');
-        const tbody = table?.querySelector('tbody');
-        if (!tbody) return;
-        const key = th.dataset.sortKey;
-        const colIndex = Array.from(th.parentElement.children).indexOf(th);
-        const direction = th.dataset.direction === 'asc' ? 'desc' : 'asc';
-        table.querySelectorAll('th.sortable').forEach(x => {
-          x.classList.remove('sort-active');
-          x.dataset.direction = '';
-          const icon = x.querySelector('.sort-indicator');
-          if (icon) icon.textContent = '⇕';
-        });
-        th.classList.add('sort-active');
-        th.dataset.direction = direction;
-        const indicator = th.querySelector('.sort-indicator');
-        if (indicator) indicator.textContent = direction === 'asc' ? '↑' : '↓';
-        // 商品表分页后 DOM 内只有当前页 → 改为数据级排序：排全量数组后回第 1 页重渲染
-        if (table.id === 'previewTable' && window.__offerPager && window.__offerPager.full.length) {
-          const dir = direction === 'asc' ? 1 : -1;
-          window.__offerPager.full.sort((a, b) => (offerSortValue(a, key) - offerSortValue(b, key)) * dir);
-          window.__offerPager.page = 1;
-          renderOfferPage();
-          table.dispatchEvent(new CustomEvent('preview:sorted'));
-          return;
-        }
-        const groups = Array.from(tbody.querySelectorAll('tr.product-main')).map(main => {
-          const detail = main.nextElementSibling?.classList.contains('product-detail') ? main.nextElementSibling : null;
-          return { main, detail, value: parseCellNumber(main.cells[colIndex]?.textContent) };
-        });
-        groups.sort((a, b) => (a.value - b.value) * (direction === 'asc' ? 1 : -1));
-        groups.forEach(group => {
-          tbody.appendChild(group.main);
-          if (group.detail) tbody.appendChild(group.detail);
-        });
-        table.dispatchEvent(new CustomEvent('preview:sorted'));
-      });
+      th.addEventListener('click', () => handleSortableThClick(th));
     });
   }
+  // 气泡迷你表/对话表格详情的表头每次渲染重建 → 统一走事件委托，避免重复绑定或绑定丢失
+  document.addEventListener('click', e => {
+    const th = e.target && e.target.closest ? e.target.closest('th.sortable') : null;
+    if (!th) return;
+    const table = th.closest('table');
+    if (!table) return;
+    if (table.id === 'mdPreviewTable' || table.classList.contains('md-table')) handleSortableThClick(th);
+  });
   async function exportPreviewXlsx(mode) {
     const table = document.getElementById('previewTable');
     if (!table || !table.rows.length) return;
@@ -4309,17 +5004,13 @@
     }
   }
   bindPreviewTableTools();
-  document.querySelector('.export-btn')?.addEventListener('click', async e => {
-    const btn = e.currentTarget;
-    if (btn.classList.contains('exporting')) return;
-    btn.classList.add('exporting');
-    try { await exportPreviewXlsx(); } catch (err) { console.error('导出失败', err); }
-    btn.classList.remove('exporting');
-  });
+  // 旧工具栏 ⤓ 导出按钮已移除：导出统一由表格上方「导出勾选 / 导出全部」承担（绑定见 bindOfferPager）
   document.querySelector('.fullscreen-btn')?.addEventListener('click', () => {
-    const wrap = document.querySelector('.excel-wrap');
-    if (!wrap) return;
-    if (wrap.requestFullscreen) wrap.requestFullscreen();
+    // 全屏开关（toggle）：已处于全屏则退出收起，修复"全屏后无法收起"；
+    // 目标改为 excel-block（工具栏+表格+分页整体全屏），样式规则 .excel-block:fullscreen 才能生效
+    if (document.fullscreenElement) { document.exitFullscreen(); return; }
+    const block = document.getElementById('excelBlock');
+    if (block && block.requestFullscreen) block.requestFullscreen().catch(() => {});
   });
 
   // 建议项点击：填入输入框 + 触发发送（全局函数，初始静态建议也能用）
@@ -4354,7 +5045,98 @@
   input.addEventListener('keydown', e => { if (e.key === 'Enter') setTimeout(fitInput); });
   fitInput();
 
-  /* ==================== 模型档位 + 积分消耗 + 智能建议 ==================== */
+  /* ==================== 输入框右键菜单：剪切 / 复制 / 粘贴 / 全选 ==================== */
+  const inputMenu = document.getElementById('inputMenu');
+  let inputMenuOpen = false;
+  // 按当前状态禁用菜单项：无选中 → 剪切/复制禁用；无内容 → 全选禁用
+  function setInputMenuState() {
+    const hasSel = input.selectionStart !== input.selectionEnd;
+    const hasVal = input.value.length > 0;
+    inputMenu.querySelector('[data-act="cut"]').classList.toggle('disabled', !hasSel);
+    inputMenu.querySelector('[data-act="copy"]').classList.toggle('disabled', !hasSel);
+    inputMenu.querySelector('[data-act="selectAll"]').classList.toggle('disabled', !hasVal);
+  }
+  function openInputMenu(x, y) {
+    setInputMenuState();
+    inputMenu.classList.add('open');
+    const rect = inputMenu.getBoundingClientRect();
+    inputMenu.style.left = Math.min(x, window.innerWidth - rect.width - 8) + 'px';
+    inputMenu.style.top = Math.min(y, window.innerHeight - rect.height - 8) + 'px';
+    inputMenuOpen = true;
+  }
+  function closeInputMenu() {
+    inputMenu.classList.remove('open');
+    inputMenuOpen = false;
+  }
+  input.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    const cm = document.getElementById('convMenu');
+    if (cm) cm.classList.remove('open');       // 与会话右键菜单互斥
+    openInputMenu(e.clientX, e.clientY);
+  });
+  // 剪贴板写入：优先 Clipboard API，失败降级 execCommand（需在用户手势内调用）
+  async function writeClipboard(text) {
+    let ok = false;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try { await navigator.clipboard.writeText(text); ok = true; } catch (e1) { ok = false; }
+    }
+    if (!ok) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { ok = document.execCommand('copy'); } catch (e2) { ok = false; }
+      ta.remove();
+    }
+    return ok;
+  }
+  // 用文本替换当前选中区间，并把光标落在插入末尾（同时触发 input 事件同步发送按钮态）
+  function replaceSelection(text) {
+    const s = input.selectionStart, t = input.selectionEnd;
+    input.value = input.value.slice(0, s) + text + input.value.slice(t);
+    const pos = s + text.length;
+    input.focus();
+    input.setSelectionRange(pos, pos);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    fitInput();
+  }
+  inputMenu.querySelectorAll('.im-item').forEach(item => {
+    item.addEventListener('click', async () => {
+      if (item.classList.contains('disabled')) return;
+      const act = item.dataset.act;
+      closeInputMenu();
+      const sel = input.value.slice(input.selectionStart, input.selectionEnd);
+      if (act === 'cut') {
+        const ok = await writeClipboard(sel);
+        if (ok) { replaceSelection(''); flashToast('已剪切'); }
+        else { input.focus(); flashToast('剪切失败，请重试'); }
+      } else if (act === 'copy') {
+        const ok = await writeClipboard(sel);
+        input.focus();
+        flashToast(ok ? '已复制' : '复制失败，请重试');
+      } else if (act === 'paste') {
+        let text = '';
+        try {
+          if (navigator.clipboard && navigator.clipboard.readText) text = await navigator.clipboard.readText();
+        } catch (e3) { text = ''; }
+        if (text) { replaceSelection(text); flashToast('已粘贴'); }
+        else { input.focus(); flashToast('无法读取剪贴板，请使用 Ctrl+V 粘贴'); }
+      } else if (act === 'selectAll') {
+        input.focus();
+        input.select();
+      }
+    });
+  });
+  // 关闭时机：点击菜单外 / 按 Esc / 右键其他区域 / 任何滚动导致错位
+  document.addEventListener('mousedown', e => { if (inputMenuOpen && !inputMenu.contains(e.target)) closeInputMenu(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && inputMenuOpen) closeInputMenu(); });
+  document.addEventListener('contextmenu', e => { if (inputMenuOpen && e.target !== input) closeInputMenu(); });
+  window.addEventListener('scroll', () => { if (inputMenuOpen) closeInputMenu(); }, true);
+
+  /* ==================== 模型档位 + 积分消耗 ====================
+     注：「下一步可以问」快捷建议已改为后端驱动——前端不预设、不兜底；后端接口未返回则整块折叠不展示。
+     原 buildSuggestions 与 MODELS.suggestPool 已移除（line 4862-4879 整段）。 */
   const MODELS = {
     'gpt-5.6': {
       name: 'GPT-5.6',
@@ -4362,13 +5144,6 @@
       coinPerKInput:  2,
       coinPerKOutput: 6,
       baseCoins: 5,
-      suggestPool: [                     // 基于本模型风格的下一步建议
-        { ic:'🔍', t:'继续查 30 天销量 TOP100' },
-        { ic:'🌍', t:'对比 OZON 同款货源价格' },
-        { ic:'📊', t:'导出 Excel 含图片和详情' },
-        { ic:'📦', t:'把这 20 款加入我的监控' },
-        { ic:'🏷', t:'查找相似款（按图片反查）' },
-      ],
     },
     'deepseek-v4': {
       name: 'DeepSeek-V4',
@@ -4376,11 +5151,6 @@
       coinPerKInput:  1,
       coinPerKOutput: 4,
       baseCoins: 3,
-      suggestPool: [
-        { ic:'📈', t:'分析这 20 款的上架趋势' },
-        { ic:'🌏', t:'找出适合 TikTok Shop 的款式' },
-        { ic:'💰', t:'算一下利润率（售价 - 1688 拿货）' },
-      ],
     },
     'claude-opus': {
       name: 'Claude-Opus',
@@ -4388,11 +5158,6 @@
       coinPerKInput:  8,
       coinPerKOutput: 24,
       baseCoins: 15,
-      suggestPool: [
-        { ic:'🧠', t:'深度分析爆品背后的用户画像' },
-        { ic:'📝', t:'写一份完整的选品调研报告' },
-        { ic:'🎯', t:'基于这 20 款给出上架策略建议' },
-      ],
     },
   };
   // 默认模型（可从 URL / 设置里切换）
@@ -4418,25 +5183,6 @@
       + toolCalls * 2
     );
     return { coins };
-  }
-
-  // 基于模型 + 本次 query 智能生成 3 条建议
-  function buildSuggestions(text, model) {
-    const pool = model.suggestPool;
-    // 简单"按 query 关键词加权"挑 3 条
-    const kw = (text || '').toLowerCase();
-    const scored = pool.map(s => {
-      let score = Math.random();
-      if (kw.includes('连衣裙') || kw.includes('dress')) score += s.t.includes('连衣裙') || s.t.includes('图片') ? 0.5 : 0;
-      if (kw.includes('亚马逊') || kw.includes('amazon')) score += s.t.includes('OZON') || s.t.includes('TikTok') ? -0.2 : 0.1;
-      return { ...s, score };
-    }).sort((a, b) => b.score - a.score).slice(0, 3);
-
-    return scored.map(s => ({
-      icon: s.ic,
-      text: s.t,
-      q:   s.t, // 点击直接当 query 发送
-    }));
   }
 
   /* ===================== 左侧：会话搜索 ===================== */
@@ -4943,6 +5689,83 @@
   // 并行模式：全局 SEND_BUSY 单任务锁与 ABORT_RUN 已由 RUNNING_TASKS 注册表取代（见 loadAccountSessions 前的基础层）
 
   let LAST_QUERY = '';
+
+  // 查询完成后补拉结构化商品。只展示标题命中查询核心词的结果，避免接口未登录或忽略关键词时展示无关商品。
+  async function loadOffersForQuery(query, convKey) {
+    const q = String(query || '').trim();
+    if (!q || typeof DLD === 'undefined') return;
+    const task = RUNNING_TASKS.get(convKey);
+    if (task) task.offersLoading = true;
+    const previewMeta = document.getElementById('previewMeta');
+    // 实测 queryList 后端规则：pageSize>20 时要求选品库登录态（报「当前未登录」），pageSize≤20 匿名可查。
+    // 故补拉明细固定 pageSize=20；若后续后端放开大分页鉴权，可回调大值。
+    const queryBody = {
+      pageIndex: 1,
+      pageSize: 20,
+      sortField: 'bookedCount30d',
+      sortType: 'desc',
+      query: { keyWord: q, sourceType: 1, cycle: 30 }
+    };
+    try {
+      let res;
+      let lastError;
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          res = await DLD.offerSearchList(queryBody);
+          break;
+        } catch (error) {
+          lastError = error;
+          if (attempt === 0) await new Promise(resolve => setTimeout(resolve, 800));
+        }
+      }
+      if (!res) throw lastError || new Error('商品列表接口无响应');
+      const result = (res && res.result) || {};
+      const rawList = Array.isArray(result.list) ? result.list : [];
+      const titleText = item => String(item.title || item.subject || '').toLowerCase();
+      const coreQuery = q
+        .replace(/近?\\d+天|上架|跨境|热销|爆款|新品|新款|推荐|帮我找|搜索|查找|找/g, '')
+        .replace(/[，。；、,.;：:！？!?\\s]+/g, '')
+        .trim()
+        .toLowerCase();
+      let matchedList = coreQuery
+        ? rawList.filter(item => titleText(item).includes(coreQuery))
+        : rawList;
+      // 关键词无命中时保持空结果，禁止把接口可能返回的首页演示榜单当成本次查询结果。
+      // 字段适配：queryList 返回 shiLiType 数组 / saleQuantity30d / image，
+      // renderOffers 期望 isFactory/isPower 布尔 / saleCount30d / imageUrl
+      const adaptOffer = (o) => {
+        if (!o || typeof o !== 'object') return o;
+        const st = Array.isArray(o.shiLiType) ? o.shiLiType : [];
+        return {
+          ...o,
+          saleCount30d: o.saleCount30d ?? o.saleQuantity30d ?? o.saleCount ?? 0,
+          bookedCount30d: o.bookedCount30d ?? o.bookedCount ?? 0,
+          isFactory: o.isFactory != null ? !!o.isFactory : st.includes('superFactory'),
+          isPower: o.isPower != null ? !!o.isPower : st.includes('Power'),
+          imageUrl: o.imageUrl || o.picUrl || o.image || ''
+        };
+      };
+      matchedList = matchedList.map(adaptOffer);
+      window.__dldOffers = matchedList;
+      if (matchedList.length && typeof renderOffers === 'function') {
+        renderOffers(matchedList, { ...result, totalCount: matchedList.length });
+        console.info('[DLD] 查询商品展示完成：', q, matchedList.length);
+      } else {
+        if (typeof renderOffers === 'function') renderOffers([], { totalCount: 0 });
+        if (previewMeta) previewMeta.textContent = '商品接口未返回与“' + q + '”匹配的明细，请检查选品库登录态或关键词检索配置。';
+        console.warn('[DLD] 商品结果与查询关键词不匹配：', q, rawList.length);
+      }
+    } catch (e) {
+      window.__dldOffers = [];
+      if (typeof renderOffers === 'function') renderOffers([], { totalCount: 0 });
+      console.warn('[DLD] 查询商品展示失败：', e.message);
+      if (previewMeta) previewMeta.textContent = '商品数据加载失败：' + e.message;
+    } finally {
+      const currentTask = RUNNING_TASKS.get(convKey);
+      if (currentTask) currentTask.offersLoading = false;
+    }
+  }
+
   function bindRegenerate(scope) {
     (scope || document).querySelectorAll('.regen-btn').forEach(btn => {
       if (btn.dataset.bound) return;
@@ -4954,6 +5777,171 @@
     });
   }
 
+  /* ===== AI 回复操作栏：点赞 / 点踩 / 复制 / 重新发起 =====
+     说明：后端暂无点赞/反馈接口，先做样式与交互（本地状态），接口就绪后按 TODO 接入上报 */
+  const MSG_ACT_ICONS = {
+    like: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10.5V21"/><path d="M7 10.5l4.6-7.7a2.1 2.1 0 0 1 3.9 1.1L14.9 10h4.7a2 2 0 0 1 2 2.4l-1.3 6.2a2.5 2.5 0 0 1-2.5 2.4H7z"/></svg>',
+    dislike: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 13.5V3"/><path d="M17 13.5l-4.6 7.7a2.1 2.1 0 0 1-3.9-1.1L9.1 14H4.4a2 2 0 0 1-2-2.4l1.3-6.2A2.5 2.5 0 0 1 6.2 3H17z"/></svg>',
+    copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+    regen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M21 3v6h-6"/></svg>',
+    edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>'
+  };
+  function escapeAttr(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  }
+  function msgActionsHtml(query, raw) {
+    return `<div class="msg-actions">`
+      + `<div class="act-group">`
+      + `<button type="button" class="msg-act-btn act-like" title="点赞" aria-label="点赞">${MSG_ACT_ICONS.like}</button>`
+      + `<button type="button" class="msg-act-btn act-dislike" title="不喜欢" aria-label="不喜欢">${MSG_ACT_ICONS.dislike}</button>`
+      + `</div>`
+      + `<div class="act-group">`
+      + `<button type="button" class="msg-act-btn act-copy" title="复制内容" aria-label="复制内容" data-raw="${escapeAttr(raw || '')}">${MSG_ACT_ICONS.copy}</button>`
+      + `<button type="button" class="msg-act-btn act-regen" title="重新发起" aria-label="重新发起" data-query="${escapeAttr(query || '')}">${MSG_ACT_ICONS.regen}</button>`
+      + `</div></div>`;
+  }
+  function bindMsgActions(scope) {
+    (scope || document).querySelectorAll('.msg-actions:not([data-bound])').forEach(bar => {
+      bar.dataset.bound = '1';
+      const like = bar.querySelector('.act-like');
+      const dislike = bar.querySelector('.act-dislike');
+      const copy = bar.querySelector('.act-copy');
+      const regen = bar.querySelector('.act-regen');
+      if (like) like.addEventListener('click', () => {
+        const on = like.classList.toggle('active');
+        if (on && dislike) dislike.classList.remove('active');
+        /* TODO: 后端点赞接口就绪后在此上报 { msgId, type: 'like', value: on } */
+        flashToast(on ? '感谢点赞' : '已取消点赞');
+      });
+      if (dislike) dislike.addEventListener('click', () => {
+        if (dislike.classList.contains('active')) return;
+        dislike.classList.add('active');
+        if (like) like.classList.remove('active');
+        openFeedbackModal(dislike);
+      });
+      if (copy) copy.addEventListener('click', async () => {
+        const raw = copy.dataset.raw || '';
+        const legacyCopy = () => {
+          const ta = document.createElement('textarea');
+          ta.value = raw;
+          ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+          document.body.appendChild(ta);
+          ta.select();
+          const ok = document.execCommand('copy');
+          ta.remove();
+          return ok;
+        };
+        try {
+          let ok = false;
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            try { await navigator.clipboard.writeText(raw); ok = true; } catch (e1) { ok = false; }
+          }
+          if (!ok) ok = legacyCopy(); // 剪贴板 API 被拒/不存在 → execCommand 兜底
+          flashToast(ok ? '复制成功' : '复制失败，请重试');
+        } catch (e) {
+          flashToast('复制失败，请重试');
+        }
+      });
+      if (regen) regen.addEventListener('click', () => {
+        if (ACTIVE_CONV_KEY && RUNNING_TASKS.has(ACTIVE_CONV_KEY)) { flashToast('当前会话正在回复中'); return; }
+        const q = (regen.dataset.query || LAST_QUERY || '').trim();
+        if (!q) { flashToast('没有可重新发起的内容'); return; }
+        input.value = q;
+        fitInput();
+        send(true);
+      });
+    });
+  }
+  /* ===== 用户消息操作栏：编辑（添加到对话）/ 复制（hover 用户气泡时显示于下方右侧） ===== */
+  function userActionsHtml(raw) {
+    return `<div class="user-actions"><div class="act-group">`
+      + `<button type="button" class="msg-act-btn ua-edit" data-tip="添加到对话" aria-label="添加到对话" data-raw="${escapeAttr(raw || '')}">${MSG_ACT_ICONS.edit}</button>`
+      + `<button type="button" class="msg-act-btn ua-copy" title="复制" aria-label="复制" data-raw="${escapeAttr(raw || '')}">${MSG_ACT_ICONS.copy}</button>`
+      + `</div></div>`;
+  }
+  function bindUserActions(scope) {
+    (scope || document).querySelectorAll('.user-actions:not([data-bound])').forEach(bar => {
+      bar.dataset.bound = '1';
+      const edit = bar.querySelector('.ua-edit');
+      const copy = bar.querySelector('.ua-copy');
+      if (edit) edit.addEventListener('click', () => {
+        const raw = (edit.dataset.raw || '').trim();
+        const box = document.getElementById('input');
+        if (!box) return;
+        // 输入框已有内容 → 换行追加；为空 → 直接填入
+        box.value = box.value ? (box.value.replace(/\s+$/, '') + '\n' + raw) : raw;
+        try { box.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+        if (typeof fitInput === 'function') fitInput();
+        box.focus();
+        try { box.selectionStart = box.selectionEnd = box.value.length; } catch (e) {}
+        flashToast('已添加到对话');
+      });
+      if (copy) copy.addEventListener('click', async () => {
+        const raw = copy.dataset.raw || '';
+        const legacyCopy = () => {
+          const ta = document.createElement('textarea');
+          ta.value = raw;
+          ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+          document.body.appendChild(ta);
+          ta.select();
+          const ok = document.execCommand('copy');
+          ta.remove();
+          return ok;
+        };
+        try {
+          let ok = false;
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            try { await navigator.clipboard.writeText(raw); ok = true; } catch (e1) { ok = false; }
+          }
+          if (!ok) ok = legacyCopy(); // 剪贴板 API 被拒/不存在 → execCommand 兜底
+          flashToast(ok ? '复制成功' : '复制失败，请重试');
+        } catch (e) {
+          flashToast('复制失败，请重试');
+        }
+      });
+    });
+  }
+  /* ===== 点踩反馈弹窗（本地状态：提交暂存 localStorage，预留后端接口接入点） ===== */
+  let FB_OPEN_BTN = null; // 记录本次打开弹窗的点踩按钮：取消时仅回退它，不误清已提交的高亮
+  function openFeedbackModal(triggerBtn) {
+    const modal = document.getElementById('fbModal');
+    if (!modal) return;
+    FB_OPEN_BTN = triggerBtn || null;
+    const ta = document.getElementById('fbText');
+    if (ta) { ta.value = ''; setTimeout(() => { try { ta.focus(); } catch (e) {} }, 60); }
+    modal.classList.add('show');
+  }
+  function closeFeedbackModal(submitted) {
+    const modal = document.getElementById('fbModal');
+    if (modal) modal.classList.remove('show');
+    if (!submitted && FB_OPEN_BTN) FB_OPEN_BTN.classList.remove('active'); // 取消/关闭：回退本次点踩
+    FB_OPEN_BTN = null;
+  }
+  (function initFeedbackModal() {
+    const modal = document.getElementById('fbModal');
+    if (!modal) return;
+    const close = document.getElementById('fbClose');
+    const cancel = document.getElementById('fbCancel');
+    const submit = document.getElementById('fbSubmit');
+    const ta = document.getElementById('fbText');
+    const cancelFn = () => closeFeedbackModal(false);
+    if (close) close.addEventListener('click', cancelFn);
+    if (cancel) cancel.addEventListener('click', cancelFn);
+    modal.addEventListener('click', e => { if (e.target === modal) cancelFn(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('show')) cancelFn(); });
+    if (submit) submit.addEventListener('click', () => {
+      const content = (ta && ta.value || '').trim();
+      /* TODO: 后端反馈接口就绪后替换为真实上报，例如：
+         DLD.messageFeedback({ msgId, type: 'dislike', content }) */
+      try {
+        localStorage.setItem('dld_ai_feedback_' + Date.now(), JSON.stringify({ type: 'dislike', content, time: new Date().toISOString() }));
+      } catch (e) {}
+      console.info('[AI反馈] 本地记录：', content || '（未填写内容）');
+      closeFeedbackModal(true);
+      flashToast('感谢反馈');
+    });
+  })();
+
   function showEmptyConversation() {
     document.querySelectorAll('.conv-item').forEach(x => x.classList.remove('active'));
     const titleEl = document.querySelector('.chat-head .title');
@@ -4964,12 +5952,12 @@
     CONV_VIEWS.forEach((v, k) => { if (k.indexOf('draft-') === 0 && !RUNNING_TASKS.has(k) && !v.el.querySelector('.msg')) CONV_VIEWS.delete(k); });
     const key = 'draft-' + (++DRAFT_SEQ);
     ACTIVE_CONV_KEY = key;
-    // 左侧同步显示当前草稿（与 loadAccountSessions 初始化路径行为一致），经事件触发闭包内列表重渲染
+    // 左栏不显示未发言的草稿条目（与 loadAccountSessions 初始化路径行为一致）；
+    // 顺带清理可能残留的旧草稿项，经事件触发闭包内列表重渲染
     const sessions = SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] || (SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] = []);
     for (let i = sessions.length - 1; i >= 0; i--) {
       if (sessions[i].draft) sessions.splice(i, 1);
     }
-    sessions.unshift({ id: key, title: '新建对话', tag: '草稿', time: '刚刚', timestamp: Date.now(), draft: true });
     const view = { el: makeConvView(key), loaded: false, scrollPos: null };
     CONV_VIEWS.set(key, view);
     renderOpening(view.el);
@@ -5052,7 +6040,8 @@
       walletModal.querySelector('.ws-tip').textContent = `余额不足，本次预计需要 ${estimatedCost} 积分，请先充值。`;
       return;
     }
-    RUNNING_TASKS.set(convKey, { runId: null, startedAt: Date.now() });
+    const abortController = new AbortController();
+    RUNNING_TASKS.set(convKey, { runId: null, startedAt: Date.now(), abortController, stopped: false });
     LAST_QUERY = text;
     // 任务刚开始不展开右栏：此时还没有任何真实结果数据，提前展开只会露出静态骨架（空统计卡/写死的建议文案）。
     // 右栏会在真实数据到达时自动解除空态并展开（renderOffers / openPreviewPanel）
@@ -5084,6 +6073,7 @@
           <p style="margin:0"></p>
           ${attachHtml}
         </div>
+        ${userActionsHtml(text)}
       </div>`;
     wrap.querySelector('p').textContent = text || '(无文本，仅附件)';
     attaches.forEach((a, i) => {
@@ -5091,6 +6081,8 @@
       if (node) node.textContent = a.name;
     });
     view.el.appendChild(wrap);
+    // 用户消息操作栏（编辑=添加到对话 / 复制）事件绑定
+    bindUserActions(wrap);
 
     // 发送后清空附件
     const attachCount = attaches.length;
@@ -5119,12 +6111,16 @@
     let statusTimer = null, statusStart = 0, lastActivity = 0, hintIdx = 0, idleTicks = 0;
     // 流式运行期可变状态（提升到外层，供状态条与异步闭包共享）
     let accAnswer = '';
+    let workflowFinished = null;   // 本轮最终 workflow_finished 输出
+    let workflowFinishedEvents = []; // 兼容同一 SSE 中多条完成事件，最终只选带 obsUrl 的输出
     let liveTextEl = null;
     let analyzeEl = null;   // 分析进度卡片（阶段+计时+可展开推理明细）
     let skeletonEl = null;  // 表格生成骨架屏
+    let azFlushTimer = null;  // 分析明细节流刷新定时器（~120ms 批量渲染，替代逐事件重写）
+    let sbTimer = null;       // 聊天区滚动节流定时器（高频 delta 合并滚动）
     const IDLE_HINTS = [
       '正在检索 1688 商品库…',
-      '正在筛选与对比候选商品…',
+      '正在核对销量与复购表现…',
       '正在汇总分析结果…',
       '数据量较大，仍在努力处理中，请稍候…'
     ];
@@ -5175,17 +6171,23 @@
       const scrollBottom = () => {
         if (view.el.isConnected && view.el.parentElement === stream) followBottom();
       };
+      // 滚动节流：高频 delta 不再逐条触发滚动重排，统一 120ms 合并一次（减少滚动条抖动与跳动）
+      const scrollBottomSoon = () => {
+        if (sbTimer) return;
+        sbTimer = setTimeout(() => { sbTimer = null; scrollBottom(); }, 120);
+      };
       const finishRun = () => {
         RUNNING_TASKS.delete(convKey);  // 释放该会话的运行锁（其他会话不受影响）
         refreshRunUI();
         refreshConvItemRunning(convKey);
+        if (sbTimer) { clearTimeout(sbTimer); sbTimer = null; }  // 收尾后不再补发滚动，避免打断用户回看
       };
       const showError = (msg) => {
         runEnded = true;
         roleTime.textContent = '· 失败';
-        // 清理加载中交互（分析进度卡/骨架屏/流式状态条），避免失败后仍在转圈
+        // 清理加载中交互（分析进度卡/骨架屏/流式状态条 + 相关定时器），避免失败后仍在转圈
         removeLiveStatus();
-        bubble.querySelectorAll('.analyze-card, .table-skeleton').forEach(el => el.remove());
+        removeTransient();
         bubble.insertAdjacentHTML('beforeend', `<div class="ai-summary" style="border-left:3px solid #d6493a;padding:8px 12px;background:#fef0ef;color:#d6493a;border-radius:4px;margin-top:8px"><b>请求失败：</b>${escapeHtml(msg)}</div>`);
       };
 
@@ -5210,14 +6212,136 @@
         return t;
       };
       const inThink = (s) => s.includes('<think>') && s.lastIndexOf('<think>') > s.lastIndexOf('</think>');
-      // 统一的"分析中"进度卡片：阶段步骤条 + 秒级计时 + 可展开推理明细
+      // 统一的"分析中"进度卡片：阶段步骤条 + 秒级计时 + 点亮条目明细；完成后折叠为「✓ 已分析 N 秒」一行可回看
       let analyzeState = null;
       const AZ_STEPS = [
-        { key: 'plan',   label: '理解需求', kw: /理解|需求|规划|任务|目标|思路|意图|understand|user is asking|request|goal|intent/i },
-        { key: 'search', label: '检索数据', kw: /检索|搜索|查询|调用|选品|1688|采集|获取|search|tool|retriev|fetch|look up|collect/i },
-        { key: 'judge',  label: '分析对比', kw: /筛选|过滤|对比|评估|分析|价格|销量|转化|竞争|维度|filter|compar|evaluat|analyz|rank|score|criteria|sales|review/i },
-        { key: 'build',  label: '生成结果', kw: /整理|汇总|生成|输出|报告|表格|结论|推荐|编制|summar|organi|format|table|report|final|conclusion|recommend|present/i }
+        { key: 'plan',   label: '理解需求', desc: '正在解析您的选品条件', kw: /理解|需求|规划|任务|目标|思路|意图|understand|user is asking|request|goal|intent/i },
+        { key: 'search', label: '检索数据', desc: '正在检索 1688 商品库', kw: /检索|搜索|查询|调用|选品|1688|采集|获取|search|tool|retriev|fetch|look up|collect/i },
+        { key: 'judge',  label: '分析对比', desc: '正在核对销量与复购表现', kw: /筛选|过滤|对比|评估|分析|价格|销量|转化|竞争|维度|filter|compar|evaluat|analyz|rank|score|criteria|sales|review/i },
+        { key: 'build',  label: '生成结果', desc: '正在汇总分析结果', kw: /整理|汇总|生成|输出|报告|表格|结论|推荐|编制|summar|organi|format|table|report|final|conclusion|recommend|present/i }
       ];
+      // 工作流节点名 → 阶段映射（Dify 类后端只发 node_started 节点名、不发推理文本，用它推进步骤条）
+      const AZ_NODE_MAP = [
+        { idx: 0, kw: /输入|开始|意图|理解|解析|分类|路由|接入/i },
+        { idx: 1, kw: /检索|搜索|查询|工具|调用|采集|获取|插件|数据源|1688|api/i },
+        { idx: 2, kw: /分析|对比|筛选|评估|排序|评分|推理|模型|llm|代码|计算|处理/i },
+        { idx: 3, kw: /生成|汇总|输出|回复|渲染|报告|结果|结束|模板|整理/i }
+      ];
+      const mapNodeToStage = (title) => {
+        for (const m of AZ_NODE_MAP) { if (m.kw.test(title)) return m.idx; }
+        return -1;
+      };
+      // ── AI 过程流：纵向逐步追加的动作行（Agent 干活现场感） ──
+      // 行分两类：真实行 = 后端 node_started 推送的工作流节点名（原样透出，不编造）；live 行 = 当前阶段动作占位（轮播文案）。
+      // 生命周期：live 行被真实信号/阶段推进收编为 ✓ done 行（「正在X」→「已X」+ 真实耗时），节点行由 node_finished 或下一个节点兜底收编。
+      const feedLiveDone = () => {
+        if (!analyzeState || !analyzeState.liveEl) return;
+        const row = analyzeState.liveEl;
+        const txtEl = row.querySelector('.azl-txt');
+        const origTxt = (txtEl && txtEl.textContent) || '';
+        const txt = origTxt.replace(/^正在/, '已');
+        const ms = Date.now() - (analyzeState.liveTs || Date.now());
+        // <1s 的阶段行不显示耗时（多为兜底推进后立刻收尾，0s 观感空洞；真实节点行耗时始终保留）
+        const dur = ms < 1000 ? '' : fmtDur(ms);
+        row.className = 'az-line done';
+        row.innerHTML = '<span class="azl-ic">✓</span><span class="azl-txt">' + escapeHtml(txt) + '</span>' + (dur ? '<span class="azl-dur">' + dur + '</span>' : '');
+        // 动作游标推进到已收编文案的下一条，避免同阶段 live 行复现刚说过的话
+        const acts = AZ_ACTIONS[analyzeState.stepIdx] || AZ_ACTIONS[0];
+        const at = acts.indexOf(origTxt);
+        if (at >= 0) analyzeState.actIdx = at + 1;
+        analyzeState.liveEl = null;
+      };
+      const feedLiveNew = (txt) => {
+        if (!analyzeState || !analyzeState.feedEl) return;
+        const row = document.createElement('div');
+        row.className = 'az-line live';
+        row.innerHTML = '<span class="azl-spin"></span><span class="azl-txt"></span><span class="tdots"><span></span><span></span><span></span></span>';
+        const anchor = analyzeState.countEl;
+        if (anchor && anchor.parentNode === analyzeState.feedEl) analyzeState.feedEl.insertBefore(row, anchor);
+        else analyzeState.feedEl.appendChild(row);
+        analyzeState.liveEl = row;
+        analyzeState.liveTs = Date.now();
+        analyzeState.descEl = row.querySelector('.azl-txt');
+        if (txt) {
+          analyzeState.descEl.textContent = txt;  // 显式文案（如被移除 live 行的原文案续写）
+        } else {
+          const acts = AZ_ACTIONS[analyzeState.stepIdx] || AZ_ACTIONS[0];
+          const i = (analyzeState.actIdx || 0) % acts.length;
+          analyzeState.descEl.textContent = acts[i];
+          analyzeState.actIdx = i + 1;
+        }
+      };
+      // 阶段推进的过程流痕迹：收编当前 live 行 + 开启下一阶段 live 行（由文本推断推进 / 8 秒兜底调用；真实节点走 feedNodeStart）
+      const feedStageSwitch = () => {
+        if (!analyzeState || !analyzeState.feedEl) return;
+        feedLiveDone();
+        feedLiveNew((AZ_ACTIONS[analyzeState.stepIdx] || AZ_ACTIONS[0])[0]);
+        scrollBottom();
+      };
+      // 真实工作流节点上屏：⚙ 徽标 + 后端原始节点名（不编造），done 后由 node_finished 填真实耗时
+      const feedNodeStart = (title) => {
+        if (!analyzeState || !analyzeState.feedEl || !title) return;
+        if (/^(agent|ai|workflow|node|llm|chat)$/i.test(title)) return;  // 泛化节点名不上屏（与标题覆写过滤一致），由阶段行讲述
+        if (analyzeState.nodeRows.some(r => r.title === title && !r.done)) return;  // 同名运行中节点去重
+        // 刚创建的 live 行（<1.5s）直接移除不留痕，避免「已X · 0s」的空转完成行；原文案续写到新 live 行
+        let prevTxt = '';
+        if (analyzeState.liveEl && Date.now() - (analyzeState.liveTs || 0) < 1500) {
+          const t = analyzeState.liveEl.querySelector('.azl-txt');
+          prevTxt = (t && t.textContent) || '';
+          analyzeState.liveEl.remove();
+          analyzeState.liveEl = null;
+        } else {
+          feedLiveDone();
+        }
+        const row = document.createElement('div');
+        row.className = 'az-line node';
+        row.innerHTML = '<span class="azl-ic">⚙</span><span class="azl-txt">' + escapeHtml(String(title).slice(0, 40)) + '</span><span class="azl-dur"></span>';
+        const anchor = analyzeState.countEl;
+        if (anchor && anchor.parentNode === analyzeState.feedEl) analyzeState.feedEl.insertBefore(row, anchor);
+        else analyzeState.feedEl.appendChild(row);
+        analyzeState.nodeRows.push({ title: String(title), el: row, ts: Date.now(), done: false });
+        feedLiveNew(prevTxt || undefined);
+        scrollBottom();
+      };
+      // 节点完成：优先按节点名匹配最后一个运行中的同名行，无名字时兜底最后一个运行中节点行
+      const feedNodeFinish = (title) => {
+        if (!analyzeState) return;
+        let rec = null;
+        for (let i = analyzeState.nodeRows.length - 1; i >= 0; i--) {
+          const r = analyzeState.nodeRows[i];
+          if (!r.done && (!title || r.title === title)) { rec = r; break; }
+        }
+        if (!rec) return;
+        rec.done = true;
+        rec.el.classList.add('done');
+        const ic = rec.el.querySelector('.azl-ic'); if (ic) ic.textContent = '✓';
+        const d = rec.el.querySelector('.azl-dur'); if (d) d.textContent = fmtDur(Date.now() - rec.ts);
+      };
+      // 完成收尾：全部运行中节点行 + live 行统一转 done（保留可回看，不编造任何结果数字）
+      const feedFinishAll = () => {
+        if (!analyzeState) return;
+        analyzeState.nodeRows.forEach(r => {
+          if (r.done) return;
+          r.done = true;
+          r.el.classList.add('done');
+          const ic = r.el.querySelector('.azl-ic'); if (ic) ic.textContent = '✓';
+          const d = r.el.querySelector('.azl-dur'); if (d) d.textContent = fmtDur(Date.now() - r.ts);
+        });
+        feedLiveDone();
+      };
+      // 各阶段轮播动作文案（第 1 条与 AZ_STEPS.desc 保持一致）：搜索现场感的关键 —— 描述真实发生的事，不编造数据。
+      // 文案对齐筛选抽取器的真实能力：价格三件套（批发价/代发价/起批量）、上架时间 vs 销量周期、
+      // 销量与复购指标、发货地与排序、买家保障；不使用接口不存在概念的词（人群偏好/优先级/转化率/店铺风险等）
+      const AZ_ACTIONS = [
+        ['正在解析您的选品条件', '正在抽取价格、代发价与起批量', '正在区分上架时间与销量统计周期', '正在确认排序与发货地要求'],
+        ['正在检索 1688 商品库', '正在按筛选条件匹配候选商品', '正在抓取销量、价格与复购数据'],
+        ['正在核对销量与复购表现', '正在对比批发价与起批量', '正在校验发货时效与买家保障'],
+        ['正在汇总分析结果', '正在生成选品对比表格']
+      ];
+      // 时长格式化：1 分钟内显示「12.3s」，超过显示「1分23秒」
+      const fmtDur = (ms) => ms < 60000
+        ? ((ms / 1000).toFixed(1).replace(/\.0$/, '')) + 's'
+        : Math.floor(ms / 60000) + '分' + Math.round((ms % 60000) / 1000) + '秒';
       // 从推理文本推断当前阶段：取关键词最后命中位置最大的阶段
       const inferStage = (txt) => {
         let best = 0, pos = -1;
@@ -5230,11 +6354,27 @@
       const applyStage = (idx) => {
         if (!analyzeState) return;
         analyzeState.stepIdx = idx;
-        analyzeState.stageEl.textContent = AZ_STEPS[idx].label + '中';
-        analyzeState.stepsEl.querySelectorAll('.az-step').forEach((el, i) => {
-          el.classList.toggle('on', i === idx);
-          el.classList.toggle('done', i < idx);
-        });
+        if (!analyzeState.customStage) analyzeState.stageEl.textContent = AZ_STEPS[idx].label + '中';
+        // 过程流推进：旧 live 行收编为 ✓ 完成行，新 live 行接上该阶段第 1 条动作文案（rotTimer 每 2.6s 轮换后续条目）
+        analyzeState.rotIdx = 0;
+        analyzeState.actIdx = 0;  // 新阶段动作从第 1 条重新起算
+        feedStageSwitch();
+      };
+      // 单向推进阶段：只允许前进不回退（节点名/正文/负载等真实信号触发）
+      const forceStage = (idx) => {
+        if (!analyzeState || idx <= analyzeState.stepIdx) return;
+        applyStage(idx);
+      };
+      // 数据接收真实计数：商品 JSON 流式到达时统计去重后的 1688 商品链接数（后端给了多少显示多少，不编造）
+      const updateAnalyzeCount = () => {
+        if (!analyzeState || !analyzeState.countEl) return;
+        const ids = accAnswer.match(/detail\.1688\.com\/offer\/\d+/g) || [];
+        const n = new Set(ids).size;
+        if (!n) return;
+        if (analyzeState.countEl.style.display !== 'none' && analyzeState.countEl.dataset.n === String(n)) return;
+        analyzeState.countEl.dataset.n = String(n);
+        analyzeState.countEl.style.display = '';
+        analyzeState.countEl.querySelector('.azc-txt').textContent = '已接收 ' + n + ' 条商品数据';
       };
       const showAnalyze = () => {
         if (analyzeEl) return;
@@ -5245,47 +6385,108 @@
         analyzeEl.className = 'analyze-card';
         analyzeEl.innerHTML =
           '<div class="analyze-head">' +
-            '<span class="az-ic">📊</span>' +
+            '<span class="az-ic"><span class="az-radar"></span><span class="az-core"></span></span>' +
             '<span class="az-stage">理解需求中</span>' +
             '<span class="az-time">0s</span>' +
             '<span class="az-arrow">⌃</span>' +
           '</div>' +
-          '<div class="analyze-steps">' +
-            AZ_STEPS.map(s => '<span class="az-step" data-step="' + s.key + '">' + s.label + '</span>').join('<span class="az-sep">›</span>') +
-          '</div>' +
-          '<div class="analyze-body"></div>';
+          '<div class="az-query"><span class="azq-badge">正在搜索</span><span class="azq-kw"></span><span class="azq-caret"></span></div>' +
+          '<div class="az-feed"></div>' +
+          '<div class="az-count" style="display:none"><span class="azc-ic">📦</span><span class="azc-txt"></span><span class="azc-bar"><i></i></span></div>';
         analyzeEl.querySelector('.analyze-head')
           .addEventListener('click', () => analyzeEl && analyzeEl.classList.toggle('collapsed'));
         bubble.appendChild(analyzeEl);
         analyzeState = {
           stageEl: analyzeEl.querySelector('.az-stage'),
           timeEl:  analyzeEl.querySelector('.az-time'),
-          stepsEl: analyzeEl.querySelector('.analyze-steps'),
-          bodyEl:  analyzeEl.querySelector('.analyze-body'),
+          countEl: analyzeEl.querySelector('.az-count'),
+          feedEl:  analyzeEl.querySelector('.az-feed'),
+          liveEl:  null,        // 当前进行中的动作行（由 feed* 系列维护）
+          liveTs:  Date.now(),  // live 行开始时间（完成后算真实耗时）
+          nodeRows: [],         // 真实工作流 ⚙ 节点行记录
+          descEl: null,         // 指向 live 行文字元素（feedLiveNew 维护）
           stepIdx: 0,
           customStage: false,
+          rotIdx: 0,       // 当前阶段动作文案轮播下标
+          actIdx: 0,       // 过程流动作游标（feedLiveNew 取下一条动作文案，防止复现刚收编的话）
+          typeTimer: null, // 搜索词打字动画定时器
+          rotTimer: null,  // 动作文案轮播定时器
           startTs: Date.now(),
+          lastSignalTs: Date.now(),  // 最后一次真实信号（节点事件/推理文本）的时间戳
           timer: setInterval(() => {
-            if (analyzeState) analyzeState.timeEl.textContent = Math.round((Date.now() - analyzeState.startTs) / 1000) + 's';
+            if (!analyzeState) return;
+            analyzeState.timeEl.textContent = Math.round((Date.now() - analyzeState.startTs) / 1000) + 's';
+            // 计时兜底：超过 8 秒无任何真实信号 → 强制推进下一阶段，避免后端不发推理文本时卡死在第一步
+            if (analyzeState.stepIdx < AZ_STEPS.length - 1 && Date.now() - analyzeState.lastSignalTs > 8000) {
+              forceStage(analyzeState.stepIdx + 1);
+              analyzeState.lastSignalTs = Date.now();
+            }
           }, 1000)
         };
+        // 搜索词打字动画：关键词提取自用户真实提问（只做前缀剥离，不改语义）
+        const kw = extractSearchKw(text);
+        const kwEl = analyzeEl.querySelector('.azq-kw');
+        let ci = 0;
+        analyzeState.typeTimer = setInterval(() => {
+          ci++;
+          if (kwEl) kwEl.textContent = kw.slice(0, ci);
+          if (ci >= kw.length && analyzeState) { clearInterval(analyzeState.typeTimer); analyzeState.typeTimer = null; }
+        }, 110);
+        // 阶段动作文案轮播：每 2.6s 淡入切换一条，让黑盒等待期"看起来 AI 在连续干活"
+        analyzeState.rotTimer = setInterval(() => {
+          if (!analyzeState) return;
+          const acts = AZ_ACTIONS[analyzeState.stepIdx] || AZ_ACTIONS[0];
+          analyzeState.rotIdx = (analyzeState.rotIdx + 1) % acts.length;
+          const el = analyzeState.descEl;
+          if (!el) return;  // live 行可能刚被节点信号收编重建，跳过本轮轮播
+          el.classList.remove('azd-swap');
+          void el.offsetWidth;  // 强制回流以重启动画
+          el.textContent = acts[analyzeState.rotIdx];
+          el.classList.add('azd-swap');
+        }, 2600);
         applyStage(0);
         scrollBottom();
       };
-      // 流式推理文本 → 更新明细窗（滚底）+ 关键词推断当前阶段
+      // 流式推理文本 → 节流推进阶段（~120ms 一次）：仅用文本信号推进阶段文字/轮播，不再渲染明细窗
+      const renderAnalyze = () => {
+        if (!analyzeState || !analyzeState.pendingText) return;
+        const clean = analyzeState.pendingText.replace(/<!--[\s\S]*?-->/g, '');
+        // 阶段只单向推进：与节点信号走同一入口 forceStage → applyStage（单向不回退 + 动作文案重置 + customStage 保护）
+        const idx = inferStage(clean.slice(-1200));
+        if (idx > analyzeState.stepIdx) forceStage(idx);
+      };
       const updateAnalyze = (thinkTxt) => {
         if (!analyzeState || !thinkTxt) return;
-        const clean = String(thinkTxt).replace(/<!--[\s\S]*?-->/g, '');
-        analyzeState.bodyEl.textContent = clean.trim().slice(-500);
-        analyzeState.bodyEl.scrollTop = analyzeState.bodyEl.scrollHeight;
-        if (!analyzeState.customStage) {
-          const idx = inferStage(clean.slice(-1200));
-          if (idx !== analyzeState.stepIdx) applyStage(idx);
+        analyzeState.pendingText = String(thinkTxt);
+        analyzeState.lastSignalTs = Date.now();  // 推理文本也是真实信号，刷新兜底计时
+        if (azFlushTimer) return;
+        azFlushTimer = setTimeout(() => { azFlushTimer = null; renderAnalyze(); }, 120);
+      };
+      // 分析卡完成态：不删卡，折叠成「✓ 搜索分析完成 · Ns」一行；展开仅回看阶段文案与已接收计数。
+      // 骨架屏不在此处清理，否则流式期间每条增量都会"删骨架 → 重建骨架"，fadeInUp 反复重放 = 骨架卡一闪一闪
+      const collapseAnalyze = () => {
+        if (azFlushTimer) { clearTimeout(azFlushTimer); azFlushTimer = null; }
+        if (analyzeState) {
+          clearInterval(analyzeState.timer);
+          if (analyzeState.typeTimer) clearInterval(analyzeState.typeTimer);
+          if (analyzeState.rotTimer) clearInterval(analyzeState.rotTimer);
+          const st = analyzeState;
+          const total = Date.now() - st.startTs;
+          feedFinishAll();  // 过程流收尾：全部 ⚙ 节点行 + live 行统一转 ✓ 完成态（保留可回看）
+          if (analyzeEl) {
+            const badge = analyzeEl.querySelector('.azq-badge');
+            if (badge) badge.textContent = '已搜索';  // 打字行动作收尾：搜索 → 已搜索
+            const caret = analyzeEl.querySelector('.azq-caret');
+            if (caret) caret.style.display = 'none';  // 完成态隐藏打字光标
+            analyzeEl.classList.add('done', 'collapsed');
+            analyzeEl.querySelector('.az-ic').textContent = '✓';  // 覆写同时移除雷达波纹动画节点
+            analyzeEl.querySelector('.az-stage').textContent = '搜索分析完成 · ' + fmtDur(total);
+          }
         }
+        analyzeState = null;
       };
       const removeTransient = () => {
-        if (analyzeEl) { analyzeEl.remove(); analyzeEl = null; }
-        if (analyzeState) { clearInterval(analyzeState.timer); analyzeState = null; }
+        collapseAnalyze();
         if (skeletonEl) { skeletonEl.remove(); skeletonEl = null; }
       };
       const ensureLiveText = () => {
@@ -5305,6 +6506,9 @@
         if (!delta) return;
         accAnswer += delta;
         bumpActivity();  // 有数据到达 → 状态条切回"正在接收回复"
+        // 负载到达信号：正文里出现商品 JSON → 直接推进"生成结果"末阶段（此刻若仍在 think 包裹中，进度卡还活着）
+        if (/\{\s*"schema_version"\s*:/.test(accAnswer)) forceStage(3);
+        updateAnalyzeCount();  // 卡片内的真实数据计数：商品链接去重统计，随流式增量逐条上涨
         // 分析阶段（think 未闭合）：推理内容实时进进度卡片（阶段+计时+明细）
         if (inThink(accAnswer)) {
           showAnalyze();
@@ -5313,19 +6517,27 @@
           return;
         }
         const vis = visibleAnswer(accAnswer);
-        if (!vis.trim()) { scrollBottom(); return; }
-        removeTransient();
+        if (!vis.trim()) { scrollBottomSoon(); return; }
+        collapseAnalyze();  // 正文到达 → 分析卡折叠成「✓ 已分析 N 秒」一行（保留可回看）；骨架屏一旦创建必须原地补绘
         ensureLiveText();
-        // 表格开始 → 正文截断到表格前，改用骨架屏告知"正在生成表格"（含真实进度：已接收/预期条数）
+        // 截断点二选一：① 商品 JSON 载荷开始（{"schema_version"… 收尾才转右栏表格）→ 截断到载荷起点，骨架屏接管，
+        //   避免 50 件商品 JSON 原文逐字上屏；流式中 JSON 括号未闭合也要截断，故只认起始标记、不依赖完整块定位
+        // ② markdown 表格开始 → 截断到表格前（原有逻辑），两种截断共用同一套骨架屏
+        const jsonMatch = /\{\s*"schema_version"\s*:/.exec(vis);
+        const jsonIdx = jsonMatch ? jsonMatch.index : -1;
         const tableIdx = vis.search(/^[ \t]*\|/m);
-        if (tableIdx >= 0) {
-          const before = vis.slice(0, tableIdx);
+        const isPayload = jsonIdx >= 0 && (tableIdx < 0 || jsonIdx < tableIdx);
+        const cutIdx = isPayload ? jsonIdx : tableIdx;
+        if (cutIdx >= 0) {
+          const before = vis.slice(0, cutIdx);
           if (liveTextEl.textContent !== before) liveTextEl.textContent = before;  // 内容未变不重写，避免闪烁
           removeLiveStatus();  // 骨架卡自带进度信息，状态条退场
-          // 预期条数：从正文"共 N 件/条/个/款"提取；已接收：统计已到达的表格数据行（去掉表头+分隔行）
+          // 预期条数：从正文"共 N 件/条/个/款"提取；已接收：JSON 载荷按去重商品链接数统计（与计数卡同口径）/ 表格按数据行数
           const totalMatches = before.match(/共\s*[\d,]+\s*(?:件|条|个|款)/g);
           const expected = totalMatches ? parseInt(totalMatches[totalMatches.length - 1].replace(/[^\d]/g, ''), 10) || 0 : 0;
-          const got = Math.max(0, ((vis.slice(tableIdx).match(/^[ \t]*\|.+/gm) || []).length) - 2);
+          const got = isPayload
+            ? new Set(accAnswer.match(/detail\.1688\.com\/offer\/\d+/g) || []).size
+            : Math.max(0, ((vis.slice(cutIdx).match(/^[ \t]*\|.+/gm) || []).length) - 2);
           if (!skeletonEl) {
             skeletonEl = document.createElement('div');
             skeletonEl.className = 'table-skeleton';
@@ -5350,32 +6562,45 @@
             barEl.firstElementChild.style.width = Math.max(4, pct) + '%';
             etaEl.textContent = pct >= 98 ? '即将完成…' : '已完成约 ' + pct + '%';
           } else {
-            cntEl.textContent = got > 0 ? '已接收 ' + got + ' 条' : '等待表格数据…';
+            cntEl.textContent = got > 0 ? '已接收 ' + got + ' 条' : (isPayload ? '正在接收选品数据…' : '等待表格数据…');
             barEl.classList.add('indeterminate');
             etaEl.textContent = '';
           }
         } else {
           if (liveTextEl.textContent !== vis) liveTextEl.textContent = vis;  // 内容未变不重写，避免闪烁
         }
-        scrollBottom();
+        scrollBottomSoon();
       };
 
       let convIdFromHeader = null;
       // 并行模式：runId 直接写入任务注册表（refreshRunUI 同步到停止按钮），不再全局 tagStopBtn
 
+      const task = RUNNING_TASKS.get(convKey);
+      if (task) task.finishRun = finishRun;
       try {
         await DLD.sendMessageStream({
           appCode,
-          conversationId: convId || undefined,
+          conversationId: convId || '',
           clientRequestId,
           query: text,
           fileIds: []
         }, {
+          signal: task && task.abortController ? task.abortController.signal : undefined,
+          cancel: cancelStream => {
+            const currentTask = RUNNING_TASKS.get(convKey);
+            if (currentTask) currentTask.cancelStream = cancelStream;
+          },
           onHeaders: ({ conversationId, requestId }) => {
             convIdFromHeader = conversationId;
             // 并行模式：runId 记入该会话的任务条目（refreshRunUI 同步到停止按钮）
             const task = RUNNING_TASKS.get(convKey);
-            if (task) { task.runId = requestId || null; refreshRunUI(); }
+            if (task) {
+              task.runId = requestId || null;
+              if (task.stopped && task.runId && typeof DLD !== 'undefined' && DLD.stopRun) {
+                DLD.stopRun(task.runId).catch(e => console.warn('[DLD] stopRun 失败：', e.message));
+              }
+              refreshRunUI();
+            }
             roleTime.textContent = '· 流式中';
             // 首条消息：服务端创建了新会话 → 草稿 key 迁移为真实会话 id（不抢占当前视图/选中态）
             if (!convId && conversationId) {
@@ -5391,6 +6616,15 @@
               };
               // 先迁移注册表与视图缓冲（draft-xxx → conversationId），再刷新左栏，徽章状态才正确
               if (convKey !== conversationId) {
+                const draftProducts = getConversationProducts(convKey);
+                if (draftProducts) {
+                  saveConversationProducts(conversationId, draftProducts);
+                  try {
+                    const allProducts = readConversationProducts();
+                    delete allProducts[String(convKey)];
+                    localStorage.setItem(PRODUCT_CACHE_KEY, JSON.stringify(allProducts));
+                  } catch (e) {}
+                }
                 const v = CONV_VIEWS.get(convKey);
                 if (v) { CONV_VIEWS.delete(convKey); v.el.dataset.conv = conversationId; CONV_VIEWS.set(conversationId, v); }
                 if (task) { RUNNING_TASKS.delete(convKey); RUNNING_TASKS.set(conversationId, task); }
@@ -5421,28 +6655,58 @@
             if (t === 'connected') { roleTime.textContent = '· 已连接'; ensureLiveStatus('已连接，正在理解需求…'); return; }
             if (t === 'error') { showError(typeof payload === 'string' ? payload : (payload && payload.message) || '流式错误'); return; }
             if (t === 'agent_thought' || t === 'workflow_started' || t === 'node_started') {
-              // 分析过程：进度卡片展示；节点事件可直接命名当前阶段，思考文本进明细窗
+              // 分析过程：节点名是后端发出的真实信号 —— 映射阶段单向推进阶段文字与动作轮播
               showAnalyze();
               if (payload && typeof payload === 'object') {
-                const nodeTitle = payload.title || (payload.data && payload.data.title) || payload.node_title || '';
-                if (nodeTitle && analyzeState) {
-                  analyzeState.customStage = true;
-                  analyzeState.stageEl.textContent = String(nodeTitle).slice(0, 30);
+                const nodeTitle = String(payload.title || (payload.data && payload.data.title) || payload.node_title || '').trim();
+                if (nodeTitle) {
+                  const mapped = mapNodeToStage(nodeTitle);
+                  if (mapped >= 0) {
+                    // 命中阶段映射：推进阶段文字（"用户输入"这类节点不再冒充大标题）
+                    forceStage(mapped);
+                  } else if (analyzeState && nodeTitle.length >= 4 && !/^(agent|ai|workflow|node|llm|chat)$/i.test(nodeTitle)) {
+                    // 未映射的非泛化节点名才覆盖标题
+                    analyzeState.customStage = true;
+                    analyzeState.stageEl.textContent = nodeTitle.slice(0, 30);
+                  }
+                  if (analyzeState) {
+                    feedNodeStart(nodeTitle);  // ⚙ 真实节点行上屏（后端原样透出，不编造）
+                    analyzeState.lastSignalTs = Date.now();
+                  }
                 }
                 const thoughtTxt = [payload.thought, payload.observation ? String(payload.observation).slice(0, 200) : '']
                   .filter(Boolean).join('\n');
-                if (thoughtTxt) updateAnalyze(thoughtTxt);
+                if (thoughtTxt) { updateAnalyze(thoughtTxt); if (analyzeState) analyzeState.lastSignalTs = Date.now(); }
               }
               return;
             }
-            if (t === 'workflow_finished' || t === 'node_finished') {
-              // 节点完成：静默收敛，等最终表格渲染
+            if (t === 'workflow_finished') {
+              workflowFinishedEvents.push(payload);
+              workflowFinished = payload;
+              console.log('SSE事件类型:', eventName);
+              console.log('workflow_finished完整事件:', payload);
+              console.log('outputs:', payload && payload.data && payload.data.outputs);
+              const workflowAnswer = payload && payload.data && payload.data.outputs && payload.data.outputs.answer;
+              console.log('workflow_finished answer信封:', typeof workflowAnswer === 'string' ? workflowAnswer.slice(0, 240) : workflowAnswer);
+              if (payload && typeof payload === 'object') feedNodeFinish('workflow_finished');
+              return;
+            }
+            if (t === 'node_finished') {
+              // 节点事件只用于分析进度；商品明细严格不从节点 outputs/products 读取。
+              const finTitle = payload && typeof payload === 'object'
+                ? String(payload.title || (payload.data && payload.data.title) || payload.node_title || '').trim()
+                : '';
+              feedNodeFinish(finTitle || null);
               return;
             }
             // 文本事件：把 answer / delta / text 字段作为增量
             let delta = null;
             if (payload && typeof payload === 'object') {
               delta = payload.answer ?? payload.delta ?? payload.text ?? payload.content ?? null;
+              // Dify Chatflow 的 text_chunk 事件：文本嵌在 data.text / data.answer
+              if (!delta && payload.data && typeof payload.data === 'object') {
+                delta = payload.data.text ?? payload.data.answer ?? null;
+              }
               if (Array.isArray(delta)) {
                 delta = delta.filter(c => c && (c.type === 'text' || c.type === 'message')).map(c => c.text || c.message || '').join('');
               }
@@ -5451,7 +6715,7 @@
             }
             if (delta) appendDelta(delta);
           },
-          onDone: (endPayload) => {
+          onDone: async (endPayload) => {
             runEnded = true;
             roleTime.textContent = '· 已完成';
             // 移除"正在连接"占位与所有加载中交互（含流式状态条）
@@ -5459,23 +6723,57 @@
             if (thinking) thinking.remove();
             removeLiveStatus();
             removeTransient();
-            // 将流式纯文本替换为渲染后的 Markdown HTML（表格/图片/链接等）
-            if (accAnswer) {
+            // 将流式纯文本替换为渲染后的 HTML：渲染分支与历史会话恢复共用 renderAiAnswerHtml，两链路永不分叉
+            // 本轮主数据只来自 workflow_finished.data.outputs.answer.payload.obsUrl，绝不从 answer/products 取明细。
+            const finishedCandidates = workflowFinishedEvents.length ? workflowFinishedEvents : (workflowFinished ? [workflowFinished] : []);
+            const workflowWithObs = finishedCandidates.find(item => {
+              const candidate = getWorkflowOutputs(item);
+              const envelope = getAnswerEnvelope(candidate);
+              return Boolean(envelope && envelope.obsUrl && envelope.obsUrl.trim());
+            });
+            workflowFinished = workflowWithObs || finishedCandidates[finishedCandidates.length - 1] || null;
+            const outputs = getWorkflowOutputs(workflowFinished) || {};
+            // Dify Chatflow 的最终信封有时只作为 message 文本流返回，而不挂在 workflow_finished.outputs。
+            // 仍只解析统一 JSON 信封中的元数据，不从 answer 读取商品明细。
+            const envelope = getAnswerEnvelope(outputs) || getAnswerEnvelope({ answer: accAnswer });
+            const answer = envelope && typeof envelope.answer === 'string' ? envelope.answer : accAnswer;
+            const payload = envelope && envelope.payload && typeof envelope.payload === 'object' ? envelope.payload : envelope;
+            const obsUrl = payload && typeof payload.obsUrl === 'string' ? payload.obsUrl.trim() : '';
+            console.log('workflow_finished候选数量:', finishedCandidates.length);
+            console.log('workflow_finished选中事件含obsUrl:', Boolean(workflowWithObs || (envelope && envelope.obsUrl)));
+            const totalCount = Number((payload && payload.totalCount) || 0) || 0;
+            const resultCount = Number((payload && payload.count) || 0) || 0;
+            window.__dldCurrentAnswer = answer;
+            console.log('outputs:', outputs);
+            console.log('obsUrl:', obsUrl);
+            console.log('totalCount:', totalCount);
+            console.log('count:', resultCount);
+            let pj = null;
+            if (obsUrl) {
+              try {
+                const obsPayload = await loadObsProducts(obsUrl, totalCount, convIdFromHeader || convKey);
+                pj = { count: obsPayload.count, products: obsPayload.products };
+                window.__lastPayloadNode = { source: 'workflow_finished.data.outputs.answer.payload', obsUrl, totalCount, fetchedCount: obsPayload.products.length };
+              } catch (e) { showError(e.message || String(e)); }
+            } else {
+              showError('Chatflow已完成，但没有返回obsUrl');
+            }
+            if (answer || accAnswer) {
               ensureLiveText();
               liveTextEl.style.whiteSpace = '';
               liveTextEl.parentElement.style.whiteSpace = '';
-              // 报告类回复：自动生成 HTML 选品报告，中栏不铺全文，改为"报告已生成"卡片（点击打开右栏预览）
-              if (typeof isReportAnswer === 'function' && isReportAnswer(accAnswer) && typeof buildLastReport === 'function') {
-                buildLastReport(accAnswer);
-                liveTextEl.innerHTML = buildReportDoneCard(window.__lastReport);
-              } else if (typeof hasMdTable === 'function' && hasMdTable(accAnswer)) {
-                // 表格型回复（未生成报告）：中栏只渲染表格（默认折叠部分数据），点击"查看更多"在右栏预览完整表格，不显示分析文字
-                liveTextEl.innerHTML = renderTablesOnly(accAnswer);
-              } else {
-                liveTextEl.innerHTML = renderMarkdown(accAnswer);
-              }
+              liveTextEl.innerHTML = renderAiAnswerHtml(answer || accAnswer);
               // 最终富文本轻淡入，柔化"流式纯文本 → 富文本渲染"的切换跳变
               liveTextEl.style.animation = 'fadeInUp .28s ease';
+            }
+            // obsUrl 商品数组已在上方加载后交给本地分页；没有 obsUrl 时保持右栏空态，不回退旧数据。
+            if (pj && Array.isArray(pj.products) && pj.products.length) {
+              saveConversationProducts(convIdFromHeader || convKey, pj);
+              renderConversationProducts(pj);
+              console.info('[DLD] 右栏商品表已切换为 Chatflow 返回数据：', pj.products.length, '条');
+            } else {
+              renderConversationProducts(null);
+              console.info('[DLD] 本次回复未包含商品数据，右栏商品表已置空');
             }
             /* ── ① 积分消耗：优先读接口 message_end 的 usage 真实 token 换算积分；接口未返回则按模型档位估算（假数据） ── */
             let usage = null, msgId = null;
@@ -5504,22 +6802,31 @@
             bubble.insertAdjacentHTML('beforeend',
               `<div class="cost-bar"><div class="cb-info"><span class="cb-title">${cbTitle}</span></div><div class="cb-total"><span class="cb-num">-${costCoins}</span><span class="cb-unit">积分</span></div></div>`);
 
-            /* ── ② 下一步建议：优先调推荐追问接口（需要 message_id）；接口失败/无数据则本地智能生成 ── */
+            /* ── ② 下一步建议：仅展示后端推荐追问接口返回的内容；后端没返回则整块折叠不展示（严格对齐"后端驱动"原则）
+                   接口：GET /api/ai/chat/messages/{msgId}/suggested（Dify 推荐追问，实测返回结构）：
+                     - result.data: ['问1','问2','问3']（字符串数组，主要形态）
+                     - 兼容旧结构：直接数组 / { suggestions: [...] } / { list: [...] }
+                   字段约定：text=显示文案，question(优先)/text=点击发送的实际问句，icon=可选 emoji
+             ── */
             const suggestBox = document.createElement('div');
             suggestBox.className = 'next-suggest';
             suggestBox.innerHTML = `<div class="ns-head"><span class="ai-tag">AI</span><span>下一步你可以问</span></div><div class="ns-list"><div class="ns-item" style="cursor:default"><span class="ns-ic">⏳</span><span class="ns-text">正在生成建议…</span></div></div>`;
             bubble.appendChild(suggestBox);
             const fillSuggestions = (items) => {
+              // 兼容三种返回结构；只保留 text 与 question 两个字段，其它全扔
               const list = (Array.isArray(items) ? items : []).slice(0, 3).map(it => {
-                const q = typeof it === 'string' ? it : ((it && (it.question || it.text || it.content || it.suggestion)) || '');
-                return q ? { q } : null;
+                const text = typeof it === 'string' ? it : ((it && (it.text || it.content)) || '');
+                const question = typeof it === 'string' ? it : ((it && (it.question || it.text || it.content || it.suggestion)) || '');
+                const icon = (it && typeof it === 'object' && it.icon) ? String(it.icon) : '';
+                return question ? { q: question, t: text || question, ic: icon } : null;
               }).filter(Boolean);
               if (!list.length) { suggestBox.remove(); return; }
-              const icons = ['🔍', '📊', '💡', '🎯', '🧭', '📈'];
+              const fallbacks = ['🔍', '📊', '💡'];
               suggestBox.querySelector('.ns-list').innerHTML = list.map((it, i) =>
-                `<div class="ns-item" data-i="${i}"><span class="ns-ic">${icons[i % icons.length]}</span><span class="ns-text"></span><span class="ns-arrow">›</span></div>`).join('');
+                `<div class="ns-item" data-i="${i}"><span class="ns-ic"></span><span class="ns-text"></span><span class="ns-arrow">›</span></div>`).join('');
               suggestBox.querySelectorAll('.ns-item').forEach((el, i) => {
-                el.querySelector('.ns-text').textContent = list[i].q;
+                el.querySelector('.ns-ic').textContent = list[i].ic || fallbacks[i % fallbacks.length];
+                el.querySelector('.ns-text').textContent = list[i].t;
                 el.addEventListener('click', () => {
                   if (RUNNING_TASKS.has(convKey)) return;
                   input.value = list[i].q;
@@ -5530,17 +6837,17 @@
               });
             };
             (async () => {
+              // 后端驱动：没有 msgId 或接口异常/空数据 → 直接折叠不展示（不再回退前端硬编码）
+              if (!msgId) { suggestBox.remove(); return; }
               let items = null;
-              if (msgId) {
-                try {
-                  const res = await DLD.messageSuggestions(msgId);
-                  const r = res && res.result;
-                  if (Array.isArray(r)) items = r;
-                  else if (r && Array.isArray(r.suggestions)) items = r.suggestions;
-                  else if (r && Array.isArray(r.list)) items = r.list;
-                } catch (e) { console.warn('[DLD] 推荐追问接口失败 → 本地生成：', e.message); }
-              }
-              if (!items) items = buildSuggestions(text, CURRENT_MODEL).map(s => s.q);
+              try {
+                const res = await DLD.messageSuggestions(msgId);
+                const r = res && res.result;
+                if (Array.isArray(r)) items = r;
+                else if (r && Array.isArray(r.data)) items = r.data;            // /suggested 实测形态：{ result:'success', data:['问1',...] }
+                else if (r && Array.isArray(r.suggestions)) items = r.suggestions;
+                else if (r && Array.isArray(r.list)) items = r.list;
+              } catch (e) { console.warn('[DLD] 推荐追问接口失败 → 不展示建议：', e.message); }
               fillSuggestions(items);
               scrollBottom();
             })();
@@ -5549,9 +6856,10 @@
             const memRounds = Math.max(1, view.el.querySelectorAll('.msg.user').length);
             bubble.insertAdjacentHTML('beforeend',
               `<div class="mem-badge" title="当前会话的上下文会持续记忆，可随时追问"><span class="mb-ic">🧠</span><span>本会话已记忆 <b>${memRounds}</b> 轮对话</span></div>`);
-            // 重新生成按钮
-            bubble.insertAdjacentHTML('beforeend', `<button class="regen-btn" style="margin-top:8px">↻ 重新生成</button>`);
-            bindRegenerate(ai);
+            // AI 回复操作栏：点赞 / 点踩 / 复制 / 重新发起（气泡下方右侧，替代旧"重新生成"按钮）
+            const actionBarHost = bubble.parentElement || bubble;
+            actionBarHost.insertAdjacentHTML('beforeend', msgActionsHtml(text, accAnswer || ''));
+            bindMsgActions(actionBarHost);
             scrollBottom();
             finishRun();
             // 首次会话完成后读取服务端正式标题，覆盖临时问题摘要
@@ -5563,9 +6871,17 @@
           }
         });
       } catch (e) {
-        showError(e.message || String(e));
+        // 手动停止（abort/取消）：标记"已停止"并清理瞬时 UI，不按错误提示处理
+        if ((task && task.stopped) || (e && e.name === 'AbortError')) {
+          runEnded = true;
+          roleTime.textContent = '· 已停止';
+          removeLiveStatus();
+          removeTransient();
+        } else {
+          showError(e.message || String(e));
+          scrollBottom();
+        }
         finishRun();
-        scrollBottom();
       }
     })();
   }
@@ -5626,11 +6942,12 @@
       const url = BASE_URL + path;
       const init = {
         method: 'POST',
-        headers: { ...HEADERS, 'Content-Type': 'application/json;charset=UTF-8' },
+        headers: { ...HEADERS, 'Content-Type': 'application/json', 'Accept': 'text/event-stream' },
         credentials: 'omit',
         mode: 'cors',
         body: JSON.stringify(body)
       };
+      if (callbacks.signal) init.signal = callbacks.signal;
       const r = await fetch(url, init);
       const ct = (r.headers.get('Content-Type') || '').toLowerCase();
       const conversationId = r.headers.get('X-AI-Conversation-Id');
@@ -5646,14 +6963,20 @@
         throw new Error(msg);
       }
       const reader = r.body.getReader();
+      let cancelled = false;
+      if (callbacks.cancel) callbacks.cancel(() => {
+        cancelled = true;
+        try { reader.cancel(); } catch (e) {}
+      });
       const decoder = new TextDecoder('utf-8');
       let buf = '';
       let streamDone = false;
       let staleTimer = null;
-      // 工具调用（如 1688 选品）期间后端可能 10~30 秒无任何输出，需留足时间
-      const STALE_MS = 60000;
+      let timedOut = false;
+      // 2000 条商品工具处理耗时较长；以流的持续活动为准，不用无结果的 EOF 冒充成功。
+      const STALE_MS = 180000;
       const finish = (payload) => {
-        if (streamDone) return;
+        if (streamDone || cancelled) return;
         streamDone = true;
         if (staleTimer) clearTimeout(staleTimer);
         if (callbacks.onDone) callbacks.onDone(payload);
@@ -5661,49 +6984,65 @@
       const resetStale = () => {
         if (staleTimer) clearTimeout(staleTimer);
         staleTimer = setTimeout(() => {
+          timedOut = true;
           try { reader.cancel(); } catch (e) {}
-          finish(null);
         }, STALE_MS);
       };
       resetStale();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        resetStale();
-        buf += decoder.decode(value, { stream: true });
-        // SSE: 以空行分隔事件，事件内 \n 分隔行
-        let idx;
-        while ((idx = buf.indexOf('\n\n')) !== -1) {
-          const evt = buf.slice(0, idx);
-          buf = buf.slice(idx + 2);
-          const lines = evt.split('\n');
-          let eventName = 'message', dataStr = '';
-          for (const line of lines) {
-            if (line.startsWith('event:')) eventName = line.slice(6).trim();
-            else if (line.startsWith('data:')) dataStr += line.slice(5).trim();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          resetStale();
+          buf += decoder.decode(value, { stream: true });
+          // SSE: 以空行分隔事件，事件内 \n 分隔行
+          let idx;
+          while ((idx = buf.search(/\r?\n\r?\n/)) !== -1) {
+            const evt = buf.slice(0, idx);
+            const separator = buf.slice(idx).match(/^\r?\n\r?\n/)[0];
+            buf = buf.slice(idx + separator.length);
+            const lines = evt.split(/\r?\n/);
+            let eventName = 'message', dataParts = [];
+            for (const line of lines) {
+              if (line.startsWith('event:')) eventName = line.slice(6).trim();
+              else if (line.startsWith('data:')) dataParts.push(line.slice(5).replace(/^ /, ''));
+            }
+            const dataStr = dataParts.join('\n').trim();
+            if (!dataStr) continue;
+            let payload;
+            try { payload = JSON.parse(dataStr); } catch { payload = dataStr; }
+            // Dify 风格：事件名内嵌在 JSON 的 event 字段（SSE 层只有 ping 带 event: 行）
+            // 事件名以 JSON 内嵌 event 字段优先，其次 SSE 层 event: 行，最后默认 message。
+            // 修复：默认名非空时内嵌字段此前永远不会生效，message_end 载荷无法传给 onDone
+            if (payload && typeof payload === 'object' && payload.event) {
+              eventName = payload.event;
+            } else if (!eventName) {
+              eventName = 'message';
+            }
+            if (callbacks.onEvent) callbacks.onEvent(eventName, payload);
+            const t = String(eventName || '').toLowerCase();
+            if (t === 'ping') continue;
+            if (t === 'workflow_finished') {
+              // 先记录完成事件；等 SSE 结束后统一选择带非空 obsUrl 的完成事件，避免空事件覆盖有效结果。
+              continue;
+            }
+            if (t === 'done' || t === 'message_end' || t === 'agent_message_end' || t === 'close') {
+              finish(payload);
+              return;
+            }
+            if (t === 'error') { if (callbacks.onError) callbacks.onError(payload); throw new Error('SSE error'); }
           }
-          if (!dataStr) continue;
-          let payload;
-          try { payload = JSON.parse(dataStr); } catch { payload = dataStr; }
-          // Dify 风格：事件名内嵌在 JSON 的 event 字段（SSE 层只有 ping 带 event: 行）
-          // 事件名以 JSON 内嵌 event 字段优先，其次 SSE 层 event: 行，最后默认 message。
-          // 修复：默认名非空时内嵌字段此前永远不会生效，message_end 载荷无法传给 onDone
-          if (payload && typeof payload === 'object' && payload.event) {
-            eventName = payload.event;
-          } else if (!eventName) {
-            eventName = 'message';
-          }
-          if (callbacks.onEvent) callbacks.onEvent(eventName, payload);
-          const t = String(eventName || '').toLowerCase();
-          if (t === 'ping') continue;
-          if (t === 'done' || t === 'message_end' || t === 'agent_message_end' || t === 'close') {
-            finish(payload);
-            return;
-          }
-          if (t === 'error') { if (callbacks.onError) callbacks.onError(payload); throw new Error('SSE error'); }
         }
+        if (cancelled) return;
+        if (workflowFinishedEvents.length) {
+          finish(workflowFinishedEvents[workflowFinishedEvents.length - 1]);
+          return;
+        }
+        throw new Error(timedOut ? '选品服务长时间未返回数据，已终止等待' : '选品服务提前断开，未收到完成事件');
+      } finally {
+        // 取消/异常路径也要清掉超时定时器，避免停止后 onDone 被延迟触发
+        if (staleTimer) clearTimeout(staleTimer);
       }
-      finish(null);
     }
 
     // ===== 业务接口 =====
@@ -5740,9 +7079,9 @@
       // 删会话
       deleteConversation: (id) =>
         request('DELETE', '/api/ai/chat/conversations/' + encodeURIComponent(id)),
-      // 推荐追问
+      // 推荐追问（Dify 动态推荐词：/suggested，旧 /suggestions 后端 404 已弃用）
       messageSuggestions: (messageId) =>
-        request('GET', '/api/ai/chat/messages/' + encodeURIComponent(messageId) + '/suggestions'),
+        request('GET', '/api/ai/chat/messages/' + encodeURIComponent(messageId) + '/suggested'),
       // 发起问答（流式）
       sendMessageStream: (body, callbacks) =>
         stream('/api/ai/chat/messages/stream', body, callbacks),
@@ -5788,23 +7127,28 @@
     try {
       const res = await DLD.getMemberLimit(0);
       const d = res.result || {};
-      const coin = document.getElementById('coinText');
-      if (coin && d.limitNum != null) {
-        const used = d.usedNum || 0;
-        coin.textContent = String(Math.max(0, d.limitNum - used));
-        coin.title = (d.packageName || '当前套餐') + '：剩余 ' + (d.limitNum - used) + ' / ' + d.limitNum;
+      if (d.limitNum != null) {
+        // 顶部胶囊与积分中心共用同一数据源 TOTAL_COINS，避免两处余额不一致
+        const remain = Math.max(0, (d.limitNum || 0) - (d.usedNum || 0));
+        TOTAL_COINS = remain;
+        if (typeof updateUserCoin === 'function') updateUserCoin();
+        if (typeof syncWalletSummary === 'function') syncWalletSummary();
+        const coin = document.getElementById('coinText');
+        if (coin) coin.title = (d.packageName || '当前套餐') + '：剩余 ' + remain + ' / ' + d.limitNum;
       }
     } catch (e) {
       console.warn('[DLD] getMemberLimit 失败 → 保留 mock：', e.message);
     }
 
-    // 3. 套餐信息（用于积分中心套餐列表）
+    // 3. 套餐信息（用于积分中心：当前套餐名 + 可购套餐列表）
     try {
       const res = await DLD.getMemberVerObj();
       const d = res.result || {};
-      window.__dldMember = d;  // 给 openWallet 使用
+      window.__dldMember = d;  // 给 openWallet / renderWalletPackagesFromMember 使用
+      console.info('[DLD] getMemberVerObj 字段：', Object.keys(d || {}));
+      if (typeof renderWalletPackagesFromMember === 'function') renderWalletPackagesFromMember();
     } catch (e) {
-      console.warn('[DLD] getMemberVerObj 失败：', e.message);
+      console.warn('[DLD] getMemberVerObj 失败 → 保留演示套餐：', e.message);
     }
 
     // 4. 智能体列表（用于顶部可选 Chatflow）
@@ -5824,23 +7168,33 @@
       console.warn('[DLD] chatApps 失败：', e.message);
     }
 
-    // 5. 会话列表
+    // 5. 会话列表：沿用已验证接口，并兼容 cursor 分页与不同响应包裹层。
     try {
-      const res = await DLD.conversations(null, null, 20);
-      const list = (res.result && res.result.list) || [];
+      const allConversations = [];
+      let cursor = null;
+      for (let page = 0; page < 20; page += 1) {
+        const res = await DLD.conversations(null, cursor, 20);
+        const r = (res && res.result) || {};
+        const list = Array.isArray(r.list) ? r.list : (Array.isArray(r.data) ? r.data : (Array.isArray(r.conversations) ? r.conversations : (Array.isArray(r) ? r : [])));
+        allConversations.push(...list);
+        const next = r.cursor || r.nextCursor || (r.data && (r.data.cursor || r.data.nextCursor)) || null;
+        if (!next || !list.length || next === cursor) break;
+        cursor = next;
+      }
+      const list = allConversations;
       window.__dldConversations = list;
       console.info('[DLD] 会话列表共', list.length, '条；首条：', list[0]);
       // 把真实会话灌入 SESSIONS_BY_ACCOUNT 的主账号桶，并通知左栏重渲染
       if (typeof SESSIONS_BY_ACCOUNT !== 'undefined' && list.length) {
         const mapped = list.map(c => ({
-          id: c.conversationId,
-          convId: c.conversationId,
-          appCode: c.appCode,
-          title: c.title || '(无标题)',
-          tag: (c.appCode || 'chat').slice(0, 8),
-          time: c.lastMessageAt ? formatRelativeTime(c.lastMessageAt) : '刚刚',
-          timestamp: c.lastMessageAt ? new Date(c.lastMessageAt).getTime() : Date.now()
-        }));
+          id: c.conversationId || c.id,
+          convId: c.conversationId || c.id,
+          appCode: c.appCode || c.app_code,
+          title: c.title || c.name || '(无标题)',
+          tag: (c.appCode || c.app_code || 'chat').slice(0, 8),
+          time: c.lastMessageAt || c.last_message_at ? formatRelativeTime(c.lastMessageAt || c.last_message_at) : '刚刚',
+          timestamp: c.lastMessageAt || c.last_message_at ? new Date(c.lastMessageAt || c.last_message_at).getTime() : Date.now()
+        })).filter(c => c.id);
         SESSIONS_BY_ACCOUNT[CURRENT_ACCOUNT.id] = mapped;
         // openDraft：列表灌入后左栏顶部显示「新建对话」草稿并高亮，中栏保持开场白空态
         document.dispatchEvent(new CustomEvent('dld:conversations-updated', { detail: { list: mapped, skipSelect: true, openDraft: true } }));
@@ -5849,19 +7203,41 @@
       console.warn('[DLD] conversations 失败：', e.message);
     }
 
-    // 6. 默认拉一次首页1688选品 → 渲染右侧商品表格
+    // 6. 不在初始化时加载首页榜单，避免覆盖当前会话的真实商品结果。
+    // 商品表只由当前会话的 node_finished payload 或历史会话缓存驱动。
+
+    // 7. 子账号列表（账号下拉）：成功后用真数据替换 ACCOUNTS 中的 mock 子账号；失败保留演示账号
     try {
-      const res = await DLD.offerSearchHome({
-        pageIndex: 1, pageSize: 20,
-        sortField: 'bookedCount', sortType: 'desc',
-        query: { sourceType: 1, cycle: 30 }
-      });
-      const list = (res.result && res.result.list) || [];
-      window.__dldOffers = list;
-      if (typeof renderOffers === 'function') renderOffers(list, res.result || {});
-      console.info('[DLD] 首页选品共', list.length, '款；样本字段：', Object.keys(list[0] || {}).slice(0, 10));
+      const res = await DLD.slaveList();
+      const list = res.result || [];
+      if (Array.isArray(list) && list.length) {
+        console.info('[DLD] slaveList 首条字段：', Object.keys(list[0] || {}));
+        const mains = ACCOUNTS.filter(a => a.role === 'main');
+        const mapped = list.map((s, i) => {
+          const phone = String(s.mobilePhone || s.mobile || s.phone || '');
+          return {
+            id: 'slave-' + (s.id ?? s.userId ?? s.memberId ?? i),
+            name: s.name || s.nickname || s.account || ('子账号' + (i + 1)),
+            role: 'sub', roleLabel: '子', avatar: '👤',
+            phone: phone.replace(/^(\d{3})\d{4}(\d{4})$/, '$1****$2'),
+            shop: s.shopName || s.remark || s.department || '',
+            lastActive: s.lastLoginTime ? formatRelativeTime(s.lastLoginTime) : ''
+          };
+        });
+        // ACCOUNTS 为 const 数组，就地替换内容；账号下拉/设置弹窗每次打开都会重新读取
+        ACCOUNTS.splice(0, ACCOUNTS.length, ...mains, ...mapped);
+        mapped.forEach(a => { if (!SESSIONS_BY_ACCOUNT[a.id]) SESSIONS_BY_ACCOUNT[a.id] = []; });
+        // 当前账号若已被移出列表则回退主账号（findAccount 有 ACCOUNTS[0] 兜底，不能用它判断）
+        if (!ACCOUNTS.some(a => a.id === CURRENT_ACCOUNT.id)) {
+          CURRENT_ACCOUNT = ACCOUNTS[0];
+          try { localStorage.setItem(ACCOUNT_KEY, CURRENT_ACCOUNT.id); } catch (e2) {}
+          renderAccountChip();
+          loadAccountSessions();
+        }
+        document.dispatchEvent(new CustomEvent('dld:accounts-updated', { detail: { accounts: ACCOUNTS } }));
+      }
     } catch (e) {
-      console.warn('[DLD] offerSearchHome 失败：', e.message);
+      console.warn('[DLD] slaveList 失败 → 保留 mock 子账号：', e.message);
     }
   })();
 
@@ -5963,8 +7339,10 @@
           tableRows.push(parseTableRow(lines[i]));
           i++;
         }
-        const mdHeaders = tableRows[0];
-        const mdDataRows = tableRows.slice(1);
+        // 入口剔除「商品链接」列（与 renderTablesOnly 同口径）；下方 __mdTables 注册与渲染均用剔除后数据
+        const strippedMd = mdStripLinkCol(tableRows[0], tableRows.slice(1));
+        const mdHeaders = strippedMd.headers;
+        const mdDataRows = strippedMd.rows;
         // 数据行超过阈值：中栏只展示前 5 行，底部显示"查看更多"；完整数据点击后在右栏展示
         const mdTotal = mdDataRows.length;
         let mdShown = mdDataRows;
@@ -6031,7 +7409,12 @@
     return MD_NUM_HEAD_RE.test(String(h || '')) ? ' class="num-col"' : '';
   }
 
-  // 单元格 → td：含图片的视为"商品信息"单元格，包成图左文右结构
+  // 保留原表头与数据行，保证商品列表和 Excel 导出列完全一致。
+  function mdStripLinkCol(headers, rows) {
+    return { headers: headers || [], rows: rows || [] };
+  }
+
+  // 单元格 → td：含图片且有文字的视为"商品信息"单元格，包成图左文右结构；纯图单元格（如商品主图列）走轻量分支
   function mdCellHtml(c, h) {
     const cls = mdColCls(h);
     const idx = String(c).indexOf('<img');
@@ -6040,6 +7423,8 @@
     const imgTag = end > idx ? String(c).slice(idx, end + 1) : '';
     if (!imgTag || imgTag.indexOf('class="md-img"') === -1) return '<td' + cls + '>' + c + '</td>';
     const rest = (String(c).slice(0, idx) + String(c).slice(end + 1)).trim();
+    // 纯图单元格：不包 md-cell-prod 宽容器（其 min/max-width 会把只有 44px 小图的列撑到 190px+）
+    if (!rest) return '<td' + cls + '>' + imgTag + '</td>';
     return '<td' + cls + '><div class="md-cell-prod">' + imgTag + '<div class="prod-txt">' + rest + '</div></div></td>';
   }
 
@@ -6101,7 +7486,8 @@
     window.__mdPreviewTid = tid;
     const sizeSel = document.getElementById('mdPgSize');
     if (sizeSel) sizeSel.value = String(window.__mdPager.size);
-    tableEl.innerHTML = '<thead><tr>' + t.headers.map(c => '<th' + mdColCls(c) + '>' + c + '</th>').join('') + '</tr></thead><tbody></tbody>';
+    // 表头全部可排序（与气泡迷你表同视觉与逻辑：升降序、全量数据生效）
+    tableEl.innerHTML = '<thead><tr>' + t.headers.map((c, i) => '<th class="sortable' + (MD_NUM_HEAD_RE.test(String(c)) ? ' num-col' : '') + '" data-sort-key="' + i + '" title="点击按本列排序">' + c + ' <span class="sort-indicator">⇕</span></th>').join('') + '</tr></thead><tbody></tbody>';
     document.getElementById('mdPreviewCsvName').textContent = '📊 ' + (t.title || '对话表格详情') + '.xlsx';
     renderMdTabs();
     renderMdPage();
@@ -6488,23 +7874,41 @@
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 3000);
   }
-  // 富文本单元格 → {text, img}：文字照常提取；图片 URL 单独返回供嵌入主图（不再混入文字，拉取失败才回填）
+  // 富文本单元格 → {text, img, link}：__mdTables.rows 存的是 inlineMd 渲染后的 HTML，故 HTML 优先、Markdown 兜底。
+  // 文字照常提取（剥标签/剥图片/剥链接语法）；图片 URL 供嵌入主图；链接 URL 供"商品/店铺链接"列输出可跳转地址
   function xlsxCellParts(html) {
     const s = String(html == null ? '' : html);
-    const srcMatch = s.match(/<img[^>]*\ssrc="([^"]*)"/i);
+    const htmlImg = s.match(/<img[^>]*\ssrc="([^"]*)"/i);
+    const mdImg = s.match(/!\[\]\(([^)]+)\)/);
+    const htmlLink = s.match(/<a[^>]*\shref="([^"]*)"/i);
+    const mdLink = s.match(/\[[^\]]*\]\((https?:\/\/[^)]+)\)/i);
     const text = s.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]*>/g, '')
+      .replace(/!\[[^\]]*\]\([^)]+\)/g, '')
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/gi, '$1')
       .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
       .replace(/\s+/g, ' ').trim();
-    return { text, img: srcMatch && srcMatch[1] ? srcMatch[1] : '' };
+    return {
+      text,
+      img: htmlImg ? htmlImg[1] : (mdImg ? mdImg[1] : ''),
+      link: htmlLink ? htmlLink[1] : (mdLink ? mdLink[1] : '')
+    };
   }
-  // 对话表格详情 → 导出 xlsx（含嵌入图片）
+  // 对话表格详情 → 导出 xlsx：严格按 37 列字段导出，并嵌入商品主图。
   async function exportMdTableXlsx() {
     const t = (window.__mdTables || {})[window.__mdPreviewTid];
     if (!t) return;
     const parts = t.rows.map(r => r.map(xlsxCellParts));
     const imgCells = [];
+    const headers = t.headers || PRODUCT_TABLE_HEADERS;
+    const imageCol = headers.indexOf('商品主图');
     parts.forEach((r, ri) => r.forEach((p, ci) => { if (p.img) imgCells.push({ row: ri, col: ci, url: p.img }); }));
-    await exportTableToXlsx(t.headers.map(h => xlsxCellParts(h).text), parts.map(r => r.map(p => p.text)), (t.title || '对话表格详情') + '.xlsx', t.title || '对话表格详情', imgCells);
+    const exportRows = parts.map(r => r.map((p, ci) => {
+      if (headers[ci] === '商品链接' && p.link) return p.link;
+      if (headers[ci] === '店铺链接' && p.link) return p.link;
+      if (headers[ci] === '主图链接' && p.link) return p.link;
+      return p.text || '--';
+    }));
+    await exportTableToXlsx(headers, exportRows, (t.title || '对话表格详情') + '.xlsx', t.title || '对话表格详情', imgCells);
   }
   /* —— 表格型回复：未生成报告时中栏只渲染表格（部分数据 + 查看更多→右栏完整预览），不显示分析文字 —— */
   // 去除 <think> 块（含未闭合的尾部 think），返回剩余正文
@@ -6542,6 +7946,179 @@
   function hasMdTable(src) {
     return extractMdTableBlocks(stripThinkBlocks(src)).length > 0;
   }
+  /* —— Chatflow 商品 JSON 块：后端回复以"文字 + {"schema_version":...}"结尾，提取并解析出商品数组 —— */
+  // 定位回复中第一个 {"schema_version"...} 块的起止位置（括号平衡扫描，处理字符串内的转义与引号）
+  function locateSchemaJsonBlock(src) {
+    const match = /\{\s*"schema_version"\s*:/.exec(src);
+    if (!match) return null;
+    const idx = match.index;
+    let depth = 0, end = -1, inStr = false, esc = false;
+    for (let i = idx; i < src.length; i += 1) {
+      const ch = src[i];
+      if (esc) { esc = false; continue; }
+      if (ch === '\\') { esc = true; continue; }
+      if (ch === '"') { inStr = !inStr; continue; }
+      if (inStr) continue;
+      if (ch === '{') depth += 1;
+      else if (ch === '}') { depth -= 1; if (depth === 0) { end = i + 1; break; } }
+    }
+    return end > 0 ? { idx: idx, end: end } : null;
+  }
+  // 清理后端 payload 包裹注释（<!--PAYLOAD_START--> / <!--PAYLOAD_END-->），避免标记残留在渲染文本里
+  function cleanPayloadMarkers(str) {
+    return String(str || '').replace(/<!--\s*PAYLOAD_(?:START|END)\s*-->/g, '').trim();
+  }
+  // 剥离回复中的元信息 JSON 块（如 general_chat 空 products），避免原始 JSON 文本显示在气泡里
+  function stripProductJsonBlock(src) {
+    if (!src) return '';
+    const range = locateSchemaJsonBlock(src);
+    if (!range) return cleanPayloadMarkers(src);
+    return cleanPayloadMarkers(src.slice(0, range.idx).trimEnd() + ' ' + src.slice(range.end));
+  }
+  function extractProductJson(src) {
+    if (!src) return null;
+    const s = stripThinkBlocks(src);
+    const range = locateSchemaJsonBlock(s);
+    if (!range) return null;
+    const jsonStr = s.slice(range.idx, range.end);
+    try {
+      const obj = JSON.parse(jsonStr);
+      const data = obj && obj.data;
+      const products = data && Array.isArray(data.products) ? data.products : null;
+      if (!products || !products.length) return null;
+      return { text: cleanPayloadMarkers(s.slice(0, range.idx)), count: data.count || products.length, products };
+    } catch (e) { return null; }
+  }
+  // 商品表固定采用最终导出字段.xlsx 的 37 列及顺序。
+  const PRODUCT_TABLE_HEADERS = [
+    '序号', '商品主图', '商品标题', '商品链接', '商品类目', '商品ID', '上架时间', '批发价', '起批量', 'sku数量',
+    '近30天订单数', '近30天件数', '近30天销售额', '24H揽收率', '48H揽收率', '7日订单增长率', '7日采购集中率', '复购率', '代发价',
+    '跨境服务', '权益保障', '面单支持', '商品标识', '商品信息', '供货类型', '店铺名称', '诚信通年限',
+    '店铺48H履约率', '店铺回头率', '店铺响应率', '综合服务', '所在地', '公司类型', '卖家会员类型', '卖家服务', '店铺链接', '主图链接'
+  ];
+  const PRODUCT_EXPORT_EXTRA_HEADERS = [];
+  const PRODUCT_FIELD_KEYS = {
+    image: ['商品主图', 'mainImageUrl', 'image', 'imageUrl', 'picUrl'], title: ['商品标题', 'title', 'offerTitle', 'subject'],
+    detailUrl: ['商品链接', 'detailUrl', 'offerUrl', 'url'], category: ['商品类目', 'category', 'categoryName'],
+    offerId: ['商品ID', 'offerId', 'id'], createTime: ['上架时间', 'offerCreateTime', 'createTime'],
+    price: ['批发价', 'price'], quantity: ['起批量', 'quantityBegin', 'startQuantity'], unit: ['unit', '单位'],
+    skuCount: ['sku数量', 'skuCount'], orders30: ['近30天订单数', 'orderCount30d', 'bookedCount30d', 'sales'],
+    items30: ['近30天件数', 'itemCount30d', 'saleCount30d'], amount30: ['近30天销售额', 'salesAmount30d', 'amount30d', 'saleAmount30d'],
+    collect24: ['24H揽收率', 'collectRate24h', 'receiveRate24h'], collect48: ['48H揽收率', 'collectRate48h', 'receiveRate48h'],
+    growth7: ['7日订单增长率', 'orderGrowth7d', 'orderGrowthRate7d'], concentration7: ['7日采购集中率', 'purchaseConcentration7d', 'purchaseRate7d'],
+    repurchase: ['复购率', 'repurchaseRate'], consignPrice: ['代发价', 'consignPrice'],
+    crossBorder: ['跨境服务', 'crossBorderService', 'crossBorder'], rights: ['权益保障', 'rightsProtection'],
+    waybill: ['面单支持', 'waybillSupport'], tag: ['商品标识', 'productTag'], info: ['商品信息', 'productInfo'],
+    supply: ['供货类型', 'supplyType', 'supplyMode'], shopName: ['店铺名称', 'supplier', 'shopName', 'companyName'], shopUrl: ['店铺链接', 'shopUrl', 'storeUrl', 'shopLink'],
+    trustYears: ['诚信通年限', 'trustYears', 'chengxintongYears', 'memberYears'], fulfillment48: ['店铺48H履约率', 'fulfillmentRate48h', 'shopFulfillmentRate48h', 'fulfillment48hRate'],
+    shopReturn: ['店铺回头率', 'shopReturnRate', 'returnRate', 'repeatPurchaseRate'], shopResponse: ['店铺响应率', 'shopResponseRate', 'responseRate', 'responseSpeed'],
+    service: ['综合服务', 'serviceScore', 'comprehensiveService', 'comprehensiveScore'], location: ['所在地', 'location', 'address'], province: ['province', '省份'], city: ['city', '城市'],
+    companyType: ['公司类型', 'companyType', 'businessType'], sellerMember: ['卖家会员类型', 'sellerMemberType', 'memberType'], sellerService: ['卖家服务', 'sellerService', 'sellerServiceTags'],
+    imageUrl: ['主图链接', 'mainImageUrl', 'imageUrl', 'image', 'picUrl'], image: ['mainImageUrl', 'image', 'imageUrl', 'picUrl']
+  };
+  const productValue = (p, keys) => {
+    for (const key of keys) if (p && p[key] !== undefined && p[key] !== null && p[key] !== '') return p[key];
+    return '--';
+  };
+  const productField = (p, name) => productValue(p, PRODUCT_FIELD_KEYS[name] || [name]);
+  const productText = (p, keys) => String(productValue(p, keys)).replace(/\|/g, '/').replace(/\r?\n/g, ' ');
+  const productUrl = (p, keys) => String(productValue(p, keys) === '--' ? '' : productValue(p, keys)).trim();
+  const productLink = (label, url) => url ? '[' + label + '](' + url + ')' : label;
+  const companyTypeText = v => {
+    const raw = productValue({ v }, ['v']);
+    return raw === 1 || raw === '1' ? '贸易商' : raw === 2 || raw === '2' ? '工厂' : String(raw);
+  };
+  function productJsonToMd(data) {
+    const lines = [
+      '| ' + PRODUCT_TABLE_HEADERS.join(' | ') + ' |',
+      '|' + PRODUCT_TABLE_HEADERS.map(() => '---').join('|') + '|'
+    ];
+    (data.products || []).forEach((p, i) => {
+      const image = productUrl(p, PRODUCT_FIELD_KEYS.image);
+      const imageUrl = productUrl(p, PRODUCT_FIELD_KEYS.imageUrl);
+      const title = productText(p, PRODUCT_FIELD_KEYS.title).slice(0, 42);
+      const detailUrl = productUrl(p, PRODUCT_FIELD_KEYS.detailUrl);
+      const shopName = productText(p, PRODUCT_FIELD_KEYS.shopName);
+      const shopUrl = productUrl(p, PRODUCT_FIELD_KEYS.shopUrl);
+      const price = productField(p, 'price');
+      const qty = productField(p, 'quantity');
+      const unit = productField(p, 'unit');
+      const locationValue = productField(p, 'location');
+      const location = locationValue !== '--' ? locationValue : [productField(p, 'province'), productField(p, 'city')].filter(v => v !== '--').join(' ') || '--';
+      const imageCell = image ? '![](' + image + ')' : '--';
+      const row = [
+        i + 1, imageCell, productLink(title, detailUrl), detailUrl ? productLink('点击查看商品', detailUrl) : '--', productText(p, PRODUCT_FIELD_KEYS.category),
+        productText(p, PRODUCT_FIELD_KEYS.offerId), productText(p, PRODUCT_FIELD_KEYS.createTime), price === '--' ? '--' : '¥' + price,
+        qty === '--' ? '--' : String(qty) + (unit === '--' ? '' : unit), productText(p, PRODUCT_FIELD_KEYS.skuCount), productText(p, PRODUCT_FIELD_KEYS.orders30),
+        productText(p, PRODUCT_FIELD_KEYS.items30), productText(p, PRODUCT_FIELD_KEYS.amount30), productText(p, PRODUCT_FIELD_KEYS.collect24),
+        productText(p, PRODUCT_FIELD_KEYS.collect48), productText(p, PRODUCT_FIELD_KEYS.growth7), productText(p, PRODUCT_FIELD_KEYS.concentration7),
+        productText(p, PRODUCT_FIELD_KEYS.repurchase), productText(p, PRODUCT_FIELD_KEYS.consignPrice), productText(p, PRODUCT_FIELD_KEYS.crossBorder),
+        productText(p, PRODUCT_FIELD_KEYS.rights), productText(p, PRODUCT_FIELD_KEYS.waybill), productText(p, PRODUCT_FIELD_KEYS.tag),
+        productText(p, PRODUCT_FIELD_KEYS.info), productText(p, PRODUCT_FIELD_KEYS.supply), shopName, productText(p, PRODUCT_FIELD_KEYS.trustYears),
+        productText(p, PRODUCT_FIELD_KEYS.fulfillment48), productText(p, PRODUCT_FIELD_KEYS.shopReturn), productText(p, PRODUCT_FIELD_KEYS.shopResponse),
+        productText(p, PRODUCT_FIELD_KEYS.service), location, companyTypeText(productField(p, 'companyType')), productText(p, PRODUCT_FIELD_KEYS.sellerMember),
+        productText(p, PRODUCT_FIELD_KEYS.sellerService), shopUrl ? productLink(shopUrl, shopUrl) : '--', imageUrl ? productLink(imageUrl, imageUrl) : '--'
+      ];
+      lines.push('| ' + row.map(v => String(v).replace(/\|/g, '/').replace(/\r?\n/g, ' ')).join(' | ') + ' |');
+    });
+    return lines.join('\n');
+  }
+  function chatflowProductsToOffers(pj) {
+    return (pj.products || []).map((p, i) => {
+      const price = Number(productField(p, 'price')) || Number(productField(p, 'consignPrice')) || null;
+      const companyType = String(productField(p, 'companyType'));
+      return {
+        ...p,
+        offerId: productField(p, 'offerId') !== '--' ? productField(p, 'offerId') : ('cf_' + (i + 1)),
+        price: price,
+        priceLow: price,
+        priceHigh: price,
+        startQuantity: Number(productField(p, 'quantity')) || undefined,
+        imageUrl: productField(p, 'imageUrl') !== '--' ? productField(p, 'imageUrl') : productField(p, 'image'),
+        bookedCount30d: Number(productField(p, 'orders30')) || 0,
+        saleCount30d: Number(productField(p, 'items30')) || 0,
+        detailUrl: productField(p, 'detailUrl'),
+        shopUrl: productField(p, 'shopUrl'),
+        shopName: productField(p, 'shopName'),
+        isFactory: /工厂/.test(companyType),
+        isPower: /实力/.test(companyType)
+      };
+    });
+  }
+  /* AI 回复统一渲染：与流式收尾分支完全一致，供"流式完成"与"历史会话恢复"两条链路共用。
+     历史会话存储的原始回复是"文字 + {"schema_version":...}"，必须走 JSON → 36 列表格链路，否则原始 JSON 会铺进气泡 */
+  // 从用户真实提问提取核心搜索词（只做纯文本前缀剥离与截断，用于"正在搜索：×××"展示，不改语义）
+  // 全局级定义：流式分析卡与历史恢复静态卡共用，避免闭包作用域导致外层访问不到
+  const extractSearchKw = (q) => {
+    let t = String(q || '').trim();
+    t = t.replace(/^(帮我|帮忙|请|麻烦|你好|您好|hi|hello)[，,、\s]*/i, '');
+    t = t.replace(/^(我想|我要|想要|需要|给我|准备|打算)[，,、\s]*/i, '');
+    t = t.replace(/^(看下|看看|看一下|找下|找找|找一下|搜下|搜搜|搜一下|查下|查查|查一下|推荐下|推荐一下|推荐|选下|选品|筛选|找|搜|查)[，,、\s]*/i, '');
+    t = t.replace(/[？?！!。，,、\s]+/g, ' ').trim();
+    if (t.length > 16) t = t.slice(0, 16);
+    return t || '选品';
+  };
+
+  function renderAiAnswerHtml(answer) {
+    const src = String(answer || '');
+    // 商品 JSON 只进入右栏数据通道，气泡仅显示摘要（兼容 message.answer 直接携带 JSON）。
+    if (typeof extractProductJson === 'function') {
+      const pj = extractProductJson(src);
+      if (pj) return pj.text ? (typeof renderMarkdown === 'function' ? renderMarkdown(pj.text) : escapeHtml(pj.text)) : '';
+    }
+    // 2) 报告类回复：渲染"报告已生成"卡片（点击打开右栏预览），不铺全文
+    if (typeof isReportAnswer === 'function' && typeof buildLastReport === 'function' && typeof buildReportDoneCard === 'function' && isReportAnswer(src)) {
+      buildLastReport(src);
+      return buildReportDoneCard(window.__lastReport);
+    }
+    // 3) 表格型回复：只渲染表格，"查看更多"在右栏预览完整数据
+    if (typeof hasMdTable === 'function' && typeof renderTablesOnly === 'function' && hasMdTable(src)) {
+      return renderTablesOnly(typeof stripProductJsonBlock === 'function' ? stripProductJsonBlock(src) : src);
+    }
+    // 4) 普通回复：Markdown 渲染（剥离残留 JSON 块，避免原始 JSON 显示在气泡里）
+    const text = typeof stripProductJsonBlock === 'function' ? stripProductJsonBlock(src) : src;
+    return typeof renderMarkdown === 'function' ? renderMarkdown(text) : escapeHtml(text).replace(/\n/g, '<br>');
+  }
   // 表格型回复渲染：每张表注册到 window.__mdTables 供右栏全量预览；默认最多展示 5 行，底部按钮打开右栏预览
   function renderTablesOnly(src) {
     const blocks = extractMdTableBlocks(stripThinkBlocks(src));
@@ -6549,18 +8126,21 @@
     window.__mdTables = window.__mdTables || {};
     return blocks.map(b => {
       const tableRows = b.lines.map(parseTableRow);
-      const headers = tableRows[0];
-      const dataRows = tableRows.slice(1);
+      // 入口剔除「商品链接」列（展示不需要，导出走独立链路保留真实 URL）；后续注册/渲染/排序索引全部一致
+      const stripped = mdStripLinkCol(tableRows[0], tableRows.slice(1));
+      const headers = stripped.headers;
+      const dataRows = stripped.rows;
       const total = dataRows.length;
       window.__mdTableSeq += 1;
       const tid = window.__mdTableSeq;
       window.__mdTables[tid] = { headers, rows: dataRows, title: b.title || '对话表格详情' };
       const shown = total > MD_TABLE_VISIBLE_ROWS ? dataRows.slice(0, MD_TABLE_VISIBLE_ROWS) : dataRows;
-      const thead = '<thead><tr>' + headers.map(c => '<th' + mdColCls(c) + '>' + c + '</th>').join('') + '</tr></thead>';
+      // 表头全部可排序（升降序、作用于全量数据而非当前 5 行）；数字列右对齐口径与 mdColCls 一致
+      const thead = '<thead><tr>' + headers.map((c, i) => '<th class="sortable' + (MD_NUM_HEAD_RE.test(String(c)) ? ' num-col' : '') + '" data-sort-key="' + i + '" title="点击按本列排序">' + c + ' <span class="sort-indicator">⇕</span></th>').join('') + '</tr></thead>';
       const tbody = '<tbody>' + shown.map(r => '<tr>' + r.map((c, ci) => mdCellHtml(c, headers[ci])).join('') + '</tr>').join('') + '</tbody>';
       const btn = total ? '<div class="md-more-btn" onclick="viewMdTableFull(' + tid + ')">'
         + (total > MD_TABLE_VISIBLE_ROWS ? ('查看更多 · 共 ' + total + ' 条数据') : ('查看完整表格 · ' + total + ' 条数据')) + '</div>' : '';
-      return '<div class="md-table-wrap"><table class="md-table">' + thead + tbody + '</table>' + btn + '</div>';
+      return '<div class="md-table-wrap"><table class="md-table" data-tid="' + tid + '">' + thead + tbody + '</table>' + btn + '</div>';
     }).join('');
   }
 
@@ -7016,6 +8596,14 @@
     }
     if (key === 'sales') return Number(o.bookedCount30d ?? o.bookedCount ?? o.recentOrders ?? 0) || 0;
     if (key === 'count') return Number(o.saleCount30d ?? o.saleCount ?? 0) || 0;
+    // 上架时间：与列显示同口径（offerCreateTime → beginOfferCreateTime）；无时间的商品视为最小值
+    // 优先直接解析 ISO（2026-08-23T13:10:00.000+08:00），失败再兼容「2026-08-23 13:10」斜杠格式
+    if (key === 'time') {
+      const s = String(o.offerCreateTime || o.beginOfferCreateTime || '');
+      let t = Date.parse(s);
+      if (isNaN(t)) t = Date.parse(s.replace(' ', 'T').replace(/-/g, '/'));
+      return isNaN(t) ? -Infinity : t;
+    }
     return 0;
   }
   // 单行 HTML（i 为全量序号，从 0 起；行模板与原 renderOffers 完全一致，供分页/排序/导出共用）
@@ -7035,19 +8623,41 @@
     const thumb = o.imageUrl || o.picUrl || o.image || '';
     const emoji = title.match(/[👟👜👗👕🎒📱💄💍🧸🪑🍵🪞⌚💎🛍🎩🥻]/);
     const thumbHtml = thumb
-      ? '<div class="img-cell"><img src="' + escapeHtml(thumb) + '" loading="lazy" onerror="this.outerHTML=\'📦\'"></div>'
+      ? '<div class="img-cell"><img src="' + escapeHtml(thumb) + '" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML=\'📦\'"></div>'
       : '<div class="img-cell">' + (emoji ? emoji[0] : '📦') + '</div>';
     const chkId = escapeHtml(offerRowKey(o));
     const chked = (window.__offerPager && window.__offerPager.selected && window.__offerPager.selected.has(offerRowKey(o))) ? ' checked' : '';
+    const val = (keys, fallback) => {
+      const value = productValue(o, keys);
+      return value === '--' ? (fallback == null ? '--' : String(fallback)) : String(value);
+    };
+    const textCell = value => escapeHtml(String(value == null || value === '' ? '--' : value));
+    const linkCell = (label, href) => href ? '<a href="' + escapeHtml(href) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(label) + '</a>' : '--';
+    // 链接归一化：'--'/空 视为缺失，避免拼出 href="--" 的伪链接；payload 未透出 detailUrl 时回退 shopUrl（1688 商品详情页链接）
+    const normUrl = u => { const s = String(u == null ? '' : u).trim(); return (!s || s === '--') ? '' : s; };
+    const detailUrl = normUrl(val(PRODUCT_FIELD_KEYS.detailUrl, o.detailUrl || o.offerUrl || o.url));
+    const shopUrl = normUrl(val(PRODUCT_FIELD_KEYS.shopUrl));
+    const titleText = val(PRODUCT_FIELD_KEYS.title, o.title || o.offerTitle || o.name || ('商品 #' + (o.offerId || o.id || i + 1)));
+    const titleCell = (detailUrl || shopUrl) ? linkCell(titleText, detailUrl || shopUrl) : escapeHtml(titleText);
+    const imageUrl = normUrl(val(PRODUCT_FIELD_KEYS.imageUrl, thumb));
+    const imageCell = thumb ? '<img src="' + escapeHtml(thumb) + '" loading="lazy" referrerpolicy="no-referrer" style="width:56px;height:56px;object-fit:cover" onerror="this.outerHTML=\'--\'">' : '--';
+    const priceText = val(PRODUCT_FIELD_KEYS.price, o.price != null ? o.price : null);
+    const qty = val(PRODUCT_FIELD_KEYS.quantity, o.startQuantity || o.beginStartQuantity || null);
+    const locationRaw = val(PRODUCT_FIELD_KEYS.location);
+    const location = locationRaw === '--' ? [val(PRODUCT_FIELD_KEYS.province), val(PRODUCT_FIELD_KEYS.city)].filter(x => x !== '--').join(' ') || '--' : locationRaw;
+    const cells = [
+      imageCell, titleCell, linkCell(detailUrl || '--', detailUrl), val(PRODUCT_FIELD_KEYS.category), val(PRODUCT_FIELD_KEYS.offerId, offerId),
+      val(PRODUCT_FIELD_KEYS.createTime, created), priceText === '--' ? '--' : '¥' + priceText, qty, val(PRODUCT_FIELD_KEYS.skuCount),
+      val(PRODUCT_FIELD_KEYS.orders30, booked30), val(PRODUCT_FIELD_KEYS.items30, saleCount), val(PRODUCT_FIELD_KEYS.amount30), val(PRODUCT_FIELD_KEYS.collect24), val(PRODUCT_FIELD_KEYS.collect48),
+      val(PRODUCT_FIELD_KEYS.growth7), val(PRODUCT_FIELD_KEYS.concentration7), val(PRODUCT_FIELD_KEYS.repurchase), val(PRODUCT_FIELD_KEYS.consignPrice), val(PRODUCT_FIELD_KEYS.crossBorder),
+      val(PRODUCT_FIELD_KEYS.rights), val(PRODUCT_FIELD_KEYS.waybill), val(PRODUCT_FIELD_KEYS.tag), val(PRODUCT_FIELD_KEYS.info), val(PRODUCT_FIELD_KEYS.supply),
+      val(PRODUCT_FIELD_KEYS.shopName), val(PRODUCT_FIELD_KEYS.trustYears), val(PRODUCT_FIELD_KEYS.fulfillment48), val(PRODUCT_FIELD_KEYS.shopReturn), val(PRODUCT_FIELD_KEYS.shopResponse),
+      val(PRODUCT_FIELD_KEYS.service), location, companyTypeText(productField(o, 'companyType')), val(PRODUCT_FIELD_KEYS.sellerMember), val(PRODUCT_FIELD_KEYS.sellerService),
+      linkCell(shopUrl, shopUrl), linkCell(imageUrl, imageUrl)
+    ];
     return `<tr class="product-main" data-offer-id="${escapeHtml(offerId)}" data-conv-id="${escapeHtml(o.convId || '')}">
       <td class="chk-cell"><input type="checkbox" class="row-chk" data-chk-id="${chkId}" title="勾选后可导出"${chked}></td>
-      <td class="idx-cell">${i + 1}</td>
-      <td><div class="product-info">${thumbHtml}<div class="product-title">${title}<br><span class="mini-tag">1688</span>${o.isFactory ? '<span class="mini-tag green">工厂</span>' : ''}${o.isPower ? '<span class="mini-tag blue">实力商家</span>' : ''}</div></div></td>
-      <td class="time-cell">${created || '—'}</td>
-      <td class="price">${price}</td>
-      <td class="ladder">${priceRange}</td>
-      <td>${fmtN(booked30)}</td>
-      <td>${fmtN(saleCount)}</td>
+      <td class="idx-cell">${i + 1}</td>${cells.map((cell, ci) => '<td>' + (ci === 0 || [1, 2, 3, 34, 35].includes(ci) ? cell : textCell(cell)) + '</td>').join('')}
     </tr>`;
   }
   // 窗口化页码：1 … cur-1 cur cur+1 … 末页，避免页数多时按钮铺满
@@ -7078,21 +8688,24 @@
     const pageRows = full.slice(start, start + pager.size);
     if (bar) bar.style.display = totalRows ? '' : 'none';
     if (!totalRows) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#909399">暂无商品数据</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="39" style="text-align:center;padding:40px;color:#909399">暂无商品数据</td></tr>';
       updateSelectionUI();
       return;
     }
     tbody.innerHTML = pageRows.map((o, i) => offerRowHtml(o, start + i)).join('');
     const end = start + pageRows.length;
     const totalEl = bar ? bar.querySelector('#pgTotal') : null;
-    if (totalEl) totalEl.textContent = '共 ' + fmtN(totalRows) + ' 条 · 本页 ' + fmtN(start + 1) + '-' + fmtN(end) + ' 条';
+    if (totalEl) totalEl.textContent = '共 ' + fmtN(totalRows) + ' 条';
     const navEl = bar ? bar.querySelector('#pgNav') : null;
     if (navEl) {
+      // 紧凑样式：‹ 页码(窗口化带省略号) ›；本页区间文案保留在预览 meta 行
       navEl.innerHTML =
-        '<button type="button" class="pg-btn pg-step" data-step="-1"' + (pager.page <= 1 ? ' disabled' : '') + '>‹ 上一页</button>' +
+        '<button type="button" class="pg-btn pg-step" data-step="-1" title="上一页" aria-label="上一页"' + (pager.page <= 1 ? ' disabled' : '') + '>‹</button>' +
         pagerPageButtons(pager.page, totalPages) +
-        '<button type="button" class="pg-btn pg-step" data-step="1"' + (pager.page >= totalPages ? ' disabled' : '') + '>下一页 ›</button>';
+        '<button type="button" class="pg-btn pg-step" data-step="1" title="下一页" aria-label="下一页"' + (pager.page >= totalPages ? ' disabled' : '') + '>›</button>';
     }
+    const jumpEl = bar ? bar.querySelector('#pgJump') : null;
+    if (jumpEl) { jumpEl.value = pager.page; jumpEl.max = totalPages; }
     const metaEl = document.getElementById('previewMeta');
     if (metaEl && pager.metaTime) {
       metaEl.innerHTML = '执行时间 · ' + pager.metaTime + ' · 共 <strong>' + fmtN(pager.totalCount || totalRows) + '</strong> 条 · 当前展示 ' + fmtN(start + 1) + '–' + fmtN(end) + ' 条';
@@ -7138,6 +8751,22 @@
       pager.page = 1;
       renderOfferPage();
     });
+    // 跳页：输入页码回车/失焦跳转，空值回显当前页，越界自动夹取到有效范围
+    const jumpInput = bar.querySelector('#pgJump');
+    if (jumpInput) {
+      const doJump = () => {
+        const pager = window.__offerPager;
+        if (!pager) return;
+        const totalPages = Math.max(1, Math.ceil((pager.full || []).length / pager.size));
+        let p = parseInt(jumpInput.value, 10);
+        if (!isFinite(p)) { jumpInput.value = pager.page; return; }
+        pager.page = Math.min(Math.max(1, p), totalPages);
+        jumpInput.value = pager.page;
+        renderOfferPage();
+      };
+      jumpInput.addEventListener('change', doJump);
+      jumpInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doJump(); } });
+    }
     // 全选/取消本页：表头勾选框为静态元素，绑定一次即可（写入跨页勾选集合 selected）
     const checkAll = document.getElementById('pgCheckAll');
     if (checkAll) checkAll.addEventListener('change', () => {
@@ -7163,14 +8792,14 @@
       if (cb.checked) pager.selected.add(key); else pager.selected.delete(key);
       updateSelectionUI();
     });
-    // 导出勾选 / 导出全部（exporting 防重入，与工具栏导出按钮一致）
-    const exportSel = bar.querySelector('#pgExportSel');
+    // 导出勾选 / 导出全部（按钮已上移至表格上方工具栏 → document 级查找；exporting 防重入）
+    const exportSel = document.getElementById('pgExportSel');
     if (exportSel) exportSel.addEventListener('click', () => {
       if (exportSel.disabled || exportSel.dataset.exporting) return;
       exportSel.dataset.exporting = '1';
       exportPreviewXlsx('selected').finally(() => { delete exportSel.dataset.exporting; });
     });
-    const exportAll = bar.querySelector('#pgExportAll');
+    const exportAll = document.getElementById('pgExportAll');
     if (exportAll) exportAll.addEventListener('click', () => {
       if (exportAll.dataset.exporting) return;
       exportAll.dataset.exporting = '1';
