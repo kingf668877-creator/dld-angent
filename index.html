@@ -3371,7 +3371,7 @@
     if (payload && Array.isArray(payload.products) && payload.products.length && typeof chatflowProductsToOffers === 'function') {
       const offers = chatflowProductsToOffers(payload);
       window.__dldOffers = offers;
-      if (typeof renderOffers === 'function') renderOffers(offers, { totalCount: payload.count || offers.length });
+      if (typeof renderOffers === 'function') renderOffers(offers, { totalCount: payload.totalCount || payload.count || offers.length });
       return true;
     }
     if (typeof setRightEmpty === 'function') setRightEmpty(true);
@@ -3451,6 +3451,82 @@
     }
     return null;
   }
+  function normalizeProduct(raw, index) {
+    const source = raw && typeof raw === 'object' ? raw : {};
+    const invalid = value => value == null || value === '' || value === false || value === -1 || value === '-1' || value === '-1%' || (Array.isArray(value) && value.length === 0);
+    const first = (...keys) => {
+      for (const key of keys) {
+        const value = source[key];
+        if (!invalid(value)) return value;
+      }
+      return '--';
+    };
+    const list = (...keys) => {
+      const value = first(...keys);
+      if (Array.isArray(value)) return value.filter(v => !invalid(v));
+      return invalid(value) || value === '--' ? [] : [value];
+    };
+    const labels = values => values
+      .flatMap(value => Array.isArray(value) ? value : [value])
+      .filter(v => !invalid(v) && v !== '--');
+    const companyType = first('companyType');
+    const shiLiType = list('shiLiType');
+    const supplyType = first('supplyType', 'offerSupplyType');
+    const province = first('province', 'shipProvince');
+    const city = first('city', 'shipCity');
+    const offerId = first('offerId', 'id');
+    const detailUrl = first('offerUrl', 'productUrl', 'url') !== '--'
+      ? first('offerUrl', 'productUrl', 'url')
+      : offerId !== '--' ? 'https://detail.1688.com/offer/' + offerId + '.html' : '--';
+    const titleTags = labels([first('titleTags'), first('isNew') === true || first('isNew') === 1 || first('isNew') === '1' ? '新品' : '--', first('status')]);
+    const productInfo = labels([first('itemNo'), first('include')]);
+    const sellerServices = labels([first('certificateNameList'), first('buyerProtections')]);
+    const crossBorder = first('kjServices', 'crossBorderService', 'crossBorder', 'isKj');
+    const crossBorderLabel = crossBorder === 1 || crossBorder === '1' ? '支持跨境' : crossBorder === 0 || crossBorder === '0' ? '--' : crossBorder;
+    const companyTypeLabel = companyType === 1 || companyType === '1' ? '贸易商' : companyType === 2 || companyType === '2' ? '工厂' : companyType;
+    const memberLabels = shiLiType.map(value => SHILI_TYPE_LABELS[value] || value);
+    const supplyLabel = Array.isArray(supplyType) ? supplyType.map(value => SUPPLY_TYPE_LABELS[value] || value).join('、') : (SUPPLY_TYPE_LABELS[supplyType] || supplyType);
+    return {
+      '序号': index + 1,
+      '商品主图': first('image'),
+      '商品标题': first('title', 'subject'),
+      '商品链接': detailUrl,
+      '商品类目': first('levelName'),
+      '商品ID': offerId,
+      '上架时间': first('offerCreateTime'),
+      '批发价': first('price'),
+      '起批量': first('quantityBegin', 'startQuantity'),
+      'sku数量': first('skuCount'),
+      '近30天订单数': first('bookedCount30d'),
+      '近30天件数': first('saleQuantity30d'),
+      '近30天销售额': first('salesVolume30d'),
+      '24H揽收率': first('offerLgt24h'),
+      '48H揽收率': first('offerLgt48h'),
+      '7日订单增长率': first('bookedCount7dGrowthRate'),
+      '7日采购集中率': first('purchaseRate7d'),
+      '复购率': first('offerRepurchaseRate'),
+      '代发价': first('consignPrice'),
+      '跨境服务': invalid(crossBorderLabel) ? supplyLabel : crossBorderLabel,
+      '权益保障': first('buyerProtections'),
+      '面单支持': first('faceToFaceSupportStatus'),
+      '商品标识': titleTags.length ? titleTags.join('、') : '--',
+      '商品信息': productInfo.length ? productInfo.join('、') : '--',
+      '供货类型': supplyLabel,
+      '店铺名称': first('company'),
+      '诚信通年限': first('tpYear'),
+      '店铺48H履约率': first('shopLgt48h'),
+      '店铺回头率': first('shopRepurchaseRate'),
+      '店铺响应率': first('wwResponseRate'),
+      '综合服务': first('compositeNewScore'),
+      '所在地': [province, city].filter(value => !invalid(value) && value !== '--').join(' ') || '--',
+      '公司类型': companyTypeLabel,
+      '卖家会员类型': memberLabels.length ? memberLabels.join('、') : '--',
+      '卖家服务': sellerServices.length ? sellerServices.join('、') : '--',
+      '店铺链接': first('shopUrl'),
+      '主图链接': first('image'),
+      raw: source
+    };
+  }
   async function loadObsProducts(obsUrl, totalCount, convId) {
     const response = await fetch(obsUrl, { method: 'GET', mode: 'cors', credentials: 'omit' });
     if (!response.ok) throw new Error('商品数据请求失败: HTTP ' + response.status);
@@ -3461,8 +3537,16 @@
         : (Array.isArray(parsed && parsed.list) ? parsed.list
           : (Array.isArray(parsed && parsed.data) ? parsed.data : null)));
     if (!items) throw new Error('obsUrl 返回的数据不是商品数组');
-    const products = items.slice(0, 10000);
-    const payload = { count: products.length, products, obsUrl };
+    const rawProducts = items.slice(0, 10000);
+    console.log('第一条原始商品:', rawProducts[0] || null);
+    console.log('真实字段名:', rawProducts[0] ? Object.keys(rawProducts[0]) : []);
+    const products = rawProducts.map((raw, index) => normalizeProduct(raw, index));
+    const payload = {
+      count: products.length,
+      totalCount: Number(totalCount || 0),
+      products,
+      obsUrl
+    };
     window.__dldObsMeta = { obsUrl, totalCount: Number(totalCount || 0), fetchedCount: items.length, renderedCount: products.length };
     console.log('obsUrl:', obsUrl);
     console.log('totalCount:', Number(totalCount || 0));
@@ -7999,30 +8083,88 @@
   const PRODUCT_EXPORT_EXTRA_HEADERS = [];
   const PRODUCT_FIELD_KEYS = {
     image: ['商品主图', 'mainImageUrl', 'image', 'imageUrl', 'picUrl'], title: ['商品标题', 'title', 'offerTitle', 'subject'],
-    detailUrl: ['商品链接', 'detailUrl', 'offerUrl', 'url'], category: ['商品类目', 'category', 'categoryName'],
+    detailUrl: ['商品链接', 'detailUrl', 'offerUrl', 'productUrl', 'url'], category: ['商品类目', 'levelName', 'category', 'categoryName'],
     offerId: ['商品ID', 'offerId', 'id'], createTime: ['上架时间', 'offerCreateTime', 'createTime'],
     price: ['批发价', 'price'], quantity: ['起批量', 'quantityBegin', 'startQuantity'], unit: ['unit', '单位'],
-    skuCount: ['sku数量', 'skuCount'], orders30: ['近30天订单数', 'orderCount30d', 'bookedCount30d', 'sales'],
-    items30: ['近30天件数', 'itemCount30d', 'saleCount30d'], amount30: ['近30天销售额', 'salesAmount30d', 'amount30d', 'saleAmount30d'],
-    collect24: ['24H揽收率', 'collectRate24h', 'receiveRate24h'], collect48: ['48H揽收率', 'collectRate48h', 'receiveRate48h'],
-    growth7: ['7日订单增长率', 'orderGrowth7d', 'orderGrowthRate7d'], concentration7: ['7日采购集中率', 'purchaseConcentration7d', 'purchaseRate7d'],
-    repurchase: ['复购率', 'repurchaseRate'], consignPrice: ['代发价', 'consignPrice'],
-    crossBorder: ['跨境服务', 'crossBorderService', 'crossBorder'], rights: ['权益保障', 'rightsProtection'],
-    waybill: ['面单支持', 'waybillSupport'], tag: ['商品标识', 'productTag'], info: ['商品信息', 'productInfo'],
-    supply: ['供货类型', 'supplyType', 'supplyMode'], shopName: ['店铺名称', 'supplier', 'shopName', 'companyName'], shopUrl: ['店铺链接', 'shopUrl', 'storeUrl', 'shopLink'],
+    skuCount: ['sku数量', 'skuCount'], orders30: ['近30天订单数', 'orderCount30d', 'bookedCount30d', 'daiXiaoBookedCount30', 'sales'],
+    items30: ['近30天件数', 'itemCount30d', 'saleQuantity30d', 'saleCount30d'], amount30: ['近30天销售额', 'salesVolume30d', 'salesAmount30d', 'amount30d', 'saleAmount30d'],
+    collect24: ['24H揽收率', 'offerLgt24h', 'collectRate24h', 'receiveRate24h'], collect48: ['48H揽收率', 'offerLgt48h', 'collectRate48h', 'receiveRate48h'],
+    growth7: ['7日订单增长率', 'bookedCount7dGrowthRate', 'orderGrowth7d', 'orderGrowthRate7d'], concentration7: ['7日采购集中率', 'purchaseRate7d', 'purchaseConcentration7d'],
+    repurchase: ['复购率', 'offerRepurchaseRate', 'repurchaseRate'], consignPrice: ['代发价', 'consignPrice'],
+    crossBorder: ['跨境服务', 'kjServices', 'crossBorderService', 'crossBorder', 'isKj', 'supplyType', 'offerSupplyType'], rights: ['权益保障', 'buyerProtections', 'rightsProtection'],
+    waybill: ['面单支持', 'faceToFaceSupportStatus', 'waybillSupport'], tag: ['商品标识', 'titleTags', 'isNew', 'status', 'include', 'productTag'], info: ['商品信息', 'itemNo', 'include', 'productInfo'],
+    supply: ['供货类型', 'supplyType', 'offerSupplyType', 'supplyMode'], shopName: ['店铺名称', 'company', 'supplier', 'shopName', 'companyName'], shopUrl: ['店铺链接', 'shopUrl', 'storeUrl', 'shopLink'],
     trustYears: ['诚信通年限', 'trustYears', 'chengxintongYears', 'memberYears'], fulfillment48: ['店铺48H履约率', 'fulfillmentRate48h', 'shopFulfillmentRate48h', 'fulfillment48hRate'],
     shopReturn: ['店铺回头率', 'shopReturnRate', 'returnRate', 'repeatPurchaseRate'], shopResponse: ['店铺响应率', 'shopResponseRate', 'responseRate', 'responseSpeed'],
-    service: ['综合服务', 'serviceScore', 'comprehensiveService', 'comprehensiveScore'], location: ['所在地', 'location', 'address'], province: ['province', '省份'], city: ['city', '城市'],
-    companyType: ['公司类型', 'companyType', 'businessType'], sellerMember: ['卖家会员类型', 'sellerMemberType', 'memberType'], sellerService: ['卖家服务', 'sellerService', 'sellerServiceTags'],
-    imageUrl: ['主图链接', 'mainImageUrl', 'imageUrl', 'image', 'picUrl'], image: ['mainImageUrl', 'image', 'imageUrl', 'picUrl']
+    service: ['综合服务', 'compositeNewScore', 'serviceScore', 'comprehensiveService', 'comprehensiveScore'], location: ['所在地', 'location', 'address'], province: ['province', 'shipProvince', '省份'], city: ['city', 'shipCity', '城市'],
+    companyType: ['公司类型', 'companyType', 'businessType'], sellerMember: ['卖家会员类型', 'shiLiType', 'sellerMemberType', 'memberType'], sellerService: ['卖家服务', 'certificateNameList', 'buyerProtections', 'sellerService', 'sellerServiceTags'],
+    imageUrl: ['主图链接', 'image', 'mainImageUrl', 'imageUrl', 'picUrl'], image: ['商品主图', 'image', 'mainImageUrl', 'imageUrl', 'picUrl']
   };
   const productValue = (p, keys) => {
-    for (const key of keys) if (p && p[key] !== undefined && p[key] !== null && p[key] !== '') return p[key];
+    for (const key of keys) {
+      const value = p && p[key];
+      if (value === undefined || value === null || value === '' || value === -1 || value === '-1') continue;
+      if (Array.isArray(value) && value.length === 0) continue;
+      return value;
+    }
     return '--';
   };
-  const productField = (p, name) => productValue(p, PRODUCT_FIELD_KEYS[name] || [name]);
-  const productText = (p, keys) => String(productValue(p, keys)).replace(/\|/g, '/').replace(/\r?\n/g, ' ');
-  const productUrl = (p, keys) => String(productValue(p, keys) === '--' ? '' : productValue(p, keys)).trim();
+  const SHILI_TYPE_LABELS = { Power: '实力商家', superFactory: '超级工厂', ytqj: '诚信通' };
+  const SUPPLY_TYPE_LABELS = { '1': '跨境卖家', '2': '内贸卖家' };
+  const PERCENT_FIELD_NAMES = new Set(['collect24', 'collect48', 'growth7', 'repurchase', 'fulfillment48', 'shopReturn', 'shopResponse']);
+  const MULTIPLE_FIELD_NAMES = new Set(['concentration7']);
+  const DECIMAL_FIELD_NAMES = new Set(['price', 'amount30', 'consignPrice', 'service']);
+  const toDisplayNumber = value => {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    const text = String(value == null ? '' : value).replace(/[¥￥,]/g, '').trim();
+    const match = text.match(/-?\d+(?:\.\d+)?/);
+    return match ? Number(match[0]) : null;
+  };
+  const formatProductValue = (name, value) => {
+    if (value === undefined || value === null || value === '' || value === false || value === '--' || value === '-' || value === -1 || value === '-1' || value === '-1%') return '--';
+    if (Array.isArray(value)) return value.filter(v => v !== '--' && v !== '-' && v !== false && v != null && v !== '').join('、') || '--';
+    const numeric = toDisplayNumber(value);
+    if (PERCENT_FIELD_NAMES.has(name) && numeric !== null) {
+      const hasPercent = /%/.test(String(value));
+      const percent = hasPercent ? numeric : (Math.abs(numeric) <= 1 ? numeric * 100 : numeric);
+      return percent.toFixed(2) + '%';
+    }
+    if (MULTIPLE_FIELD_NAMES.has(name) && numeric !== null) return numeric.toFixed(2) + '倍';
+    if (DECIMAL_FIELD_NAMES.has(name) && numeric !== null) return numeric.toFixed(2);
+    return Array.isArray(value) ? value.join('、') || '--' : String(value);
+  };
+  const fieldNameForKeys = keys => Object.keys(PRODUCT_FIELD_KEYS).find(name => PRODUCT_FIELD_KEYS[name] === keys) || '';
+  const productField = (p, name) => {
+    if (name === 'detailUrl' && !(p && (p.detailUrl || p.offerUrl || p.productUrl || p.url))) {
+      const id = productValue(p, PRODUCT_FIELD_KEYS.offerId);
+      return id !== '--' ? 'https://detail.1688.com/offer/' + id + '.html' : '--';
+    }
+    const value = productValue(p, PRODUCT_FIELD_KEYS[name] || [name]);
+    if (name === 'companyType') return value === 1 || value === '1' ? '贸易商' : value === 2 || value === '2' ? '工厂' : formatProductValue(name, value);
+    if (name === 'sellerMember') return formatProductValue(name, Array.isArray(value) ? value.map(v => SHILI_TYPE_LABELS[v] || v) : value);
+    if (name === 'supply' || name === 'crossBorder') return formatProductValue(name, Array.isArray(value) ? value.map(v => SUPPLY_TYPE_LABELS[v] || v) : (SUPPLY_TYPE_LABELS[value] || value));
+    if (name === 'tag') {
+      const source = p && p.raw && typeof p.raw === 'object' ? p.raw : p;
+      const tags = [];
+      if (Array.isArray(source?.titleTags)) tags.push(...source.titleTags);
+      if (source?.isNew === 1 || source?.isNew === true || source?.isNew === '1') tags.push('新品');
+      if (source?.status && source.status !== '-1') tags.push(source.status);
+      if (tags.length) return formatProductValue(name, tags);
+      return formatProductValue(name, value);
+    }
+    return formatProductValue(name, value);
+  };
+  const productText = (p, keys) => {
+    const fieldName = fieldNameForKeys(keys);
+    const value = fieldName ? productField(p, fieldName) : productValue(p, keys);
+    return String(Array.isArray(value) ? value.join('、') : value).replace(/\|/g, '/').replace(/\r?\n/g, ' ');
+  };
+  const productUrl = (p, keys) => {
+    const value = productValue(p, keys);
+    if (value !== '--') return String(value).trim();
+    const id = productValue(p, PRODUCT_FIELD_KEYS.offerId);
+    return id !== '--' && keys === PRODUCT_FIELD_KEYS.detailUrl ? 'https://detail.1688.com/offer/' + id + '.html' : '';
+  };
   const productLink = (label, url) => url ? '[' + label + '](' + url + ')' : label;
   const companyTypeText = v => {
     const raw = productValue({ v }, ['v']);
@@ -8628,7 +8770,8 @@
     const chkId = escapeHtml(offerRowKey(o));
     const chked = (window.__offerPager && window.__offerPager.selected && window.__offerPager.selected.has(offerRowKey(o))) ? ' checked' : '';
     const val = (keys, fallback) => {
-      const value = productValue(o, keys);
+      const fieldName = fieldNameForKeys(keys);
+      const value = fieldName ? productField(o, fieldName) : productValue(o, keys);
       return value === '--' ? (fallback == null ? '--' : String(fallback)) : String(value);
     };
     const textCell = value => escapeHtml(String(value == null || value === '' ? '--' : value));
