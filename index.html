@@ -1901,7 +1901,7 @@
     color: var(--text-dim); border-radius: 50%; font-size: 12px;
   }
   .right-tab .x:hover { background: var(--border); color: var(--red); }
-  .right-body { flex: 1; overflow-y: auto; padding: 12px 18px 6px; }
+  .right-body { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 12px 18px 6px; }
 
   /* ========== 右栏骨架屏 ========== */
   .right-skeleton { margin-bottom: 14px; }
@@ -1977,12 +1977,27 @@
   .preview-p strong { color: #FF6600; }
 
   .excel-wrap {
-    margin-top: 8px;
+    width: 100%;
+    max-width: 100%;
+    height: min(560px, calc(100vh - 360px));
+    max-height: min(560px, calc(100vh - 360px));
+    margin-top: 4px;
     border: 1px solid var(--border-light);
     border-radius: var(--r);
-    overflow-x: auto;
-    overflow-y: clip;
+    overflow: auto;
+    overscroll-behavior: contain;
     background: #fff;
+    box-sizing: border-box;
+  }
+  /* 导出工具栏固定在右侧内容顶部，不随表格纵向滚动消失 */
+  #excelBlock > .excel-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 12;
+    overflow: hidden;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   /* 工具栏 = 表格上方导出条：与对话表格详情导出条（md-export-bar）同款 1688 橙渐变底 */
   .excel-toolbar {
@@ -2029,9 +2044,8 @@
   .pg-export-btn:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
   .pg-export-btn.exporting { opacity: .7; pointer-events: none; }
 
-  .excel-wrap { max-height: none; }
   .preview-table {
-    width: 920px; min-width: 100%; border-collapse: separate; border-spacing: 0;
+    width: max-content; min-width: 100%; border-collapse: separate; border-spacing: 0;
     font-size: 10px; color: #3c4652; background: #fff;
   }
   .preview-table .product-info { white-space: normal; }
@@ -2303,9 +2317,14 @@
   .offer-card .oc-shop a:hover { color: #00a83e; }
   .offer-card .oc-chk input { width: 15px; height: 15px; cursor: pointer; accent-color: #00a83e; }
   .table-pagination {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
     display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-    margin-top: 8px; padding: 7px 12px;
-    background: #fff; border: 1px solid var(--border-light); border-radius: var(--r);
+    width: 100%; box-sizing: border-box;
+    margin: 4px 0 0; padding: 5px 10px;
+    background: rgba(255,255,255,.98); border: 1px solid var(--border-light); border-radius: var(--r);
+    box-shadow: 0 -3px 10px rgba(16,24,40,.12);
     font-size: 12px; color: #6f7a85;
   }
   /* 页码条：参考 Element 风格 —— 无独立描边的方块按钮拼成一条带分隔线的圆角条，激活页绿字浅绿底 */
@@ -3654,7 +3673,7 @@
       const old = all[key];
       const rounds = Array.isArray(old && old.rounds) ? old.rounds : (old && old.products ? [{ products: old.products, count: old.count, savedAt: old.savedAt }] : []);
       const rid = String(roundKey || ('round-' + Date.now()));
-      const entry = { roundKey: rid, query: payload.query || payload.title || window.__dldCurrentResultQuery || '', count: payload.count || payload.products.length, products: payload.products, savedAt: Date.now() };
+      const entry = { roundKey: rid, query: payload.query || payload.title || window.__dldCurrentResultQuery || '', count: payload.count || payload.products.length, totalCount: payload.totalCount || payload.count || payload.products.length, products: payload.products, savedAt: Date.now() };
       const idx = rounds.findIndex(r => String(r.roundKey || '') === rid);
       if (idx >= 0) rounds[idx] = entry; else rounds.push(entry);
       all[key] = { count: entry.count, products: entry.products, rounds: rounds.slice(-20), savedAt: entry.savedAt };
@@ -3694,7 +3713,7 @@
 
   // 每轮的五条商品预览与右侧完整结果共用同一份缓存，点击时不重复请求 obsUrl。
   window.__dldProductPreviews = window.__dldProductPreviews || new Map();
-  function productPreviewHtml(sample, products, convId) {
+  function productPreviewHtml(sample, products, convId, totalCount) {
     // list 只有摘要或部分字段时，从已取得的 OBS 明细补齐，保证卡片有真实标题和图片。
     const byId = new Map(products.map(p => [String(p['商品ID'] || p.offerId || ''), p]));
     const samples = Array.isArray(sample) ? sample.map(p => {
@@ -3703,7 +3722,7 @@
       return id && byId.get(String(id)) || null;
     }).filter(Boolean) : [];
     const normalized = (samples.length ? samples : products).slice(0, 5);
-    const total = products.length;
+    const total = Number(totalCount || (window.currentResult && window.currentResult.totalCount) || products.length) || products.length;
     const key = 'product-preview-' + Date.now() + '-' + Math.random().toString(36).slice(2);
     window.__dldProductPreviews.set(key, {
       convId, products, totalCount: window.currentResult && window.currentResult.totalCount,
@@ -4667,6 +4686,17 @@
             };
           }
         }
+        // 刷新恢复时，如果历史缓存只有对话摘要的 5 条，补拉完整商品列表后再渲染右侧。
+        if (cachedProducts && Array.isArray(cachedProducts.rounds) && typeof loadOffersForQuery === 'function' && typeof DLD !== 'undefined') {
+          const summaryRounds = cachedProducts.rounds.filter(round => Array.isArray(round.products) && round.products.length === 5 && round.query);
+          for (const round of summaryRounds) {
+            await loadOffersForQuery(round.query, target.convId, {
+              resultKey: 'history-' + target.convId + '-' + (round.roundKey || ''),
+              roundKey: round.roundKey || ''
+            });
+          }
+          cachedProducts = getConversationProducts(target.convId) || cachedProducts;
+        }
         if (cachedProducts && cachedProducts.products.length) {
           const aiBubbles = [...view.el.querySelectorAll('.msg.ai .msg-bubble')];
           const aiMessages = messages.filter(message => message.role === 'assistant');
@@ -4690,7 +4720,7 @@
             if (aiIndex < 0) aiIndex = Math.min(idx, aiBubbles.length - 1);
             const bubble = aiBubbles[aiIndex];
             if (bubble && Array.isArray(round.products) && round.products.length) {
-              bubble.insertAdjacentHTML('beforeend', productPreviewHtml(round.sample, round.products, target.convId));
+              bubble.insertAdjacentHTML('beforeend', productPreviewHtml(round.sample, round.products, target.convId, round.totalCount || round.count));
             }
           });
           previewRounds.forEach((round, idx) => {
@@ -6500,7 +6530,7 @@
   let LAST_QUERY = '';
 
   // 查询完成后补拉结构化商品。只展示标题命中查询核心词的结果，避免接口未登录或忽略关键词时展示无关商品。
-  async function loadOffersForQuery(query, convKey) {
+  async function loadOffersForQuery(query, convKey, options = {}) {
     const q = String(query || '').trim();
     if (!q || typeof DLD === 'undefined') return;
     const task = RUNNING_TASKS.get(convKey);
@@ -6556,8 +6586,25 @@
       };
       matchedList = matchedList.map(adaptOffer);
       window.__dldOffers = matchedList;
+      // 补拉到完整商品列表后覆盖保存本轮缓存，刷新时恢复完整数量而不是对话摘要的 5 条。
+      if (matchedList.length && typeof saveConversationProducts === 'function') {
+        const fullConversationId = convKey;
+        const fullRoundKey = options.roundKey || window.__dldCurrentResultMessageId || ('round-' + q);
+        saveConversationProducts(fullConversationId, {
+          products: matchedList,
+          count: matchedList.length,
+          totalCount: matchedList.length,
+          query: q,
+          conversationId: fullConversationId,
+          messageId: fullRoundKey
+        }, fullRoundKey);
+      }
       if (matchedList.length && typeof renderOffers === 'function') {
-        renderOffers(matchedList, { ...result, totalCount: matchedList.length });
+        renderOffers(matchedList, { ...result, totalCount: matchedList.length, resultKey: options.resultKey || '', resultPayload: { products: matchedList, count: matchedList.length, query: q, conversationId: window.__dldActiveConversationId || convKey, messageId: options.roundKey || '' }, queryTitle: q });
+        // 完整列表返回后，把中间分析卡更新为本次真实结果总数。
+        const activeView = CONV_VIEWS.get(convKey);
+        const countText = activeView && activeView.el ? activeView.el.querySelector('.az-count .azc-txt') : null;
+        if (countText) countText.textContent = '检索完成，共 ' + matchedList.length + ' 条符合条件的商品，完整结果加载中';
         console.info('[DLD] 查询商品展示完成：', q, matchedList.length);
       } else {
         // 新查询没有匹配商品时，不用空数组覆盖当前已经打开的结果表。
@@ -7162,16 +7209,13 @@
         if (!analyzeState || idx <= analyzeState.stepIdx) return;
         applyStage(idx);
       };
-      // 数据接收真实计数：商品 JSON 流式到达时统计去重后的 1688 商品链接数（后端给了多少显示多少，不编造）
+      // 数据接收计数：流式正文只包含示例链接（5 条），不能当总数展示。
+      // 数量条在流式阶段保持隐藏，等完整商品接口返回真实总数后再由 onDone 写入。
       const updateAnalyzeCount = () => {
         if (!analyzeState || !analyzeState.countEl) return;
-        const ids = accAnswer.match(/detail\.1688\.com\/offer\/\d+/g) || [];
-        const n = new Set(ids).size;
-        if (!n) return;
-        if (analyzeState.countEl.style.display !== 'none' && analyzeState.countEl.dataset.n === String(n)) return;
-        analyzeState.countEl.dataset.n = String(n);
-        analyzeState.countEl.style.display = '';
-        analyzeState.countEl.querySelector('.azc-txt').textContent = '已生成 ' + n + ' 条预览，完整结果加载中';
+        if (analyzeState.countEl.style.display === 'none' || !analyzeState.countEl.dataset.n) {
+          analyzeState.countEl.style.display = 'none';
+        }
       };
       const showAnalyze = () => {
         if (analyzeEl) return;
@@ -7358,12 +7402,14 @@
           const etaEl = skeletonEl.querySelector('.sk-eta');
           if (expected > 0) {
             const pct = Math.min(98, Math.round(got / expected * 100));
-            cntEl.textContent = '已接收 ' + Math.min(got, expected) + '/' + expected + ' 条';
+            cntEl.textContent = '';
+            cntEl.style.display = 'none';
             barEl.classList.remove('indeterminate');
             barEl.firstElementChild.style.width = Math.max(4, pct) + '%';
             etaEl.textContent = pct >= 98 ? '即将完成…' : '已完成约 ' + pct + '%';
           } else {
-            cntEl.textContent = got > 0 ? '已接收 ' + got + ' 条' : (isPayload ? '正在接收选品数据…' : '等待表格数据…');
+            cntEl.textContent = '';
+            cntEl.style.display = 'none';
             barEl.classList.add('indeterminate');
             etaEl.textContent = '';
           }
@@ -7587,7 +7633,7 @@
               try {
                 const resultRoundKey = responseMessageId || ('round-' + Date.now());
                 const obsPayload = await loadObsProducts(obsUrl, totalCount, convIdFromHeader || convKey, resultRoundKey, window.__dldCurrentResultQuery || text);
-                pj = { count: obsPayload.count, products: obsPayload.products };
+                pj = { count: obsPayload.count, totalCount: obsPayload.totalCount || totalCount || obsPayload.products.length, products: obsPayload.products };
                 window.__lastPayloadNode = { source: 'workflow_finished.data.outputs.answer.payload', obsUrl, totalCount, fetchedCount: obsPayload.products.length };
               } catch (e) { showError(e.message || String(e)); }
             } else if (answer || accAnswer) {
@@ -7604,8 +7650,9 @@
               const barTxt = analyzeEl.querySelector('.az-count .azc-txt');
               if (barWrap && barTxt) {
                 barWrap.style.display = '';
-                barWrap.dataset.n = String(pj.products.length);
-                barTxt.textContent = '检索完成，共 ' + pj.products.length.toLocaleString('zh-CN') + ' 条符合条件的商品，点击下方"查看更多"查看完整商品。';
+                const previewTotal = Number(pj.totalCount || totalCount || pj.count || pj.products.length) || pj.products.length;
+                barWrap.dataset.n = String(previewTotal);
+                barTxt.textContent = '检索完成，共 ' + previewTotal.toLocaleString('zh-CN') + ' 条符合条件的商品，完整结果加载中';
               }
             }
             if (answer || accAnswer || (pj && pj.products.length)) {
@@ -7627,7 +7674,7 @@
                     .replace(/\n{3,}/g, '\n\n').trim()
                 : stripJsonTail(answer || accAnswer);
               liveTextEl.innerHTML = renderAiAnswerHtml(visibleAnswer)
-                + (pj && pj.products.length ? productPreviewHtml(list, pj.products, convIdFromHeader || convKey) : '');
+                + (pj && pj.products.length ? productPreviewHtml(list, pj.products, convIdFromHeader || convKey, totalCount || pj.totalCount || pj.count) : '');
               // 最终富文本轻淡入，柔化"流式纯文本 → 富文本渲染"的切换跳变
               liveTextEl.style.animation = 'fadeInUp .28s ease';
             }
@@ -7635,7 +7682,7 @@
             if (pj && Array.isArray(pj.products) && pj.products.length) {
               const resultQuery = window.__dldCurrentResultQuery || text || '';
               const resultMessageId = responseMessageId || ('round-' + Date.now());
-              saveConversationProducts(convIdFromHeader || convKey, { ...pj, totalCount, query: resultQuery, conversationId: convIdFromHeader || convKey, messageId: resultMessageId }, resultMessageId);
+              saveConversationProducts(convIdFromHeader || convKey, { ...pj, totalCount: pj.totalCount || totalCount || pj.count, query: resultQuery, conversationId: convIdFromHeader || convKey, messageId: resultMessageId }, resultMessageId);
               window.__dldActiveConversationId = convIdFromHeader || convKey;
                window.__dldCurrentResultMessageId = resultMessageId;
                window.__dldCurrentResultKey = String((convIdFromHeader || convKey) + ':' + resultMessageId);
