@@ -1,0 +1,47 @@
+<style>
+  .preview-wrap { display:grid; gap:22px; }
+  .demo-table { border:1px solid #e6e9ed; border-radius:8px; overflow:hidden; background:#fff; }
+  .demo-table table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  .demo-table th { background:#f7f8fa; color:#5a6472; font-weight:700; text-align:left; padding:9px 12px; border-bottom:1px solid #e6e9ed; white-space:nowrap; }
+  .demo-table td { padding:9px 12px; border-bottom:1px solid #edf0f3; color:#35434d; }
+  .demo-table tr:last-child td { border-bottom:none; }
+  .green-check { width:16px; height:16px; border-radius:5px; background:linear-gradient(180deg,#18BD71,#00A65A); display:inline-grid; place-items:center; color:#fff; font-size:11px; box-shadow:0 1px 2px rgba(0,166,90,.28); }
+  .empty-check { width:16px; height:16px; border-radius:5px; border:1.5px solid #d2d9e0; background:#fff; display:inline-block; }
+  .half-check { width:16px; height:16px; border-radius:5px; background:linear-gradient(180deg,#18BD71,#00A65A); display:inline-grid; place-items:center; box-shadow:0 1px 2px rgba(0,166,90,.28); }
+  .half-check::after { content:''; width:8px; height:2px; border-radius:1px; background:#fff; }
+  .pager { min-height:40px; display:flex; align-items:center; gap:12px; color:#53616c; font-size:12.5px; white-space:nowrap; background:#fff; border:1px solid var(--border-light,#e6e9ed); border-radius:8px; padding:8px 12px; margin-top:10px; }
+  .pager .total { color:#6f7a85; }
+  .pager select { height:30px; border:1px solid #e3e8ee; border-radius:3px; padding:0 4px; font-size:12px; color:#4a5560; background:#fff; }
+  .nav { display:inline-flex; align-items:center; border:1px solid #e3e8ee; border-radius:3px; background:#fff; overflow:hidden; }
+  .nav span { min-width:30px; height:30px; display:inline-flex; align-items:center; justify-content:center; font-size:13px; color:#4a5560; border-left:1px solid #f0f2f5; }
+  .nav span:first-child { border-left:none; }
+  .nav .disabled { color:#c8cfd6; }
+  .nav .active { color:#00A65A; background:#f4fbf7; font-weight:700; }
+  .jump { display:inline-flex; align-items:center; gap:6px; margin-left:auto; color:#6f7a85; }
+  .jump input { box-sizing:border-box; width:46px; height:30px; border:1px solid #e3e8ee; border-radius:3px; text-align:center; color:#35434d; }
+  .hint { display:flex; align-items:flex-start; gap:8px; margin:0; padding:11px 13px; border-left:3px solid #00A65A; background:#f3fbf6; color:#466052; font-size:13px; border-radius:0 6px 6px 0; }
+  .hint b { color:#2e6e4e; }
+  @media (max-width: 780px) { .pager { gap:8px; font-size:12px; } .jump { margin-left:0; } }
+</style>
+<h2>已实装样式 · 最终效果</h2>
+<p class="subtitle">绿色勾选框 + Element 风格紧凑分页已在工作台生效，下图为实装后的样子。</p>
+<div class="preview-wrap">
+  <div class="hint"><span class="green-check">✓</span><span><b>勾选框绿色主题</b>：选中/半选为绿渐变（#18BD71 → #00A65A），hover 绿色光圈；表头仍为浅灰无色主题。以下三态：已选、半选、未选。</span></div>
+  <div class="demo-table">
+    <table>
+      <thead><tr><th style="width:36px"><span class="half-check" title="半选"></span></th><th style="width:44px">序号</th><th>商品信息</th><th>价格</th><th>近30天动销</th></tr></thead>
+      <tbody>
+        <tr><td><span class="green-check">✓</span></td><td>51</td><td>无线蓝牙耳机 迷你入耳式 演示款 #51</td><td>¥59.00</td><td>12,340</td></tr>
+        <tr><td><span class="green-check">✓</span></td><td>52</td><td>无线蓝牙耳机 迷你入耳式 演示款 #52</td><td>¥60.00</td><td>12,273</td></tr>
+        <tr><td><span class="empty-check"></span></td><td>53</td><td>无线蓝牙耳机 迷你入耳式 演示款 #53</td><td>¥61.00</td><td>12,206</td></tr>
+      </tbody>
+    </table>
+    <div class="pager">
+      <span class="total">共 120 条</span>
+      <select><option>50条/页</option></select>
+      <span class="nav"><span class="disabled">‹</span><span>1</span><span class="active">2</span><span>3</span><span>›</span></span>
+      <span class="jump">前往 <input value="2"> 页</span>
+    </div>
+  </div>
+  <p class="subtitle" style="margin:0">在工作台里做一次查询即可看到真实数据上的效果；本页仅为静态示意。</p>
+</div>

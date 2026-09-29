@@ -1,0 +1,51 @@
+<style>
+  .preview-wrap { display:grid; gap:22px; }
+  .comparison { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .pager-card { border:1px solid #e5e9ed; border-radius:10px; background:#fff; overflow:hidden; cursor:pointer; transition:border-color .15s, box-shadow .15s; }
+  .pager-card:hover { border-color:#00a65a; box-shadow:0 5px 15px rgba(0,166,90,.1); }
+  .pager-card.selected { border-color:#00a65a; box-shadow:0 0 0 3px rgba(0,166,90,.13); }
+  .pager-head { padding:13px 16px 10px; border-bottom:1px solid #edf0f2; }
+  .pager-head b { color:#263238; font-size:14px; }
+  .pager-head p { margin:5px 0 0; font-size:12px; color:#73808a; }
+  .mock-area { padding:34px 22px; background:#fafbfc; }
+  .pager { min-height:38px; display:flex; align-items:center; gap:12px; color:#53616c; font-size:13px; white-space:nowrap; }
+  .select { height:32px; padding:0 30px 0 11px; border:1px solid #d9e0e5; border-radius:3px; color:#52606b; background:#fff; font-size:13px; appearance:auto; }
+  .nav { display:flex; align-items:center; height:32px; border:1px solid #edf0f2; background:#fff; }
+  .nav span { width:32px; height:30px; display:grid; place-items:center; font-weight:600; color:#263238; }
+  .nav .disabled { color:#cbd2d7; }
+  .nav .active { color:#00a65a; background:#f4fbf7; }
+  .jump { display:flex; align-items:center; gap:8px; margin-left:auto; }
+  .jump input { box-sizing:border-box; width:42px; height:30px; border:1px solid #d9e0e5; text-align:center; color:#35434d; }
+  .green-check { width:16px; height:16px; border-radius:5px; background:linear-gradient(180deg,#18bd71,#00a65a); display:inline-grid; place-items:center; color:#fff; font-size:11px; box-shadow:0 1px 2px rgba(0,166,90,.28); }
+  .hint { display:flex; align-items:center; gap:8px; margin:0; padding:11px 13px; border-left:3px solid #00a65a; background:#f3fbf6; color:#466052; font-size:13px; }
+  @media (max-width: 780px) { .comparison { grid-template-columns:1fr; } .pager { gap:8px; font-size:12px; } .jump { margin-left:0; } }
+</style>
+<h2>分页与勾选风格预览</h2>
+<p class="subtitle">勾选框将从橙色改为绿色；分页按你提供的参考图复刻为紧凑型控件。点击任一卡片确认方案。</p>
+<div class="preview-wrap">
+  <div class="hint"><span class="green-check">✓</span><span>勾选框：绿色渐变填充，白色对勾与半选横杠保持不变；表头仍保持浅灰无色主题。</span></div>
+  <div class="comparison">
+    <div class="pager-card" data-choice="reference-compact" onclick="toggleSelect(this)">
+      <div class="pager-head"><b>方案 A：参考图紧凑型</b><p>完全贴近你发的样式，信息密度高，适合右侧预览面板。</p></div>
+      <div class="mock-area">
+        <div class="pager">
+          <span>共 35 条</span>
+          <select class="select" aria-label="每页条数"><option>30条/页</option></select>
+          <div class="nav"><span class="disabled">‹</span><span class="active">1</span><span>2</span><span>›</span></div>
+          <div class="jump"><span>前往</span><input value="1" aria-label="页码"><span>页</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="pager-card" data-choice="reference-compact-extended" onclick="toggleSelect(this)">
+      <div class="pager-head"><b>方案 B：紧凑型增强</b><p>沿用参考图结构，增加页码状态和更清晰的禁用态。</p></div>
+      <div class="mock-area">
+        <div class="pager">
+          <span>共 35 条</span>
+          <select class="select" aria-label="每页条数"><option>30条/页</option></select>
+          <div class="nav"><span class="disabled">‹</span><span class="active">1</span><span>2</span><span>›</span></div>
+          <div class="jump"><span>前往</span><input value="1" aria-label="页码"><span>页</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
